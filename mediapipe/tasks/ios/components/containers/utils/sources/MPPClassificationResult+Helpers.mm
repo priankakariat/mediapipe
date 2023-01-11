@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
-
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPCategory+Helpers.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 
 namespace {
 using ClassificationsProto = ::mediapipe::tasks::components::containers::proto::Classifications;
@@ -27,7 +26,9 @@ using ClassificationResultProto =
 
 + (MPPClassifications *)classificationsWithProto:
     (const ClassificationsProto &)classificationsProto {
-  NSMutableArray<MPPCategory *> *categories = [NSMutableArray arrayWithCapacity:(NSUInteger)classificationsProto.classification_list().classification_size()];
+  NSMutableArray<MPPCategory *> *categories =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)classificationsProto.classification_list()
+                                            .classification_size()];
   for (const auto &classification : classificationsProto.classification_list().classification()) {
     [categories addObject:[MPPCategory categoryWithProto:classification]];
   }
@@ -48,17 +49,19 @@ using ClassificationResultProto =
 
 + (MPPClassificationResult *)classificationResultWithProto:
     (const ClassificationResultProto &)classificationResultProto {
-  NSMutableArray *classifications = [NSMutableArray arrayWithCapacity:(NSUInteger)classificationResultProto.classifications_size()];
+  NSMutableArray *classifications = [NSMutableArray
+      arrayWithCapacity:(NSUInteger)classificationResultProto.classifications_size()];
   for (const auto &classificationsProto : classificationResultProto.classifications()) {
     [classifications addObject:[MPPClassifications classificationsWithProto:classificationsProto]];
   }
 
-  NSInteger timestampMs;
+  NSInteger timestampMs = 0;
   if (classificationResultProto.has_timestamp_ms()) {
     timestampMs = (NSInteger)classificationResultProto.timestamp_ms();
   }
-  
-  return [[MPPClassificationResult alloc] initWithClassifications:classifications timestampMs:timestampMs];;
+
+  return [[MPPClassificationResult alloc] initWithClassifications:classifications
+                                                      timestampMs:timestampMs];
 }
 
 @end

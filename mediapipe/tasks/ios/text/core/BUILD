@@ -26,6 +26,7 @@ objc_library(
     ],
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 

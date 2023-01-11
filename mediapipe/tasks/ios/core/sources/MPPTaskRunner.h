@@ -31,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
  * additional functionality. An instance of `MPPVisionTaskRunner` can in turn be used by the each
  * vision task for creation and execution of the task. Please see the documentation for the C++ Task
  * Runner for more details on how the taks runner operates.
- **/
+ */
 @interface MPPTaskRunner : NSObject
 
 /**
@@ -55,7 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @return An instance of `MPPTaskRunner` initialized to the given graph config proto and optional
  * packetsCallback.
- **/
+ */
 - (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                               packetsCallback:
                                   (mediapipe::tasks::core::PacketsCallback)packetsCallback
@@ -71,14 +71,14 @@ NS_ASSUME_NONNULL_BEGIN
  * than the timestamps of the previous invocation. This method is thread-unsafe and it is the
  * caller's responsibility to synchronize access to this method across multiple threads and to
  * ensure that the input packet timestamps are in order.
- **/
+ */
 - (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:
     (const mediapipe::tasks::core::PacketMap &)packetMap;
 
 /**
  * Shuts down the C++ task runner. After the runner is closed, any calls that send input data to the
  * runner are illegal and will receive errors.
- **/
+ */
 - (absl::Status)close;
 
 - (instancetype)init NS_UNAVAILABLE;

@@ -89,9 +89,9 @@ objc_library(
     ],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
+        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

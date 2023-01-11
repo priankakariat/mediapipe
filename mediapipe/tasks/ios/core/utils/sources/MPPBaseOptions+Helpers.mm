@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 namespace {
@@ -35,6 +37,7 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
     case MPPDelegateGPU: {
       // TODO: Provide an implementation for GPU Delegate.
       [NSException raise:@"Invalid value for delegate" format:@"GPU Delegate is not implemented."];
+      break;
     }
     default:
       break;

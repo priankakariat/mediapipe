@@ -35,7 +35,7 @@ NS_SWIFT_NAME(TextClassifierResult)
  *
  * @return An instance of `MPPTextClassifierResult` initialized with the given
  * `MPPClassificationResult` and timestamp (in milliseconds).
- **/
+ */
 - (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
                                  timestampMs:(NSInteger)timestampMs;
 

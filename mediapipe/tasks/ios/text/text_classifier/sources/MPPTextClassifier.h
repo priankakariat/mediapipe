@@ -51,7 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
  *    AssociatedFile (if any) whose locale matches the `displayNamesLocale` field of the 
  *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If 
  *    none of these are available, only the `index` field of the results will be filled.
- **/
+ */
 NS_SWIFT_NAME(TextClassifier)
 @interface MPPTextClassifier : NSObject
 
@@ -66,7 +66,7 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return A new instance of `MPPTextClassifier` with the given model path. `nil` if there is an
  * error in initializing the text classifier.
- **/
+ */
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
 
 /**
@@ -79,7 +79,7 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return A new instance of `MPPTextClassifier` with the given options. `nil` if there is an
  * error in initializing the text classifier.
- **/
+ */
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options
                           error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
@@ -91,7 +91,7 @@ NS_SWIFT_NAME(TextClassifier)
  * classification on the input text.
  *
  * @return  A `MPPTextClassifierResult` object that contains a list of text classifications.
- **/
+ */
 - (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;

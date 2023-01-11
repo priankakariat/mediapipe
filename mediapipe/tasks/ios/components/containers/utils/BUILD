@@ -20,10 +20,10 @@ objc_library(
     name = "MPPCategoryHelpers",
     srcs = ["sources/MPPCategory+Helpers.mm"],
     hdrs = ["sources/MPPCategory+Helpers.h"],
-     deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPCategory",
+    deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
     ],
 )
 
@@ -32,9 +32,9 @@ objc_library(
     srcs = ["sources/MPPClassificationResult+Helpers.mm"],
     hdrs = ["sources/MPPClassificationResult+Helpers.h"],
     deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
         ":MPPCategoryHelpers",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
     ],
 )

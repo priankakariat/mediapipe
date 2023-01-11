@@ -19,8 +19,7 @@ import {Acceleration} from '../../../tasks/cc/core/proto/acceleration_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {ExternalFile} from '../../../tasks/cc/core/proto/external_file_pb';
 import {BaseOptions, TaskRunnerOptions} from '../../../tasks/web/core/task_runner_options';
-import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor, WasmModule} from '../../../web/graph_runner/graph_runner';
-import {SupportImage} from '../../../web/graph_runner/graph_runner_image_lib';
+import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor} from '../../../web/graph_runner/graph_runner';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
 
 import {WasmFileset} from './wasm_fileset';
@@ -29,10 +28,12 @@ import {WasmFileset} from './wasm_fileset';
 const NO_ASSETS = undefined;
 
 // tslint:disable-next-line:enforce-name-casing
-const GraphRunnerImageLibType =
-    SupportModelResourcesGraphService(SupportImage(GraphRunner));
-/** An implementation of the GraphRunner that supports image operations */
-export class GraphRunnerImageLib extends GraphRunnerImageLibType {}
+const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+/**
+ * An implementation of the GraphRunner that exposes the resource graph
+ * service.
+ */
+export class CachedGraphRunner extends CachedGraphRunnerType {}
 
 /**
  * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -49,7 +50,7 @@ export async function createTaskRunner<T extends TaskRunner>(
     }
   };
 
-  // Initialize a canvas if requested. If OffscreenCanvas is availble, we
+  // Initialize a canvas if requested. If OffscreenCanvas is available, we
   // let the graph runner initialize it by passing `undefined`.
   const canvas = initializeCanvas ? (typeof OffscreenCanvas === 'undefined' ?
                                          document.createElement('canvas') :
@@ -64,8 +65,8 @@ export async function createTaskRunner<T extends TaskRunner>(
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
-  protected graphRunner: GraphRunnerImageLib;
   private processingErrors: Error[] = [];
+  private latestOutputTimestamp = 0;
 
   /**
    * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -79,12 +80,7 @@ export abstract class TaskRunner {
   }
 
   /** @hideconstructor protected */
-  constructor(
-      wasmModule: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-      graphRunner?: GraphRunnerImageLib) {
-    this.graphRunner =
-        graphRunner ?? new GraphRunnerImageLib(wasmModule, glCanvas);
-
+  constructor(protected readonly graphRunner: CachedGraphRunner) {
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
     this.graphRunner.setAutoRenderToScreen(false);
@@ -167,18 +163,36 @@ export abstract class TaskRunner {
     this.handleErrors();
   }
 
+  /*
+   * Sets the latest output timestamp received from the graph (in ms).
+   * Timestamps that are smaller than the currently latest output timestamp are
+   * ignored.
+   */
+  protected setLatestOutputTimestamp(timestamp: number): void {
+    this.latestOutputTimestamp =
+        Math.max(this.latestOutputTimestamp, timestamp);
+  }
+
+  /** Returns the latest output timestamp. */
+  protected getLatestOutputTimestamp() {
+    return this.latestOutputTimestamp;
+  }
+
   /** Throws the error from the error listener if an error was raised. */
   private handleErrors() {
-    const errorCount = this.processingErrors.length;
-    if (errorCount === 1) {
-      // Re-throw error to get a more meaningful stacktrace
-      throw new Error(this.processingErrors[0].message);
-    } else if (errorCount > 1) {
-      throw new Error(
-          'Encountered multiple errors: ' +
-          this.processingErrors.map(e => e.message).join(', '));
+    try {
+      const errorCount = this.processingErrors.length;
+      if (errorCount === 1) {
+        // Re-throw error to get a more meaningful stacktrace
+        throw new Error(this.processingErrors[0].message);
+      } else if (errorCount > 1) {
+        throw new Error(
+            'Encountered multiple errors: ' +
+            this.processingErrors.map(e => e.message).join(', '));
+      }
+    } finally {
+      this.processingErrors = [];
     }
-    this.processingErrors = [];
   }
 
   /** Configures the `externalFile` option */

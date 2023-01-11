@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPCategory (Helpers)
 
-+ (MPPCategory *)categoryWithProto:(const mediapipe::Classification &)classificationProto;
++ (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto;
 
 @end
 

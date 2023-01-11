@@ -20,14 +20,16 @@ import {Detection as DetectionProto} from '../../../../framework/formats/detecti
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../tasks/cc/vision/object_detector/proto/object_detector_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ObjectDetectorOptions} from './object_detector_options';
 import {Detection} from './object_detector_result';
 
-const INPUT_STREAM = 'input_frame_gpu';
+const IMAGE_STREAM = 'input_frame_gpu';
+const NORM_RECT_STREAM = 'norm_rect';
 const DETECTIONS_STREAM = 'detections';
 const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
 
@@ -41,7 +43,7 @@ export {ImageSource};  // Used in the public API
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs object detection on images. */
-export class ObjectDetector extends VisionTaskRunner<Detection[]> {
+export class ObjectDetector extends VisionTaskRunner {
   private detections: Detection[] = [];
   private readonly options = new ObjectDetectorOptionsProto();
 
@@ -96,7 +98,9 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    super(
+        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
+        NORM_RECT_STREAM);
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -160,33 +164,33 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
    * ObjectDetector is created with running mode `image`.
    *
    * @param image An image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The list of detected objects
    */
-  detect(image: ImageSource): Detection[] {
-    return this.processImageData(image);
+  detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
+      Detection[] {
+    this.detections = [];
+    this.processImageData(image, imageProcessingOptions);
+    return [...this.detections];
   }
 
   /**
-   * Performs object detection on the provided vidoe frame and waits
+   * Performs object detection on the provided video frame and waits
    * synchronously for the response. Only use this method when the
    * ObjectDetector is created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The list of detected objects
    */
-  detectForVideo(videoFrame: ImageSource, timestamp: number): Detection[] {
-    return this.processVideoData(videoFrame, timestamp);
-  }
-
-  /** Runs the object detector graph and blocks on the response. */
-  protected override process(imageSource: ImageSource, timestamp: number):
-      Detection[] {
-    // Get detections by running our MediaPipe graph.
+  detectForVideo(
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions?: ImageProcessingOptions): Detection[] {
     this.detections = [];
-    this.graphRunner.addGpuBufferAsImageToStream(
-        imageSource, INPUT_STREAM, timestamp ?? performance.now());
-    this.finishProcessing();
+    this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return [...this.detections];
   }
 
@@ -226,7 +230,8 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   /** Updates the MediaPipe graph configuration. */
   protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
-    graphConfig.addInputStream(INPUT_STREAM);
+    graphConfig.addInputStream(IMAGE_STREAM);
+    graphConfig.addInputStream(NORM_RECT_STREAM);
     graphConfig.addOutputStream(DETECTIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
@@ -235,15 +240,17 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
 
     const detectorNode = new CalculatorGraphConfig.Node();
     detectorNode.setCalculator(OBJECT_DETECTOR_GRAPH);
-    detectorNode.addInputStream('IMAGE:' + INPUT_STREAM);
+    detectorNode.addInputStream('IMAGE:' + IMAGE_STREAM);
+    detectorNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     detectorNode.addOutputStream('DETECTIONS:' + DETECTIONS_STREAM);
     detectorNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(detectorNode);
 
     this.graphRunner.attachProtoVectorListener(
-        DETECTIONS_STREAM, binaryProto => {
+        DETECTIONS_STREAM, (binaryProto, timestamp) => {
           this.addJsObjectDetections(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

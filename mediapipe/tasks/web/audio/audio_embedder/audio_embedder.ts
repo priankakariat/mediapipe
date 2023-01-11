@@ -24,6 +24,7 @@ import {Embedding} from '../../../../tasks/web/components/containers/embedding_r
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
+import {CachedGraphRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -100,7 +101,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -126,6 +127,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
         options, this.options.getEmbedderOptions()));
     return this.applyOptions(options);
   }
+
+  // TODO: Add a classifyStream() that takes a timestamp
 
   /**
    * Performs embeding extraction on the provided audio clip and waits
@@ -192,20 +195,24 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
 
     graphConfig.addNode(embedderNode);
 
-    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
-      const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
-      this.embeddingResults.push(
-          convertFromEmbeddingResultProto(embeddingResult));
-    });
+    this.graphRunner.attachProtoListener(
+        EMBEDDINGS_STREAM, (binaryProto, timestamp) => {
+          const embeddingResult =
+              EmbeddingResult.deserializeBinary(binaryProto);
+          this.embeddingResults.push(
+              convertFromEmbeddingResultProto(embeddingResult));
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     this.graphRunner.attachProtoVectorListener(
-        TIMESTAMPED_EMBEDDINGS_STREAM, data => {
+        TIMESTAMPED_EMBEDDINGS_STREAM, (data, timestamp) => {
           for (const binaryProto of data) {
             const embeddingResult =
                 EmbeddingResult.deserializeBinary(binaryProto);
             this.embeddingResults.push(
                 convertFromEmbeddingResultProto(embeddingResult));
           }
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();
