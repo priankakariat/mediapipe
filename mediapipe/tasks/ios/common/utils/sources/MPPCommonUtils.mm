@@ -97,7 +97,9 @@ namespace {
   // any errors not falling into other categories.) Since payload is of type absl::Cord that can be
   // type cast into an absl::optional<std::string>, we use the std::stoi function to convert it into
   // an integer code if possible.
-  NSUInteger genericErrorCode = MPPTasksErrorCodeUnknownError;
+  MPPTasksErrorCode genericErrorCode = MPPTasksErrorCodeUnknownError;
+
+  MPPTasksErrorCode errorCode = genericErrorCode;
 
   // If errorCode is outside the range of enum values possible or is
   // MPPTasksErrorCodeError, we try to map the absl::Status::code() to assign
@@ -113,49 +115,46 @@ namespace {
       case StatusCode::kUnknown:
         errorCode = MPPTasksErrorCodeUnknownError;
         break;
-      case kInvalidArgument:
+      case StatusCode::kInvalidArgument:
         errorCode = MPPTasksErrorCodeInvalidArgumentError;
         break;
-      case kDeadlineExceeded:
+      case StatusCode::kDeadlineExceeded:
         errorCode = MPPTasksErrorCodeDeadlineExceededError;
         break;
-      case kNotFound:
+      case StatusCode::kNotFound:
         errorCode = MPPTasksErrorCodeNotFoundError;
         break;
-      case kAlreadyExists:
+      case StatusCode::kAlreadyExists:
         errorCode = MPPTasksErrorCodeAlreadyExistsError;
         break;
-      case kPermissionDenied:
+      case StatusCode::kPermissionDenied:
         errorCode = MPPTasksErrorCodePermissionDeniedError;
         break;
-      case kResourceExhausted:
+      case StatusCode::kResourceExhausted:
         errorCode = MPPTasksErrorCodeResourceExhaustedError;
         break;
-      case kFailedPrecondition:
+      case StatusCode::kFailedPrecondition:
         errorCode = MPPTasksErrorCodeFailedPreconditionError;
         break;
-      case kAborted:
+      case StatusCode::kAborted:
         errorCode = MPPTasksErrorCodeAbortedError;
         break;
-      case kOutOfRange:
+      case StatusCode::kOutOfRange:
         errorCode = MPPTasksErrorCodeOutOfRangeError;
         break;
-      case kUnimplemented:
+      case StatusCode::kUnimplemented:
         errorCode = MPPTasksErrorCodeUnimplementedError;
         break;
-      case kInternal:
+      case StatusCode::kInternal:
         errorCode = MPPTasksErrorCodeInternalError;
         break;
-      case kUnavailable:
+      case StatusCode::kUnavailable:
         errorCode = MPPTasksErrorCodeUnavailableError;
         break;
-      case kDataLoss:
+      case StatusCode::kDataLoss:
         errorCode = MPPTasksErrorCodeDataLossError;
         break;
-      case kUnauthenticated:
-        errorCode = MPPTasksErrorCodeUnauthenticatedError;
-        break;
-      case kUnauthenticated:
+      case StatusCode::kUnauthenticated:
         errorCode = MPPTasksErrorCodeUnauthenticatedError;
         break;
       default:

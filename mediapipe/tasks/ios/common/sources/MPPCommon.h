@@ -56,13 +56,13 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
 
   MPPTasksErrorCodeDataLossError = 15,
 
-  MPPTasksErrorCodeUnauthenticated = 16,
+  MPPTasksErrorCodeUnauthenticatedError = 16,
 
   // The first error code in MPPTasksErrorCode (for internal use only).
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 
   // The last error code in MPPTasksErrorCode (for internal use only).
-  MPPTasksErrorCodeLast = MPPTasksErrorCodeUnauthenticated,
+  MPPTasksErrorCodeLast = MPPTasksErrorCodeUnauthenticatedError,
 
 } NS_SWIFT_NAME(TasksErrorCode);
 
