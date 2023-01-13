@@ -23,10 +23,6 @@ static NSString *const kRegexTextClassifierModelName =
 static NSString *const kNegativeText = @"unflinchingly bleak and desperate";
 static NSString *const kPositiveText = @"it's a charming and often affecting journey";
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
-static NSArray<MPPCategory *> *expectedNegativeCategories = @[
-  [[MPPCategory alloc] initWithIndex:0 score:0.956187f categoryName:@"negative" displayName:nil],
-  [[MPPCategory alloc] initWithIndex:1 score:0.043812f categoryName:@"positive" displayName:nil]
-];
 
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
@@ -47,7 +43,7 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
 
 #define AssertTextClassifierResultHasOneHead(textClassifierResult)                    \
   XCTAssertNotNil(textClassifierResult);                                              \
-  \              
+  \      
   XCTAssertNotNil(textClassifierResult.classificationResult);                         \
   XCTAssertEqual(textClassifierResult.classificationResult.classifications.count, 1); \
   XCTAssertEqual(textClassifierResult.classificationResult.classifications[0].headIndex, 0);
@@ -123,6 +119,24 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
   return textClassifier;
 }
 
+- (void)assertCreateTextClassifierWithOptions:(MPPTextClassifierOptions *)textClassifierOptions
+                       failsWithExpectedError:(NSError *)expectedError {
+  NSError *error = nil;
+  MPPTextClassifier *textClassifier =
+      [[MPPTextClassifier alloc] initWithOptions:textClassifierOptions error:&error];
+  XCTAssertNil(textClassifier);
+  AssertEqualErrors(error, expectedError);
+}
+
+- (void)assertResultsOfClassifyText:(NSString *)text
+                usingTextClassifier:(MPPTextClassifier *)textClassifier
+                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:text error:nil];
+  AssertTextClassifierResultHasOneHead(negativeResult);
+  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
+                            expectedCategories);
+}
+
 - (void)testCreateTextClassifierFailsWithMissingModelPath {
   NSString *modelPath = [self filePathWithName:@"" extension:@""];
 
@@ -148,19 +162,16 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
   options.categoryAllowlist = @[ @"positive" ];
   options.categoryDenylist = @[ @"negative" ];
 
-  NSError *error = nil;
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-                                                                           error:&error];
-  XCTAssertNil(textClassifier);
-
-  NSError *expectedError = [NSError
-      errorWithDomain:kExpectedErrorDomain
-                 code:MPPTasksErrorCodeInvalidArgumentError
-             userInfo:@{
-               NSLocalizedDescriptionKey : @"INVALID_ARGUMENT: `category_allowlist` and "
-                                           @"`category_denylist` are mutually exclusive options."
-             }];
-  AssertEqualErrors(error, expectedError);
+  [self assertCreateTextClassifierWithOptions:options
+                       failsWithExpectedError:
+                           [NSError
+                               errorWithDomain:kExpectedErrorDomain
+                                          code:MPPTasksErrorCodeInvalidArgumentError
+                                      userInfo:@{
+                                        NSLocalizedDescriptionKey :
+                                            @"INVALID_ARGUMENT: `category_allowlist` and "
+                                            @"`category_denylist` are mutually exclusive options."
+                                      }]];
 }
 
 - (void)testCreateTextClassifierFailsWithInvalidMaxResults {
@@ -168,49 +179,44 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.maxResults = 0;
 
-  NSError *error = nil;
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-                                                                           error:&error];
-  XCTAssertNil(textClassifier);
-
-  NSError *expectedError =
-      [NSError errorWithDomain:kExpectedErrorDomain
-                          code:MPPTasksErrorCodeInvalidArgumentError
-                      userInfo:@{
-                        NSLocalizedDescriptionKey :
-                            @"INVALID_ARGUMENT: Invalid `max_results` option: value must be != 0."
-                      }];
-  AssertEqualErrors(error, expectedError);
+  [self assertCreateTextClassifierWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"INVALID_ARGUMENT: Invalid `max_results` option: "
+                                                 @"value must be != 0."
+                                           }]];
 }
 
 - (void)testClassifyWithBertSucceeds {
   MPPTextClassifier *textClassifier =
       [self textClassifierFromModelFileWithName:kBertTextClassifierModelName];
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForNegativeText]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForNegativeText]];
 
-  MPPTextClassifierResult *positiveResult = [textClassifier classifyText:kPositiveText error:nil];
-  AssertTextClassifierResultHasOneHead(positiveResult);
-  AssertEqualCategoryArrays(positiveResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForPositiveText]);
+  [self assertResultsOfClassifyText:kPositiveText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForPositiveText]];
 }
 
 - (void)testClassifyWithRegexSucceeds {
   MPPTextClassifier *textClassifier =
       [self textClassifierFromModelFileWithName:kRegexTextClassifierModelName];
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedRegexResultCategoriesForNegativeText]);
-
-  MPPTextClassifierResult *positiveResult = [textClassifier classifyText:kPositiveText error:nil];
-  AssertTextClassifierResultHasOneHead(positiveResult);
-  AssertEqualCategoryArrays(positiveResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedRegexResultCategoriesForPositiveText]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedRegexResultCategoriesForNegativeText]];
+  [self assertResultsOfClassifyText:kPositiveText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedRegexResultCategoriesForPositiveText]];
 }
 
 - (void)testClassifyWithMaxResultsSucceeds {
@@ -218,15 +224,13 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.maxResults = 1;
 
-  NSError *error = nil;
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-                                                                           error:&error];
+  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
   XCTAssertNotNil(textClassifier);
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForEdgeCaseTests]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
 - (void)testClassifyWithCategoryAllowListSucceeds {
@@ -238,11 +242,12 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
                                                                            error:&error];
   XCTAssertNotNil(textClassifier);
+  XCTAssertNil(error);
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForEdgeCaseTests]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
 - (void)testClassifyWithCategoryDenyListSucceeds {
@@ -250,15 +255,13 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.categoryDenylist = @[ @"positive" ];
 
-  NSError *error = nil;
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-                                                                           error:&error];
+  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
   XCTAssertNotNil(textClassifier);
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForEdgeCaseTests]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
 - (void)testClassifyWithScoreThresholdSucceeds {
@@ -266,15 +269,13 @@ static NSArray<MPPCategory *> *expectedNegativeCategories = @[
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.scoreThreshold = 0.5f;
 
-  NSError *error = nil;
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-                                                                           error:&error];
+  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
   XCTAssertNotNil(textClassifier);
 
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:kNegativeText error:nil];
-  AssertTextClassifierResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            [MPPTextClassifierTests expectedBertResultCategoriesForEdgeCaseTests]);
+  [self assertResultsOfClassifyText:kNegativeText
+                usingTextClassifier:textClassifier
+                   equalsCategories:[MPPTextClassifierTests
+                                        expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
 @end
