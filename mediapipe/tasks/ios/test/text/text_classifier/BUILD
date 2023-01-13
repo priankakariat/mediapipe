@@ -47,7 +47,14 @@ swift_library(
     name = "MPPTextClassifierSwiftTestLibrary",
     testonly = 1,
     srcs = ["TextClassifierTests.swift"],
+    data = [
+        "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
+        "//mediapipe/tasks/testdata/text:text_classifier_models",
+    ],
     tags = [],
+    deps = [
+        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
+    ],
 )
 
 ios_unit_test(
