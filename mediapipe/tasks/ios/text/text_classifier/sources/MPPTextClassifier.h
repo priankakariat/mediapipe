@@ -67,7 +67,7 @@ NS_SWIFT_NAME(TextClassifier)
  * @return A new instance of `MPPTextClassifier` with the given model path. `nil` if there is an
  * error in initializing the text classifier.
  */
-- (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
 
 /**
  * Creates a new instance of `MPPTextClassifier` from the given `MPPTextClassifierOptions`.
@@ -80,7 +80,7 @@ NS_SWIFT_NAME(TextClassifier)
  * @return A new instance of `MPPTextClassifier` with the given options. `nil` if there is an
  * error in initializing the text classifier.
  */
-- (instancetype)initWithOptions:(MPPTextClassifierOptions *)options
+- (nullable instancetype)initWithOptions:(MPPTextClassifierOptions *)options
                           error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
@@ -92,7 +92,8 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return  A `MPPTextClassifierResult` object that contains a list of text classifications.
  */
-- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error;
+- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error NS_SWIFT_NAME(classify(text:));
+
 
 - (instancetype)init NS_UNAVAILABLE;
 
