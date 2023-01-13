@@ -44,13 +44,12 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * At least one output tensor (`kTfLiteFloat32/kBool`) with:
  *  - `N` classes and shape `[1 x N]`
- *  - optional (but recommended) label map(s) as AssociatedFiles with type
- *    TENSOR_AXIS_LABELS,
- *    containing one label per line. The first such AssociatedFile (if any) is used to fill
- *    the `categoryName` field of the results. The `displayName` field is filled from the
+ *  - optional (but recommended) label map(s) as AssociatedFiles with type TENSOR_AXIS_LABELS,
+ *    containing one label per line. The first such AssociatedFile (if any) is used to fill the
+ *    `categoryName` field of the results. The `displayName` field is filled from the
  *    AssociatedFile (if any) whose locale matches the `displayNamesLocale` field of the
- *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If
- *    none of these are available, only the `index` field of the results will be filled.
+ *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If none of
+ *    these are available, only the `index` field of the results will be filled.
  */
 NS_SWIFT_NAME(TextClassifier)
 @interface MPPTextClassifier : NSObject
@@ -59,10 +58,9 @@ NS_SWIFT_NAME(TextClassifier)
  * Creates a new instance of `MPPTextClassifier` from an absolute path to a TensorFlow Lite
  * model file stored locally on the device and the default `MPPTextClassifierOptions`.
  *
- * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the
- * device.
- * @param error An optional error parameter populated when there is an error in initializing
- * the text classifier.
+ * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
+ * @param error An optional error parameter populated when there is an error in initializing the
+ * text classifier.
  *
  * @return A new instance of `MPPTextClassifier` with the given model path. `nil` if there is an
  * error in initializing the text classifier.
@@ -74,8 +72,8 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @param options The options of type `MPPTextClassifierOptions` to use for configuring the
  * `MPPTextClassifier`.
- * @param error An optional error parameter populated when there is an error in initializing
- * the text classifier.
+ * @param error An optional error parameter populated when there is an error in initializing the
+ * text classifier.
  *
  * @return A new instance of `MPPTextClassifier` with the given options. `nil` if there is an
  * error in initializing the text classifier.

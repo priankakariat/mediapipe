@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
-
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
+#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 

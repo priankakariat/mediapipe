@@ -18,6 +18,7 @@
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 
 namespace {
 using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;

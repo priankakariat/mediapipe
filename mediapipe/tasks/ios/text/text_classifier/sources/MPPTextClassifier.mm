@@ -27,7 +27,6 @@
 
 namespace {
 using ::mediapipe::Packet;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;
 }  // namespace
 
@@ -46,29 +45,29 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 @implementation MPPTextClassifier
 
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
-  MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-      initWithTaskGraphName:kTaskGraphName
-               inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-              outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                          kClassificationsStreamName] ]
-                taskOptions:options
-         enableFlowLimiting:NO
-                      error:error];
-
-  if (!taskInfo) {
-    return nil;
-  }
-
-  _textTaskRunner =
-      [[MPPTextTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                         error:error];
-
-  if (!_textTaskRunner) {
-    return nil;
-  }
-
   self = [super init];
+  if (self) {
+    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
+        initWithTaskGraphName:kTaskGraphName
+                 inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
+                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
+                                                            kClassificationsStreamName] ]
+                  taskOptions:options
+           enableFlowLimiting:NO
+                        error:error];
 
+    if (!taskInfo) {
+      return nil;
+    }
+
+    _textTaskRunner =
+        [[MPPTextTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
+                                                           error:error];
+
+    if (!_textTaskRunner) {
+      return nil;
+    }
+  }
   return self;
 }
 

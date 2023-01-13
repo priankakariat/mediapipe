@@ -25,35 +25,34 @@ NS_SWIFT_NAME(TextClassifierOptions)
 @interface MPPTextClassifierOptions : MPPTaskOptions <NSCopying>
 
 /**
- * The locale to use for display names specified through the TFLite Model
- * Metadata, if any. Defaults to English.
+ * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
+ * to English.
  */
 @property(nonatomic, copy) NSString *displayNamesLocale;
 
 /**
- * The maximum number of top-scored classification results to return. If < 0,
- * all available results will be returned. If 0, an invalid argument error is
- * returned.
+ * The maximum number of top-scored classification results to return. If < 0, all available results
+ * will be returned. If 0, an invalid argument error is returned.
  */
 @property(nonatomic) NSInteger maxResults;
 
 /**
- * Score threshold to override the one provided in the model metadata (if any).
- * Results below this value are rejected.
+ * Score threshold to override the one provided in the model metadata (if any). Results below this
+ * value are rejected.
  */
 @property(nonatomic) float scoreThreshold;
 
 /**
- * The allowlist of category names. If non-empty, detection results whose
- * category name is not in this set will be filtered out. Duplicate or unknown
- * category names are ignored. Mutually exclusive with categoryDenylist.
+ * The allowlist of category names. If non-empty, detection results whose category name is not in
+ * this set will be filtered out. Duplicate or unknown category names are ignored. Mutually
+ * exclusive with categoryDenylist.
  */
 @property(nonatomic, copy) NSArray<NSString *> *categoryAllowlist;
 
 /**
- * The denylist of category names. If non-empty, detection results whose
- * category name is in this set will be filtered out. Duplicate or unknown
- * category names are ignored. Mutually exclusive with categoryAllowlist.
+ * The denylist of category names. If non-empty, detection results whose category name is in this
+ * set will be filtered out. Duplicate or unknown category names are ignored. Mutually exclusive
+ * with categoryAllowlist.
  */
 @property(nonatomic, copy) NSArray<NSString *> *categoryDenylist;
 
