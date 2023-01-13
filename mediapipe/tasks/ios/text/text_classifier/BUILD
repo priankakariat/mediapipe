@@ -43,6 +43,7 @@ objc_library(
         "-ObjC++",
         "-std=c++17",
     ],
+    module_name = "MPPTextClassifier",
     deps = [
         ":MPPTextClassifierOptions",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
