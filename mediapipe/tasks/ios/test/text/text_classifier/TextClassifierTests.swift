@@ -1,272 +1,237 @@
-/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- ==============================================================================*/
-// import GMLImageUtils
 import XCTest
 
-// @testable import TFLImageSegmenter
+import MPPCommon
+
+@testable import MPPTextClassifier
 
 class TextClassifierTests: XCTestCase {
 
-  func testExample() throws {
-       XCTAssertEqual(1, 1)
+  static let bundle = Bundle(for: TextClassifierTests.self)
+  
+  static let kBertModelPath = bundle.path(
+    forResource: "bert_text_classifier",
+    ofType: "tflite")
+  
+  static let kPositiveText = "it's a charming and often affecting journey"
+
+  static let kNegativeText = "unflinchingly bleak and desperate"
+
+  static let kBertNegativeTextResults = [
+      ResultCategory(
+        index: 0, 
+        score: 0.956187, 
+        categoryName: "negative", 
+        displayName: nil),
+      ResultCategory(
+        index: 1, 
+        score: 0.043812, 
+        categoryName: "positive", 
+        displayName: nil)
+      ]
+
+  static let kBertNegativeTextResultsForEdgeTestCases = [
+      ResultCategory(
+        index: 0, 
+        score: 0.956187, 
+        categoryName: "negative", 
+        displayName: nil),
+      ]
+
+  func assertEqualErrorDescriptions(
+    _ error: Error, expectedLocalizedDescription:String) {
+   XCTAssertEqual(
+      error.localizedDescription,
+      expectedLocalizedDescription)
+  }
+  
+  func assertCategoriesAreEqual(
+    category: ResultCategory, 
+    expectedCategory: ResultCategory) {
+     XCTAssertEqual(
+      category.index,
+      expectedCategory.index)
+    XCTAssertEqual(
+      category.score,
+      expectedCategory.score,
+      accuracy:1e-6)
+    XCTAssertEqual(
+      category.categoryName,
+      expectedCategory.categoryName)
+    XCTAssertEqual(
+      category.displayName,
+      expectedCategory.displayName)
+  }
+
+  func assertEqualCategoryArrays(
+    categoryArray: [ResultCategory], 
+    expectedCategoryArray:[ResultCategory]) {
+
+    XCTAssertEqual(categoryArray.count, expectedCategoryArray.count)
+
+    for (category, expectedCategory) in 
+      zip(categoryArray, expectedCategoryArray)  {
+      assertCategoriesAreEqual(
+        category:category, 
+        expectedCategory:expectedCategory)
     }
+  }
+  
+  func assertTextClassifierResultHasOneHead(
+    _ textClassifierResult: TextClassifierResult) {
+    XCTAssertEqual(textClassifierResult.classificationResult.classifications.count, 1);
+    XCTAssertEqual(textClassifierResult.classificationResult.classifications[0].headIndex, 0);
+  }
 
-  // static let bundle = Bundle(for: TextClassifierTests.self)
-  // static let modelPath = bundle.path(
-  //   forResource: "deeplabv3",
-  //   ofType: "tflite")
+  func textClassifierOptionsWithModelPath(
+    _ modelPath: String?) throws -> TextClassifierOptions {
+    let modelPath = try XCTUnwrap(modelPath)
 
-  // // The maximum fraction of pixels in the candidate mask that can have a
-  // // different class than the golden mask for the test to pass.
-  // let kGoldenMaskTolerance: Float = 1e-2
+    let textClassifierOptions = TextClassifierOptions();
+    textClassifierOptions.baseOptions.modelAssetPath = modelPath;
 
-  // // Magnification factor used when creating the golden category masks to make
-  // // them more human-friendly. Each pixel in the golden masks has its value
-  // // multiplied by this factor, i.e. a value of 10 means class index 1, a value of
-  // // 20 means class index 2, etc.
-  // let kGoldenMaskMagnificationFactor: UInt8 = 10
+    return textClassifierOptions
+  }
 
-  // let deepLabV3SegmentationWidth = 257
+  func assertCreateTextClassifierThrowsError(
+    textClassifierOptions: TextClassifierOptions,
+    expectedErrorDescription: String) {
+    do {
+      let textClassifier = try TextClassifier(options:textClassifierOptions)
+      XCTAssertNil(textClassifier)
+    }
+    catch {
+      assertEqualErrorDescriptions(
+        error, 
+        expectedLocalizedDescription: expectedErrorDescription)
+    }
+  }
 
-  // let deepLabV3SegmentationHeight = 257
+  func assertResultsForClassify(
+    text: String, 
+    using textClassifier: TextClassifier,
+    equals expectedCategories: [ResultCategory]) throws {
+    let textClassifierResult = 
+      try XCTUnwrap(
+        textClassifier.classify(text: text));
+    assertTextClassifierResultHasOneHead(textClassifierResult);
+    assertEqualCategoryArrays(
+      categoryArray:
+        textClassifierResult.classificationResult.classifications[0].categories,
+      expectedCategoryArray: expectedCategories);
+  }
 
-  // func verifyDeeplabV3PartialSegmentationResult(_ coloredLabels: [ColoredLabel]) {
+  func testCreateTextClassifierWithInvalidMaxResultsFails() throws {
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.maxResults = 0
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[0],
-  //     expectedR: 0,
-  //     expectedG: 0,
-  //     expectedB: 0,
-  //     expectedLabel: "background")
+    assertCreateTextClassifierThrowsError(
+      textClassifierOptions: textClassifierOptions,
+      expectedErrorDescription: """
+          INVALID_ARGUMENT: Invalid `max_results` option: value must be != 0.
+          """)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[1],
-  //     expectedR: 128,
-  //     expectedG: 0,
-  //     expectedB: 0,
-  //     expectedLabel: "aeroplane")
+  func testCreateTextClassifierWithCategoryAllowlistandDenylistFails() throws {
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[2],
-  //     expectedR: 0,
-  //     expectedG: 128,
-  //     expectedB: 0,
-  //     expectedLabel: "bicycle")
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.categoryAllowlist = ["positive"]
+    textClassifierOptions.categoryDenylist = ["positive"]
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[3],
-  //     expectedR: 128,
-  //     expectedG: 128,
-  //     expectedB: 0,
-  //     expectedLabel: "bird")
+    assertCreateTextClassifierThrowsError(
+      textClassifierOptions: textClassifierOptions,
+      expectedErrorDescription: """
+          INVALID_ARGUMENT: `category_allowlist` and `category_denylist` are \
+          mutually exclusive options.
+          """)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[4],
-  //     expectedR: 0,
-  //     expectedG: 0,
-  //     expectedB: 128,
-  //     expectedLabel: "boat")
+  func testClassifyWithBertSucceeds() throws {
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[5],
-  //     expectedR: 128,
-  //     expectedG: 0,
-  //     expectedB: 128,
-  //     expectedLabel: "bottle")
+    let modelPath = try XCTUnwrap(TextClassifierTests.kBertModelPath)
+    let textClassifier = try XCTUnwrap(TextClassifier(modelPath: modelPath))
+    
+    try assertResultsForClassify(
+        text: TextClassifierTests.kNegativeText,
+        using: textClassifier,
+        equals: TextClassifierTests.kBertNegativeTextResults)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[6],
-  //     expectedR: 0,
-  //     expectedG: 128,
-  //     expectedB: 128,
-  //     expectedLabel: "bus")
+  func testClassifyWithMaxResultsSucceeds() throws {
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.maxResults = 1
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[7],
-  //     expectedR: 128,
-  //     expectedG: 128,
-  //     expectedB: 128,
-  //     expectedLabel: "car")
+    let textClassifier = 
+      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[8],
-  //     expectedR: 64,
-  //     expectedG: 0,
-  //     expectedB: 0,
-  //     expectedLabel: "cat")
+    try assertResultsForClassify(
+        text: TextClassifierTests.kNegativeText,
+        using: textClassifier,
+        equals: TextClassifierTests.kBertNegativeTextResultsForEdgeTestCases)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[9],
-  //     expectedR: 192,
-  //     expectedG: 0,
-  //     expectedB: 0,
-  //     expectedLabel: "chair")
+  func testClassifyWithCategoryAllowlistSucceeds() throws {
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.categoryAllowlist = ["negative"];
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[10],
-  //     expectedR: 64,
-  //     expectedG: 128,
-  //     expectedB: 0,
-  //     expectedLabel: "cow")
+    let textClassifier = 
+      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    
+    try assertResultsForClassify(
+        text: TextClassifierTests.kNegativeText,
+        using: textClassifier,
+        equals: TextClassifierTests.kBertNegativeTextResultsForEdgeTestCases)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[11],
-  //     expectedR: 192,
-  //     expectedG: 128,
-  //     expectedB: 0,
-  //     expectedLabel: "dining table")
+  func testClassifyWithCategoryDenylistSucceeds() throws {
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.categoryDenylist = ["positive"];
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[12],
-  //     expectedR: 64,
-  //     expectedG: 0,
-  //     expectedB: 128,
-  //     expectedLabel: "dog")
+    let textClassifier = 
+      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    
+    try assertResultsForClassify(
+        text: TextClassifierTests.kNegativeText,
+        using: textClassifier,
+        equals: TextClassifierTests.kBertNegativeTextResultsForEdgeTestCases)
+  }
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[13],
-  //     expectedR: 192,
-  //     expectedG: 0,
-  //     expectedB: 128,
-  //     expectedLabel: "horse")
+  func testClassifyWithScoreThresholdSucceeds() throws {
+    let textClassifierOptions = 
+      try XCTUnwrap(
+        textClassifierOptionsWithModelPath(TextClassifierTests.kBertModelPath))
+    textClassifierOptions.scoreThreshold = 0.5;
 
-  //   self.verifyColoredLabel(
-  //     coloredLabels[14],
-  //     expectedR: 64,
-  //     expectedG: 128,
-  //     expectedB: 128,
-  //     expectedLabel: "motorbike")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[15],
-  //     expectedR: 192,
-  //     expectedG: 128,
-  //     expectedB: 128,
-  //     expectedLabel: "person")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[16],
-  //     expectedR: 0,
-  //     expectedG: 64,
-  //     expectedB: 0,
-  //     expectedLabel: "potted plant")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[17],
-  //     expectedR: 128,
-  //     expectedG: 64,
-  //     expectedB: 0,
-  //     expectedLabel: "sheep")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[18],
-  //     expectedR: 0,
-  //     expectedG: 192,
-  //     expectedB: 0,
-  //     expectedLabel: "sofa")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[19],
-  //     expectedR: 128,
-  //     expectedG: 192,
-  //     expectedB: 0,
-  //     expectedLabel: "train")
-
-  //   self.verifyColoredLabel(
-  //     coloredLabels[20],
-  //     expectedR: 0,
-  //     expectedG: 64,
-  //     expectedB: 128,
-  //     expectedLabel: "tv")
-  // }
-
-  // func verifyColoredLabel(
-  //   _ coloredLabel: ColoredLabel,
-  //   expectedR: UInt,
-  //   expectedG: UInt,
-  //   expectedB: UInt,
-  //   expectedLabel: String
-  // ) {
-  //   XCTAssertEqual(
-  //     coloredLabel.r,
-  //     expectedR)
-  //   XCTAssertEqual(
-  //     coloredLabel.g,
-  //     expectedG)
-  //   XCTAssertEqual(
-  //     coloredLabel.b,
-  //     expectedB)
-  //   XCTAssertEqual(
-  //     coloredLabel.label,
-  //     expectedLabel)
-  // }
-
-  // func testSuccessfullInferenceOnMLImageWithUIImage() throws {
-
-  //   let modelPath = try XCTUnwrap(ImageSegmenterTests.modelPath)
-
-  //   let imageSegmenterOptions = ImageSegmenterOptions(modelPath: modelPath)
-
-  //   let imageSegmenter =
-  //     try ImageSegmenter.segmenter(options: imageSegmenterOptions)
-
-  //   let gmlImage = try XCTUnwrap(
-  //     MLImage.imageFromBundle(
-  //       class: type(of: self),
-  //       filename: "segmentation_input_rotation0",
-  //       type: "jpg"))
-  //   let segmentationResult: SegmentationResult =
-  //     try XCTUnwrap(imageSegmenter.segment(mlImage: gmlImage))
-
-  //   XCTAssertEqual(segmentationResult.segmentations.count, 1)
-
-  //   let coloredLabels = try XCTUnwrap(segmentationResult.segmentations[0].coloredLabels)
-  //   verifyDeeplabV3PartialSegmentationResult(coloredLabels)
-
-  //   let categoryMask = try XCTUnwrap(segmentationResult.segmentations[0].categoryMask)
-  //   XCTAssertEqual(deepLabV3SegmentationWidth, categoryMask.width)
-  //   XCTAssertEqual(deepLabV3SegmentationHeight, categoryMask.height)
-
-  //   let goldenMaskImage = try XCTUnwrap(
-  //     MLImage.imageFromBundle(
-  //       class: type(of: self),
-  //       filename: "segmentation_golden_rotation0",
-  //       type: "png"))
-
-  //   let pixelBuffer = goldenMaskImage.grayScalePixelBuffer().takeRetainedValue()
-
-  //   CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags.readOnly)
-
-  //   let pixelBufferBaseAddress = (try XCTUnwrap(CVPixelBufferGetBaseAddress(pixelBuffer)))
-  //     .assumingMemoryBound(to: UInt8.self)
-
-  //   let numPixels = deepLabV3SegmentationWidth * deepLabV3SegmentationHeight
-
-  //   let mask = try XCTUnwrap(categoryMask.mask)
-
-  //   var inconsistentPixels: Float = 0.0
-
-  //   for i in 0..<numPixels {
-  //     if mask[i] * kGoldenMaskMagnificationFactor != pixelBufferBaseAddress[i] {
-  //       inconsistentPixels += 1
-  //     }
-  //   }
-
-  //   CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags.readOnly)
-
-  //   XCTAssertLessThan(inconsistentPixels / Float(numPixels), kGoldenMaskTolerance)
-  // }
+    let textClassifier = 
+      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    
+    try assertResultsForClassify(
+        text: TextClassifierTests.kNegativeText,
+        using: textClassifier,
+        equals: TextClassifierTests.kBertNegativeTextResultsForEdgeTestCases)
+  }
 
 }
