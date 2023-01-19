@@ -37,6 +37,31 @@ objc_library(
     ],
 )
 
+cc_library(
+    name = "objc_text_classifier_graph",
+    srcs = ["sources/objc_text_classifier_graph.cc"],
+    hdrs = ["sources/objc_text_classifier_graph.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:inference_calculator_cpu",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors:text_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:text_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_resources_calculator",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
+        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 objc_library(
     name = "MPPTextClassifier",
     srcs = ["sources/MPPTextClassifier.mm"],
@@ -49,8 +74,9 @@ objc_library(
     deps = [
         ":MPPTextClassifierOptions",
         ":MPPTextClassifierResult",
+        ":objc_text_classifier_graph",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        # "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",

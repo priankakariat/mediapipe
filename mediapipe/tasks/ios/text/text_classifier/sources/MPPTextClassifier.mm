@@ -24,17 +24,20 @@
 
 #include "absl/status/statusor.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/ios/text/text_classifier/sources/objc_text_classifier_graph.h"
 
 namespace {
 using ::mediapipe::Packet;
 using ::mediapipe::tasks::core::PacketMap;
+using ::mediapipe::tasks::text::text_classifier::ObjcTextClassifierGraph;
+
 }  // namespace
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
 static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
 static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
+static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.ObjcTextClassifierGraph";
 
 @interface MPPTextClassifier () {
   /** iOS Text Task Runner */
@@ -47,6 +50,9 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
+    // Register the graph via function call.
+    ObjcTextClassifierGraph::register_graph();
+
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
@@ -59,7 +65,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
     if (!taskInfo) {
       return nil;
     }
-
+    
     _textTaskRunner =
         [[MPPTextTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
                                                            error:error];
