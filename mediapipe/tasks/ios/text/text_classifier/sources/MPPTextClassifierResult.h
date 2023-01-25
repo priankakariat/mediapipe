@@ -39,6 +39,10 @@ NS_SWIFT_NAME(TextClassifierResult)
 - (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
                                  timestampMs:(NSInteger)timestampMs;
 
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;                                 
+
 @end
 
 NS_ASSUME_NONNULL_END
