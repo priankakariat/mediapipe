@@ -27,6 +27,10 @@
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
+#if IOS_STATIC_FRAMEWORK
+#include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.h"
+#endif
+
 namespace mediapipe {
 namespace api2 {
 
@@ -218,7 +222,13 @@ ClassificationAggregationCalculator::ConvertToTimestampedClassificationResults(
   return results;
 }
 
-MEDIAPIPE_REGISTER_NODE(ClassificationAggregationCalculator);
+#if !IOS_STATIC_FRAMEWORK
+  MEDIAPIPE_REGISTER_NODE(ClassificationAggregationCalculator);
+#else
+  void register_classification_aggregation_calculator() {
+    MEDIAPIPE_REGISTER_NODE(ClassificationAggregationCalculator);
+  }
+#endif
 
 }  // namespace api2
 }  // namespace mediapipe

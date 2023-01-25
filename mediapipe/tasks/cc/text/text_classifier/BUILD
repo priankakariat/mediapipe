@@ -43,7 +43,7 @@ cc_library(
     ],
 )
 
-cc_library(
+objc_library(
     name = "text_classifier_graph",
     srcs = ["text_classifier_graph.cc"],
     deps = [

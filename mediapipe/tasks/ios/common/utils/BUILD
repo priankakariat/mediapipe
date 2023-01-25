@@ -20,6 +20,11 @@ objc_library(
     name = "MPPCommonUtils",
     srcs = ["sources/MPPCommonUtils.mm"],
     hdrs = ["sources/MPPCommonUtils.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     deps = [
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/ios/common:MPPCommon",
@@ -36,5 +41,6 @@ objc_library(
     copts = [
         "-ObjC++",
         "-std=c++17",
+        "-x objective-c++",
     ],
 )

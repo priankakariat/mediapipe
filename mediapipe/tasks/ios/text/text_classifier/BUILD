@@ -20,9 +20,13 @@ objc_library(
     name = "MPPTextClassifierOptions",
     srcs = ["sources/MPPTextClassifierOptions.m"],
     hdrs = ["sources/MPPTextClassifierOptions.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -30,10 +34,14 @@ objc_library(
     name = "MPPTextClassifierResult",
     srcs = ["sources/MPPTextClassifierResult.m"],
     hdrs = ["sources/MPPTextClassifierResult.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -71,11 +79,18 @@ objc_library(
         "-std=c++17",
         "-x objective-c++",
     ],
+    # features = ["fully_static_link"],
+    linkopts = ["-all_load"],
+    defines = select({
+        "//conditions:default": [],
+        "//mediapipe/tasks/ios:ios_static_framework": ["IOS_STATIC_FRAMEWORK=1"],
+    }),
     module_name = "MPPTextClassifier",
     deps = [
         ":MPPTextClassifierOptions",
         ":MPPTextClassifierResult",
         ":objc_text_classifier_graph",
+        # "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_ios",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         # "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
@@ -90,3 +105,12 @@ objc_library(
         "@com_google_absl//absl/status:statusor",
     ],
 )
+
+# apple_binary(
+#     name = "MPPTextClassifierBinary",
+#     deps = [
+#         ":MPPTextClassifier",
+#         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+#     ],
+#     platform_type = "ios",
+# )

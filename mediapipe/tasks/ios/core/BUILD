@@ -52,6 +52,7 @@ objc_library(
     copts = [
         "-ObjC++",
         "-std=c++17",
+        "-x objective-c++",
     ],
     deps = [
         ":MPPTaskOptions",
@@ -72,6 +73,7 @@ objc_library(
     copts = [
         "-ObjC++",
         "-std=c++17",
+        "-x objective-c++",
     ],
     deps = [
         "//mediapipe/framework:packet",
@@ -86,6 +88,7 @@ objc_library(
     copts = [
         "-ObjC++",
         "-std=c++17",
+        "-x objective-c++",
     ],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",

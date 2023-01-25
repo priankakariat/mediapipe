@@ -22,9 +22,22 @@ load(
     "ios_static_framework",
 )
 
+load(
+    "@build_bazel_rules_apple//apple:apple.bzl",
+    "apple_static_xcframework",
+)
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
+
+config_setting(
+    name = "ios_static_framework",
+    define_values = {
+        "IOS_STATIC_FRAMEWORK": "1",
+    },
+    visibility = ["//visibility:public"],
+)
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
@@ -41,6 +54,28 @@ strip_api_include_path_prefix(
     ],
 )
 
+# apple_static_xcframework(
+#     name = "MediaPipeTaskText_framework",
+#     public_hdrs = [
+#         ":MPPBaseOptions.h",
+#         ":MPPCategory.h",
+#         ":MPPClassificationResult.h",
+#         ":MPPCommon.h",
+#         ":MPPTaskOptions.h",
+#         ":MPPTaskResult.h",
+#         ":MPPTextClassifier.h",
+#         ":MPPTextClassifierOptions.h",
+#         ":MPPTextClassifierResult.h",
+#     ],
+#     bundle_name = "MediaPipeTaskText",
+#     minimum_os_versions = {
+#         "ios":MPP_TASK_MINIMUM_OS_VERSION,
+#     },
+#     deps = [
+#         "//mediapipe/tasks/ios/text:MediaPipeTaskText",
+#     ],
+# )
+
 ios_static_framework(
     name = "MediaPipeTaskText_framework",
     hdrs = [
@@ -56,8 +91,10 @@ ios_static_framework(
     ],
     bundle_name = "MediaPipeTaskText",
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    # minimum_os_versions = {
+    #     "ios":MPP_TASK_MINIMUM_OS_VERSION,
+    # },
     deps = [
-        # "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
     ],
 )

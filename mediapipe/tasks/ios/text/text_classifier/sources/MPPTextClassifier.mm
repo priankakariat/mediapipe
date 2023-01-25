@@ -25,6 +25,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/ios/text/text_classifier/sources/objc_text_classifier_graph.h"
+// #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.h"
 
 namespace {
 using ::mediapipe::Packet;
@@ -50,8 +51,10 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.O
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
+    NSLog(@"Verifying 1.0.7.... classification aggregation");
     // Register the graph via function call.
     ObjcTextClassifierGraph::register_graph();
+    // ::mediapipe::api2::register_classification_aggregation_calculator();
 
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName

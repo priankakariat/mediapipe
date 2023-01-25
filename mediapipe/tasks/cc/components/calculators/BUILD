@@ -43,6 +43,22 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "classification_aggregation_calculator_ios",
+    srcs = ["classification_aggregation_calculator.cc"],
+    hdrs = ["classification_aggregation_calculator.h"],
+    deps = [
+        ":classification_aggregation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 cc_test(
     name = "classification_aggregation_calculator_test",
     srcs = ["classification_aggregation_calculator_test.cc"],

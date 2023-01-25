@@ -113,6 +113,7 @@ class TextClassifierGraph : public core::ModelTaskGraph {
       const proto::TextClassifierGraphOptions& task_options,
       const ModelResources& model_resources, Source<std::string> text_in,
       Graph& graph) {
+              std::cout << "Building C graph" << std::endl;
     // Adds preprocessing calculators and connects them to the text input
     // stream.
     auto& preprocessing = graph.AddNode(
