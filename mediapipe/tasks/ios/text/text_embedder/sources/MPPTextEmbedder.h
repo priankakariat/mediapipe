@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
+#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderOptions.h"
+#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -51,8 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
  *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If none of
  *    these are available, only the `index` field of the results will be filled.
  */
-NS_SWIFT_NAME(TextClassifier)
-@interface MPPTextClassifier : NSObject
+NS_SWIFT_NAME(TextEmbedder)
+@interface MPPTextEmbedder : NSObject
 
 /**
  * Creates a new instance of `MPPTextClassifier` from an absolute path to a TensorFlow Lite
@@ -78,7 +78,7 @@ NS_SWIFT_NAME(TextClassifier)
  * @return A new instance of `MPPTextClassifier` with the given options. `nil` if there is an
  * error in initializing the text classifier.
  */
-- (nullable instancetype)initWithOptions:(MPPTextClassifierOptions *)options
+- (nullable instancetype)initWithOptions:(MPPTextEmbedderOptions *)options
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
@@ -90,7 +90,7 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return  A `MPPTextClassifierResult` object that contains a list of text classifications.
  */
-- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text
+- (nullable MPPTextEmbedderResult *)embedText:(NSString *)text
                                              error:(NSError **)error NS_SWIFT_NAME(classify(text:));
 
 - (instancetype)init NS_UNAVAILABLE;

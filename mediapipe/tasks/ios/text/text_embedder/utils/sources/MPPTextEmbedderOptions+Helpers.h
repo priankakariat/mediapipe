@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderOptions.h"
 
-@implementation MPPTextEmbedderResult
+NS_ASSUME_NONNULL_BEGIN
 
-- (instancetype)initWithEmbeddingResult:(MPPEmbeddingResult *)embeddingResult
-                            timestampMs:(NSInteger)timestampMs {
-  self = [super initWithTimestampMs:timestampMs];
-  if (self) {
-    _embeddingResult = embeddingResult;
-  }
-  return self;
-}
+@interface MPPTextEmbedderOptions (Helpers) <MPPTaskOptionsProtocol>
+
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END

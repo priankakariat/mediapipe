@@ -12,46 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifier.h"
+#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedder.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
 #import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
-#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
-#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
+#import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderOptions+Helpers.h"
+#import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderResult+Helpers.h"
 
 #include "absl/status/statusor.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
 namespace {
 using ::mediapipe::Packet;
 using ::mediapipe::tasks::core::PacketMap;
 }  // namespace
 
-static NSString *const kClassificationsStreamName = @"classifications_out";
-static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
+static NSString *const kEmbeddingsOutStreamName = @"embeddings_out";
+static NSString *const kEmbeddingsTag = @"EMBEDDINGS";
 static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
+static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.TextEmbedderGraph";
 
-@interface MPPTextClassifier () {
+@interface MPPTextEmbedder () {
   /** iOS Text Task Runner */
   MPPTextTaskRunner *_textTaskRunner;
 }
 @end
 
-@implementation MPPTextClassifier
+@implementation MPPTextEmbedder
 
-- (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
+- (instancetype)initWithOptions:(MPPTextEmbedderOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                            kClassificationsStreamName] ]
+                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kEmbeddingsTag,
+                                                            kEmbeddingsOutStreamName] ]
                   taskOptions:options
            enableFlowLimiting:NO
                         error:error];
@@ -72,14 +71,14 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
-  MPPTextClassifierOptions *options = [[MPPTextClassifierOptions alloc] init];
+  MPPTextEmbedderOptions *options = [[MPPTextEmbedderOptions alloc] init];
 
   options.baseOptions.modelAssetPath = modelPath;
 
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error {
+- (nullable MPPTextEmbedderResult *)embedText:(NSString *)text error:(NSError **)error {
   Packet packet = [MPPTextPacketCreator createWithText:text];
 
   std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};
@@ -89,9 +88,9 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
     return nil;
   }
 
-  return [MPPTextClassifierResult
-      textClassifierResultWithClassificationsPacket:statusOrOutputPacketMap.value()
-                                                        [kClassificationsStreamName.cppString]];
+  return [MPPTextEmbedderResult
+      textEmbedderResultWithOutputPacket:statusOrOutputPacketMap.value()
+                                                        [kEmbeddingsOutStreamName.cppString]];
 }
 
 @end

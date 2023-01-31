@@ -14,15 +14,15 @@
 
 #import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
 
-@implementation MPPTextEmbedderResult
+#include "mediapipe/framework/packet.h"
 
-- (instancetype)initWithEmbeddingResult:(MPPEmbeddingResult *)embeddingResult
-                            timestampMs:(NSInteger)timestampMs {
-  self = [super initWithTimestampMs:timestampMs];
-  if (self) {
-    _embeddingResult = embeddingResult;
-  }
-  return self;
-}
+NS_ASSUME_NONNULL_BEGIN
+
+@interface MPPTextEmbedderResult (Helpers)
+
++ (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:
+    (const mediapipe::Packet &)packet;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -33,29 +33,28 @@ objc_library(
     ],
 )
 
-# objc_library(
-#     name = "MPPTextClassifier",
-#     srcs = ["sources/MPPTextClassifier.mm"],
-#     hdrs = ["sources/MPPTextClassifier.h"],
-#     copts = [
-#         "-ObjC++",
-#         "-std=c++17",
-#         "-x objective-c++",
-#     ],
-#     module_name = "MPPTextClassifier",
-#     deps = [
-#         ":MPPTextClassifierOptions",
-#         ":MPPTextClassifierResult",
-#         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-#         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-#         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-#         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-#         "//mediapipe/tasks/ios/core:MPPTaskInfo",
-#         "//mediapipe/tasks/ios/core:MPPTaskOptions",
-#         "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
-#         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
-#         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
-#         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
-#         "@com_google_absl//absl/status:statusor",
-#     ],
-# )
+objc_library(
+    name = "MPPTextEmbedder",
+    srcs = ["sources/MPPTextEmbedder.mm"],
+    hdrs = ["sources/MPPTextEmbedder.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPTextEmbedder",
+    deps = [
+        ":MPPTextEmbedderOptions",
+        ":MPPTextEmbedderResult",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
+        "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderOptionsHelpers",
+        "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderResultHelpers",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
