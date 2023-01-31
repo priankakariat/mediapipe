@@ -27,30 +27,24 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   NSString *categoryName;
   NSString *displayName;
 
-  float *floatEmbedding = nullptr;
-  char *quantizedEmbedding = nullptr;
+  NSMutableArray<NSNumber *> *floatEmbedding;
+  NSData *quantizedEmbedding;
 
   if (embeddingProto.has_float_embedding()) {
-    floatEmbedding = new float(embeddingProto.float_embedding().values_size());
-    std::memcpy(
-            floatEmbedding,
-            reinterpret_cast<const float*>(embeddingProto.float_embedding()
-                                               .values()
-                                               .data()),
-            embeddingProto.float_embedding().values_size() * sizeof(float));
+    floatEmbedding = [NSMutableArray arrayWithCapacity:embeddingProto.float_embedding().values_size()];
+    const auto floatEmbeddingValues = embeddingProto.float_embedding().values();
+
+    for (const auto value : embeddingProto.float_embedding().values()) {
+      [floatEmbedding addObject:[NSNumber numberWithFloat:value]];
+    }
   }
 
   if (embeddingProto.has_quantized_embedding()) {
     const std::string& cppQuantizedEmbedding =
         embeddingProto.quantized_embedding().values().data();
-    
-    const int cppQuantizedEmbeddingLength = cppQuantizedEmbedding.length() + 1;
-    
-    quantizedEmbedding = new char(cppQuantizedEmbeddingLength);
-    std::memcpy(
-            quantizedEmbedding,
-            reinterpret_cast<const char*>(cppQuantizedEmbedding.c_str()),
-            cppQuantizedEmbeddingLength * sizeof(char));
+
+    const char *cppQuantizedEmbeddingCString = cppQuantizedEmbedding.c_str();
+    quantizedEmbedding = [NSData dataWithBytes:cppQuantizedEmbeddingCString length:sizeof(cppQuantizedEmbeddingCString)];
   }
 
   NSString *headName;
