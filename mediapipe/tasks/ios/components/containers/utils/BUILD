@@ -47,7 +47,7 @@ objc_library(
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
-    ]
+    ],
 )
 
 objc_library(
@@ -61,4 +61,3 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
     ],
 )
-

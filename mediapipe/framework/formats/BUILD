@@ -486,3 +486,12 @@ cc_test(
         "//mediapipe/gpu:disable_gpu": [],
     }),
 )
+
+cc_library(
+    name = "frame_buffer",
+    hdrs = ["frame_buffer.h"],
+    deps = [
+        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/log:check",
+    ],
+)

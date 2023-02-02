@@ -20,7 +20,7 @@
                        timestampMs:(NSInteger)timestampMs {
   self = [super init];
   if (self) {
-    _embeddings = classifications;
+    _embeddings = embeddings;
     _timestampMs = timestampMs;
   }
 
