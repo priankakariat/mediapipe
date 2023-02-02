@@ -36,8 +36,8 @@ objc_library(
     testonly = 1,
     srcs = ["MPPTextEmbedderTests.m"],
     data = [
-        "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
-        "//mediapipe/tasks/testdata/text:text_classifier_models",
+        "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
+        "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",

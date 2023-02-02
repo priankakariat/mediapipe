@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/components/containers/sources/MPPEmbedding.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -26,10 +28,9 @@ NS_SWIFT_NAME(CosineSimilarity)
 
 - (instancetype)init NS_UNAVAILABLE;
 
-
 + (instancetype)new NS_UNAVAILABLE;
 
-+ (instancetype)computeBetweenEmbedding1:(MPPEmbedding *)embedding1 andEmbedding2:(MPPEmbedding *)embedding2
++ (nullable NSNumber *)computeBetweenEmbedding1:(MPPEmbedding *)embedding1 andEmbedding2:(MPPEmbedding *)embedding2 error:(NSError **)error;
 
 @end
 

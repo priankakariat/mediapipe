@@ -23,6 +23,8 @@ static NSString *const kRegexTextEmbedderModelName =
 // static NSString *const kNegativeText = @"unflinchingly bleak and desperate";
 // static NSString *const kPositiveText = @"it's a charming and often affecting journey";
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
+static const float kFloatDiffTolerance = 1e-4;
+static const float kDoubleDiffTolerance = 1e-4;
 
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
@@ -44,13 +46,28 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 //                           @"index i = %d", i);                                            \
 //   }
 
-#define AssertTextEmbedderResultHasOneHead(textEmbedderResult)                    \
+#define AssertTextEmbedderResultHasOneEmbedding(textEmbedderResult)                    \
   XCTAssertNotNil(textEmbedderResult);                                              \
   XCTAssertNotNil(textEmbedderResult.embeddingResult);                         \
   XCTAssertEqual(textEmbedderResult.embeddingResult.embeddings.count, 1); \
-  XCTAssertEqual(textEmbedderResult.embeddingResult.embeddings[0].headIndex, 0);
 
-@interface MPPTextEmbedderests : XCTestCase
+#define AssertEmbeddingIsFloat(embedding)                    \
+  XCTAssertNotNil(embedding.floatEmbedding);                                              \
+  XCTAssertNil(embedding.quantizedEmbedding);        
+
+#define AssertEmbeddingIsQuantized(embedding)                    \
+  XCTAssertNil(embedding.floatEmbedding);                                              \
+  XCTAssertNotNil(embedding.quantizedEmbedding);                    
+
+#define AssertFloatEmbeddingHasExpectedValues(floatEmbedding, expectedLength, expectedFirstValue)                    \
+  XCTAssertEqual(floatEmbedding.count, expectedLength); \
+  XCTAssertEqualWithAccuracy(floatEmbedding[0].floatValue, expectedFirstValue, 1e-4f); 
+
+#define AssertQuantizedEmbeddingHasExpectedValues(quantizedEmbedding, expectedLength, expectedFirstValue)                    \
+  XCTAssertEqual(quantizedEmbedding.count, expectedLength); \
+  XCTAssertEqual(quantizedEmbedding[0].charValue, expectedFirstValue); 
+
+@interface MPPTextEmbedderTests : XCTestCase
 @end
 
 @implementation MPPTextEmbedderTests
@@ -106,8 +123,11 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 - (MPPTextEmbedder *)textEmbedderFromModelFileWithName:(NSString *)modelName {
   NSString *modelPath = [self filePathWithName:modelName extension:@"tflite"];
+
+  NSError *error = nil;
   MPPTextEmbedder *textEmbedder = [[MPPTextEmbedder alloc] initWithModelPath:modelPath
-                                                                             error:nil];
+                                                                             error:&error];
+                                                                    
   XCTAssertNotNil(textEmbedder);
 
   return textEmbedder;
@@ -122,13 +142,28 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
-- (void)assertResultsOfEmbedText:(NSString *)text
-                usingTextClassifier:(MPPTextEmbedder *)textEmbedder
-                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
-  MPPTextClassifierResult *negativeResult = [textClassifier classifyText:text error:nil];
-  AssertTextEmbedderResultHasOneHead(negativeResult);
-  AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            expectedCategories);
+- (NSArray<NSNumber *>*)assertFloatEmbeddingResultsOfEmbedText:(NSString *)text
+                usingTextEmbedder:(MPPTextEmbedder *)textEmbedder
+                   hasCount:(NSUInteger)embeddingCount 
+                   firstValue:(float)firstValue {
+  MPPTextEmbedderResult *embedderResult = [textEmbedder embedText:text error:nil];
+  AssertTextEmbedderResultHasOneEmbedding(embedderResult);
+  AssertEmbeddingIsFloat(embedderResult.embeddingResult.embeddings[0]);
+  AssertFloatEmbeddingHasExpectedValues(embedderResult.embeddingResult.embeddings[0].floatEmbedding,
+                            embeddingCount, firstValue);
+  return embedderResult.embeddingResult.embeddings[0];
+}
+
+- (NSArray<NSNumber *>*)assertQuantizedEmbeddingResultsOfEmbedText:(NSString *)text
+                usingTextEmbedder:(MPPTextEmbedder *)textEmbedder
+                   hasCount:(NSUInteger)embeddingCount 
+                   firstValue:(char)firstValue {
+  MPPTextEmbedderResult *embedderResult = [textEmbedder embedText:text error:nil];
+  AssertTextEmbedderResultHasOneEmbedding(embedderResult);
+  AssertEmbeddingIsQuantized(embedderResult.embeddingResult.embeddings[0]);
+  AssertQuantizedEmbeddingHasExpectedValues(embedderResult.embeddingResult.embeddings[0].quantizedEmbedding,
+                            embeddingCount, firstValue);
+  return embedderResult.embeddingResult.embeddings[0];
 }
 
 - (void)testCreateTextEmbedderFailsWithMissingModelPath {
@@ -150,47 +185,60 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
-- (void)testClassifyWithBertSucceeds {
-  MPPTextClassifier *textClassifier =
-      [self textClassifierFromModelFileWithName:kBertTextClassifierModelName];
+- (void)testEmbedWithBertSucceeds {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName];
 
-  [self assertResultsOfClassifyText:kNegativeText
-                usingTextClassifier:textClassifier
-                   equalsCategories:[MPPTextClassifierTests
-                                        expectedBertResultCategoriesForNegativeText]];
+  MPPEmbedding *embedding1 = [self assertFloatEmbeddingResultsOfEmbedText:@"it's a charming and often affecting journey"
+                usingTextEmbedder:textEmbedder
+                   hasCount:512
+                   firstValue:20.057026f];
 
-  [self assertResultsOfClassifyText:kPositiveText
-                usingTextClassifier:textClassifier
-                   equalsCategories:[MPPTextClassifierTests
-                                        expectedBertResultCategoriesForPositiveText]];
+  MPPEmbedding *embedding2 = [self assertFloatEmbeddingResultsOfEmbedText:@"what a great and fantastic trip"
+                usingTextEmbedder:textEmbedder
+                   hasCount:512
+                   firstValue:21.254150f];
+  NSNumber *cosineSimilarity = [MPPTextEmbedder cosineSimilarityBetweenEmbedding1:embedding1 andEmbedding2:embedding2 error:nil];  
+  XCTAssertEqualWithAccuracy(cosineSimilarity.doubleValue, 0.96386, 1e-4f); 
 }
 
-- (void)testClassifyWithRegexSucceeds {
-  MPPTextClassifier *textClassifier =
-      [self textClassifierFromModelFileWithName:kRegexTextClassifierModelName];
+- (void)testEmbedWithRegexSucceeds {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName];
 
-  [self assertResultsOfClassifyText:kNegativeText
-                usingTextClassifier:textClassifier
-                   equalsCategories:[MPPTextClassifierTests
-                                        expectedRegexResultCategoriesForNegativeText]];
-  [self assertResultsOfClassifyText:kPositiveText
-                usingTextClassifier:textClassifier
-                   equalsCategories:[MPPTextClassifierTests
-                                        expectedRegexResultCategoriesForPositiveText]];
+  MPPEmbedding *embedding1 = [self assertFloatEmbeddingResultsOfEmbedText:@"it's a charming and often affecting journey"
+                usingTextEmbedder:textEmbedder
+                   hasCount:16
+                   firstValue:0.030935612f];
+
+  MPPEmbedding *embedding2 = [self assertFloatEmbeddingResultsOfEmbedText:@"what a great and fantastic trip"
+                usingTextEmbedder:textEmbedder
+                   hasCount:16
+                   firstValue:0.0312863f];
+
+  NSNumber *cosineSimilarity = [MPPTextEmbedder cosineSimilarityBetweenEmbedding1:embedding1 andEmbedding2:embedding2 error:nil];  
+  XCTAssertEqualWithAccuracy(cosineSimilarity.doubleValue, 0.999937f, 1e-4f); 
 }
 
-- (void)testClassifyWithMaxResultsSucceeds {
-  MPPTextClassifierOptions *options =
-      [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
-  options.maxResults = 1;
+- (void)testedEMbWithQuantizeSucceeds {
+  MPPTextEmbedderOptions *options =
+      [self textEmbedderOptionsWithModelName:kBertTextEmbedderModelName];
+  options.quantize = YES;
 
-  MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
-  XCTAssertNotNil(textClassifier);
+  MPPTextEmbedder *textEmbedder = [[MPPTextEmbedder alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(textEmbedder);
 
-  [self assertResultsOfClassifyText:kNegativeText
-                usingTextClassifier:textClassifier
-                   equalsCategories:[MPPTextClassifierTests
-                                        expectedBertResultCategoriesForEdgeCaseTests]];
+  MPPEmbedding *embedding1 = [self assertQuantizedEmbeddingResultsOfEmbedText:@"it's a charming and often affecting journey"
+                usingTextEmbedder:textEmbedder
+                   hasCount:512
+                   firstValue:0];
+
+  MPPEmbedding *embedding2 = [self assertQuantizedEmbeddingResultsOfEmbedText:@"what a great and fantastic trip"
+                usingTextEmbedder:textEmbedder
+                   hasCount:512
+                   firstValue:0];
+  NSNumber *cosineSimilarity = [MPPTextEmbedder cosineSimilarityBetweenEmbedding1:embedding1 andEmbedding2:embedding2 error:nil];  
+  XCTAssertEqualWithAccuracy(cosineSimilarity.doubleValue, 0.0, 1e-4f); 
 }
 
 @end
