@@ -75,6 +75,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:
     (const mediapipe::tasks::core::PacketMap &)packetMap;
 
+- (absl::StatusOr<mediapipe::tasks::core::PacketMap>)sendPacketMap:
+    (const mediapipe::tasks::core::PacketMap &)packetMap;
+
 /**
  * Shuts down the C++ task runner. After the runner is closed, any calls that send input data to the
  * runner are illegal and will receive errors.

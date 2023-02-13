@@ -14,17 +14,15 @@
 
 #import <Foundation/Foundation.h>
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-static NSString *const kTextInStreamName = @"text_in";
-static NSString *const kTextTag = @"TEXT";
 
 /**
  * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
  * execute and terminate any MediaPipe text task.
  */
-@interface MPPTextTaskRunner : MPPTaskRunner
+@interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
  * Initializes a new `MPPTextTaskRunner` with the MediaPipe calculator config proto.
@@ -34,10 +32,13 @@ static NSString *const kTextTag = @"TEXT";
  * @return An instance of `MPPTextTaskRunner` initialized to the given MediaPipe calculator config
  * proto.
  */
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
+- (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
+                              runningMode:(MPPRunningMode)runningMode
+                              packetsCallback:
+                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                         error:(NSError **)error;
 
- - (nullable PacketMap)processText:(NSString *)text error:(NSError **)error;                                       
+- (nullable PacketMap)processImagePacketMap:(PacketMap)packetMap error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

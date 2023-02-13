@@ -32,8 +32,8 @@ using ::mediapipe::tasks::core::PacketMap;
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
 static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
-static NSString *const kTextInStreamName = @"text_in";
-static NSString *const kTextTag = @"TEXT";
+// static NSString *const kTextInStreamName = @"text_in";
+// static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
 
 @interface MPPTextClassifier () {

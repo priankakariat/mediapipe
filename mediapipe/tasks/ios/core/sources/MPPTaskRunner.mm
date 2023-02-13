@@ -54,6 +54,10 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   return _cppTaskRunner->Process(packetMap);
 }
 
+- (absl::StatusOr<PacketMap>)sendPacketMap:(const PacketMap &)packetMap {
+      _cppTaskRunner->Send(packetMap);
+}
+
 - (absl::Status)close {
   return _cppTaskRunner->Close();
 }

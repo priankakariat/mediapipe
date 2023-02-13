@@ -14,8 +14,15 @@
 
 #import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 
+#import "mediapipe/tasks/ios/common/utils/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
+
+#include "absl/status/statusor.h"
+
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
+using ::mediapipe::Packet;
+using ::mediapipe::tasks::core::PacketMap
 }  // namespace
 
 @implementation MPPTextTaskRunner
@@ -33,6 +40,17 @@ using ::mediapipe::CalculatorGraphConfig;
 - (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
                                         error:(NSError **)error {
   return [self initWithCalculatorGraphConfig:graphConfig packetsCallback:nullptr error:error];
+}
+
+- (nullable PacketMap)processPacketMap:(PacketMap)packetMap error:(NSError **)error {
+
+  absl::StatusOr<PacketMap> statusOrOutputPacketMap = [self process:packetMap];
+
+  if (![MPPCommonUtils checkCppError:statusOrOutputPacketMap.status() toError:error]) {
+    return nil;
+  }
+
+  return statusOrOutputPacketMap.value();
 }
 
 @end

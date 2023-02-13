@@ -3,20 +3,19 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPImage",
-    srcs = ["sources/MPPImage.mm"],
-    hdrs = ["sources/MPPImage.h"],
-    module_name = "MPPImage",
+    name = "MPPImageUtils",
+    srcs = ["sources/MPPImage+Utils.m"],
+    hdrs = ["sources/MPPImage+Utils.h"],
+    module_name = "MPPImageUtils",
     sdk_frameworks = [
-        "CoreMedia",
+        "Accelerate",
+        "CoreGraphics",
+        "CoreImage",
         "CoreVideo",
-        "UIKit",
     ],
     deps = [
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:UIKit",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
     ],
 )
 
