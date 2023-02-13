@@ -62,6 +62,22 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPTaskRunner",
+    srcs = ["sources/MPPTaskRunner.mm"],
+    hdrs = ["sources/MPPTaskRunner.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)
+
+objc_library(
     name = "MPPTextPacketCreator",
     srcs = ["sources/MPPTextPacketCreator.mm"],
     hdrs = ["sources/MPPTextPacketCreator.h"],
@@ -76,17 +92,15 @@ objc_library(
 )
 
 objc_library(
-    name = "MPPTaskRunner",
-    srcs = ["sources/MPPTaskRunner.mm"],
-    hdrs = ["sources/MPPTaskRunner.h"],
+    name = "MPPVisionPacketCreator",
+    srcs = ["sources/MPPVisionPacketCreator.mm"],
+    hdrs = ["sources/MPPVisionPacketCreator.h"],
     copts = [
         "-ObjC++",
         "-std=c++17",
     ],
     deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
-        "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
     ],
 )

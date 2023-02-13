@@ -17,6 +17,10 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
     ],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
 )
 
 objc_library(

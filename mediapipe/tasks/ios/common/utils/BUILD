@@ -27,6 +27,10 @@ objc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
     ],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
 )
 
 objc_library(

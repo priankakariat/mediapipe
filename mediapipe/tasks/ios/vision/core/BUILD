@@ -4,7 +4,7 @@ licenses(["notice"])
 
 objc_library(
     name = "MPPImage",
-    srcs = ["sources/MPPImage.mm"],
+    srcs = ["sources/MPPImage.m"],
     hdrs = ["sources/MPPImage.h"],
     module_name = "MPPImage",
     sdk_frameworks = [
@@ -14,9 +14,13 @@ objc_library(
     ],
     deps = [
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:UIKit",
+        # "//third_party/apple_frameworks:CoreMedia",
+        # "//third_party/apple_frameworks:CoreVideo",
+        # "//third_party/apple_frameworks:UIKit",
+    ],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
     ],
 )
 

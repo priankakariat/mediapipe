@@ -13,17 +13,35 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPVisionPacketCreator.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Helpers.h"
 
 namespace {
 using ::mediapipe::MakePacket;
 using ::mediapipe::Packet;
 }  // namespace
 
+struct freeDeleter {
+  void operator()(void* ptr) { free(ptr); }
+}
+
 @implementation MPPTextPacketCreator
 
-+ (Packet)createWithMPPImage:(MPPImage *)image {
++ (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error {
+  
+  uint8_t *pixelData = [image pixelDataWithError:error];
+
   return MakePacket<std::string>(text.cppString);
+}
+
++ (absl::StatusOr<std::unique_ptr<mediapipe::ImageFrame>>)createImageFrameFromImage:(MPPImage *)image {
+
+   auto image_frame = std::make_unique<mediapipe::ImageFrame>();
+
+   image_frame->CopyPixelData(
+      format, width, height, width_step, static_cast<const uint8*>(buffer_data),
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+
 }
 
 @end

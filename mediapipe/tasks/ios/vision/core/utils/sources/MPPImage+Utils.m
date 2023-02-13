@@ -1,19 +1,18 @@
-/* Copyright 2021 The TensorFlow Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- ==============================================================================*/
-
-#import "mediapipe/tasks/ios/vision/utils/sources/MPPImage+Utils.h"
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
@@ -22,6 +21,17 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreImage/CoreImage.h>
 #import <CoreVideo/CoreVideo.h>
+
+@interface MPPPixelDataUtils : NSObject
+
++ (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
+                                   withWidth:(size_t)width
+                                      height:(size_t)height
+                                      stride:(size_t)stride
+                           pixelBufferFormat:(OSType)pixelBufferFormatType
+                                       error:(NSError **)error;
+
+@end
 
 @interface MPPCVPixelBufferUtils : NSObject
 
@@ -44,7 +54,7 @@
 
 @end
 
-@implementation MPPCVPixelBufferUtils
+@implementation MPPPixelDataUtils: NSObject
 
 + (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
                                    withWidth:(size_t)width
@@ -56,7 +66,7 @@
   size_t destinationBytesPerRow = width * destinationChannelCount;
 
   uint8_t *destPixelBufferAddress =
-      [MPPCommonUtils mallocWithSize:sizeof(uint8_t) * height * destinationBytesPerRow error:error];
+     (uint8_t *)[MPPCommonUtils mallocWithSize:sizeof(uint8_t) * height * destinationBytesPerRow error:error];
 
   if (!destPixelBufferAddress) {
     return NULL;
@@ -85,10 +95,9 @@
     }
     default: {
       [MPPCommonUtils createCustomError:error
-                               withCode:MPPErrorCodeInvalidArgumentError
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Invalid source pixel buffer format. Expecting one of "
-                                        @"kCVPixelFormatType_32RGBA, kCVPixelFormatType_32BGRA, "
-                                        @"kCVPixelFormatType_32ARGB"];
+                                        @"kCVPixelFormatType_32RGBA, kCVPixelFormatType_32BGRA"];
 
       free(destPixelBufferAddress);
       return NULL;
@@ -97,7 +106,7 @@
 
   if (convertError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
-                             withCode:MPPErrorCodeImageProcessingError
+                             withCode:MPPTasksErrorCodeInternalError
                           description:@"Image format conversion failed."];
 
     free(destPixelBufferAddress);
@@ -107,12 +116,16 @@
   return destPixelBufferAddress;
 }
 
+@end
+
+@implementation MPPCVPixelBufferUtils
+
 + (uint8_t *)rgbPixelDatafromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                            error:(NSError **)error {
   CVPixelBufferLockBaseAddress(pixelBuffer, 0);
 
-  uint8_t *rgbPixelData = [MPPCVPixelBufferUtils
-      rgbPixelDatafromCVPixelBuffer:CVPixelBufferGetBaseAddress(pixelBuffer)
+  uint8_t *rgbPixelData = [MPPPixelDataUtils
+      rgbPixelDatafromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
                             withWidth:CVPixelBufferGetWidth(pixelBuffer)
                                height:CVPixelBufferGetHeight(pixelBuffer)
                                stride:CVPixelBufferGetBytesPerRow(pixelBuffer)
@@ -137,7 +150,7 @@
     }
     default: {
       [MPPCommonUtils createCustomError:error
-                               withCode:MPPErrorCodeInvalidArgumentError
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unsupported pixel format for CVPixelBuffer. Supported "
                                         @"pixel format types are kCVPixelFormatType_32BGRA"];
     }
@@ -174,18 +187,19 @@
 
   if (context) {
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgImage);
-    uint8_t *srcData = CGBitmapContextGetData(context);
+    uint8_t *srcData = (uint8_t *)CGBitmapContextGetData(context);
 
     if (srcData) {
       // We have drawn the image as an RGBA image with 8 bitsPerComponent and hence can safely input
       // a pixel format of type kCVPixelFormatType_32RGBA for conversion by vImage.
       pixel_data_to_return =
-          [MPPCVPixelBufferUtils rgbImageDataFromImageData:srcData
-                                                       withWidth:width
-                                                          height:height
-                                                          stride:bytesPerRow
-                                               pixelBufferFormat:kCVPixelFormatType_32RGBA
-                                                           error:error];
+      [MPPPixelDataUtils
+      rgbPixelDatafromPixelData:srcData
+                            withWidth:width
+                               height:height
+                               stride:bytesPerRow
+                    pixelBufferFormat:kCVPixelFormatType_32RGBA
+                                error:error];
     }
 
     CGContextRelease(context);
@@ -200,19 +214,19 @@
 
 @implementation UIImage (RawPixelDataUtils)
 
-- (uint8_t *)pixelDataFromCIImage:(NSError **)error {
+- (uint8_t *)pixelDataFromCIImageWithError:(NSError **)error {
 
   uint8_t *pixelData = NULL;
 
-  if (self.ciImage.pixelBuffer) {
-    pixelData = [MPPCVPixelBufferUtils rgbPixelDatafromCVPixelBuffer:ciImage.pixelBuffer
+  if (self.CIImage.pixelBuffer) {
+    pixelData = [MPPCVPixelBufferUtils pixelDataFromCVPixelBuffer:self.CIImage.pixelBuffer
                                                                   error:error];
 
-  } else if (self.ciImage.CGImage) {
-    pixelData = [MPPCGImageUtils pixelDataFromCGImage:self.ciImage.CGImage error:error];
+  } else if (self.CIImage.CGImage) {
+    pixelData = [MPPCGImageUtils pixelDataFromCGImage:self.CIImage.CGImage error:error];
   } else {
     [MPPCommonUtils createCustomError:error
-                             withCode:MPPErrorCodeInvalidArgumentError
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"CIImage should have CGImage or CVPixelBuffer info."];
   }
 
@@ -229,7 +243,7 @@
     pixelData = [self pixelDataFromCIImageWithError:error];
   } else {
     [MPPCommonUtils createCustomError:error
-                             withCode:MPPErrorCodeInvalidArgumentError
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"UIImage should be initialized from"
                                        " CIImage or CGImage."];
   }
@@ -276,7 +290,7 @@
     }
     default:
       [MPPCommonUtils createCustomError:error
-                               withCode:MPPErrorCodeInvalidArgumentError
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Invalid source type for MPPImage."];
   }
 
