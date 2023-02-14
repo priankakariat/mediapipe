@@ -416,7 +416,7 @@ build issues.
 3.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone -–depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
 
     $ cd mediapipe
     ```
@@ -651,7 +651,7 @@ cameras. Alternatively, you use a video file as input.
 
 1.  Follow the
     [instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to
-    install Windows Sysystem for Linux (Ubuntu).
+    install Windows Subsystem for Linux (Ubuntu).
 
 2.  Install Windows ADB and start the ADB server in Windows.
 

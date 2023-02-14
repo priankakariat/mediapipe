@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"Image cannot be nil."];
+    return nil;
   }
   if (image.CGImage == NULL) {
     [MPPCommonUtils createCustomError:error
