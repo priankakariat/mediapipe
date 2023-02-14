@@ -20,25 +20,38 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
- * execute and terminate any MediaPipe text task.
+ * execute and terminate any MediaPipe vision task.
  */
 @interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPTextTaskRunner` with the MediaPipe calculator config proto.
+ * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config proto running mode
+ * and packetsCallback.
+ * Make sure that the packets callback is set properly based on the vision task's running mode.
+ * In case of live stream running mode, a C++ packets callback that is intended to deliver inference
+ * results must be provided. In case of image or video running mode, packets callback must be set to
+ * nil.
  *
  * @param graphConfig A MediaPipe calculator config proto.
+ * @param runningMode MediaPipe vision task running mode.
+ * @param packetsCallback An optional C++ callback function that takes a list of output packets as
+ * the input argument. If provided, the callback must in turn call the block provided by the user in
+ * the appropriate task options. Make sure that the packets callback is set properly based on the
+ * vision task's running mode. In case of live stream running mode, a C++ packets callback that is
+ * intended to deliver inference results must be provided. In case of image or video running mode,
+ * packets callback must be set to nil.
  *
- * @return An instance of `MPPTextTaskRunner` initialized to the given MediaPipe calculator config
- * proto.
+ * @param error Pointer to the memory location where errors if any should be
+ * saved. If @c NULL, no error will be saved.
+ *
+ * @return An instance of `MPPVisionTaskRunner` initialized to the given MediaPipe calculator config
+ * proto, running mode and packets callback.
  */
 - (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              runningMode:(MPPRunningMode)runningMode
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error;
-
-- (nullable PacketMap)processImagePacketMap:(PacketMap)packetMap error:(NSError **)error;
+                                           runningMode:(MPPRunningMode)runningMode
+                                       packetsCallback:
+                                           (mediapipe::tasks::core::PacketsCallback)packetsCallback
+                                                 error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

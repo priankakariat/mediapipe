@@ -18,19 +18,19 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Helper utility for performing operations on MPPImage specific to the
- * MediaPipe Vision library.
+/** 
+ * Helper utility for performing operations on MPPImage specific to the MediaPipe Vision library.
  */
 @interface MPPImage (Utils)
 
-// /** Bitmap size of the image. */
+/** Bitmap size of the image. */
 @property(nonatomic, readonly) CGSize bitmapSize;
 
 /**
  * Returns the underlying uint8 pixel buffer of an `MPPImage`.
  * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the pixel
- * data is converted to an RGB format. In case of grayscale images, the mono channel is duplicated in
- * the R, G, B channels.
+ * data is converted to an RGB format. In case of grayscale images, the mono channel is duplicated
+ * in the R, G, B channels.
  *
  * @param error Pointer to the memory location where errors if any should be
  * saved. If @c NULL, no error will be saved.

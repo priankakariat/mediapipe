@@ -24,12 +24,12 @@
 
 @interface MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
-                                   withWidth:(size_t)width
-                                      height:(size_t)height
-                                      stride:(size_t)stride
-                           pixelBufferFormat:(OSType)pixelBufferFormatType
-                                       error:(NSError **)error;
++ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
+                             withWidth:(size_t)width
+                                height:(size_t)height
+                                stride:(size_t)stride
+                     pixelBufferFormat:(OSType)pixelBufferFormatType
+                                 error:(NSError **)error;
 
 @end
 
@@ -45,7 +45,6 @@
 
 @end
 
-
 @interface UIImage (RawPixelDataUtils)
 
 @property(nonatomic, readonly) CGSize bitmapSize;
@@ -54,19 +53,20 @@
 
 @end
 
-@implementation MPPPixelDataUtils: NSObject
+@implementation MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
-                                   withWidth:(size_t)width
-                                      height:(size_t)height
-                                      stride:(size_t)stride
-                           pixelBufferFormat:(OSType)pixelBufferFormatType
-                                       error:(NSError **)error {
++ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
+                             withWidth:(size_t)width
+                                height:(size_t)height
+                                stride:(size_t)stride
+                     pixelBufferFormat:(OSType)pixelBufferFormatType
+                                 error:(NSError **)error {
   NSInteger destinationChannelCount = 3;
   size_t destinationBytesPerRow = width * destinationChannelCount;
 
   uint8_t *destPixelBufferAddress =
-     (uint8_t *)[MPPCommonUtils mallocWithSize:sizeof(uint8_t) * height * destinationBytesPerRow error:error];
+      (uint8_t *)[MPPCommonUtils mallocWithSize:sizeof(uint8_t) * height * destinationBytesPerRow
+                                          error:error];
 
   if (!destPixelBufferAddress) {
     return NULL;
@@ -120,17 +120,16 @@
 
 @implementation MPPCVPixelBufferUtils
 
-+ (uint8_t *)rgbPixelDatafromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                           error:(NSError **)error {
++ (uint8_t *)rgbPixelDataFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error {
   CVPixelBufferLockBaseAddress(pixelBuffer, 0);
 
   uint8_t *rgbPixelData = [MPPPixelDataUtils
-      rgbPixelDatafromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
-                            withWidth:CVPixelBufferGetWidth(pixelBuffer)
-                               height:CVPixelBufferGetHeight(pixelBuffer)
-                               stride:CVPixelBufferGetBytesPerRow(pixelBuffer)
-                    pixelBufferFormat:CVPixelBufferGetPixelFormatType(pixelBuffer)
-                                error:error];
+      rgbPixelDataFromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
+                      withWidth:CVPixelBufferGetWidth(pixelBuffer)
+                         height:CVPixelBufferGetHeight(pixelBuffer)
+                         stride:CVPixelBufferGetBytesPerRow(pixelBuffer)
+              pixelBufferFormat:CVPixelBufferGetPixelFormatType(pixelBuffer)
+                          error:error];
 
   CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
 
@@ -138,14 +137,14 @@
 }
 
 + (nullable uint8_t *)pixelDataFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                        error:(NSError **)error {
+                                           error:(NSError **)error {
   uint8_t *pixelData = NULL;
 
   OSType pixelBufferFormat = CVPixelBufferGetPixelFormatType(pixelBuffer);
 
   switch (pixelBufferFormat) {
     case kCVPixelFormatType_32BGRA: {
-      pixelData = [MPPCVPixelBufferUtils rgbPixelDatafromCVPixelBuffer:pixelBuffer error:error];
+      pixelData = [MPPCVPixelBufferUtils rgbPixelDataFromCVPixelBuffer:pixelBuffer error:error];
       break;
     }
     default: {
@@ -192,14 +191,12 @@
     if (srcData) {
       // We have drawn the image as an RGBA image with 8 bitsPerComponent and hence can safely input
       // a pixel format of type kCVPixelFormatType_32RGBA for conversion by vImage.
-      pixel_data_to_return =
-      [MPPPixelDataUtils
-      rgbPixelDatafromPixelData:srcData
-                            withWidth:width
-                               height:height
-                               stride:bytesPerRow
-                    pixelBufferFormat:kCVPixelFormatType_32RGBA
-                                error:error];
+      pixel_data_to_return = [MPPPixelDataUtils rgbPixelDataFromPixelData:srcData
+                                                                withWidth:width
+                                                                   height:height
+                                                                   stride:bytesPerRow
+                                                        pixelBufferFormat:kCVPixelFormatType_32RGBA
+                                                                    error:error];
     }
 
     CGContextRelease(context);
@@ -215,12 +212,11 @@
 @implementation UIImage (RawPixelDataUtils)
 
 - (uint8_t *)pixelDataFromCIImageWithError:(NSError **)error {
-
   uint8_t *pixelData = NULL;
 
   if (self.CIImage.pixelBuffer) {
     pixelData = [MPPCVPixelBufferUtils pixelDataFromCVPixelBuffer:self.CIImage.pixelBuffer
-                                                                  error:error];
+                                                            error:error];
 
   } else if (self.CIImage.CGImage) {
     pixelData = [MPPCGImageUtils pixelDataFromCGImage:self.CIImage.CGImage error:error];
@@ -231,7 +227,6 @@
   }
 
   return pixelData;
-
 }
 
 - (uint8_t *)pixelDataWithError:(NSError **)error {
@@ -277,7 +272,8 @@
   switch (self.imageSourceType) {
     case MPPImageSourceTypeSampleBuffer: {
       CVPixelBufferRef sampleImagePixelBuffer = CMSampleBufferGetImageBuffer(self.sampleBuffer);
-      pixelData = [MPPCVPixelBufferUtils pixelDataFromCVPixelBuffer:sampleImagePixelBuffer error:error];
+      pixelData = [MPPCVPixelBufferUtils pixelDataFromCVPixelBuffer:sampleImagePixelBuffer
+                                                              error:error];
       break;
     }
     case MPPImageSourceTypePixelBuffer: {
