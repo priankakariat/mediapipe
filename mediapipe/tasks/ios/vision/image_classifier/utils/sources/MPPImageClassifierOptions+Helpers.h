@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
 
-#include "mediapipe/framework/packet.h"
+NS_ASSUME_NONNULL_BEGIN
 
-/* This class is an Objective-C wrapper around a MediaPipe graph object, and
- * helps interface it with iOS technologies such as AVFoundation.
- */
-@interface MPPVisionPacketCreator : NSObject
+@interface MPPImageClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
 
-+ (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error;
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END

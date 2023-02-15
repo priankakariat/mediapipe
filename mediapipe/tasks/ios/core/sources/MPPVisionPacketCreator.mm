@@ -14,34 +14,31 @@
 
 #import "mediapipe/tasks/ios/core/sources/MPPVisionPacketCreator.h"
 
-#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Helpers.h"
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+ImageFrameUtils.h"
+
+#include "mediapipe/framework/formats/image.h"
 
 namespace {
 using ::mediapipe::MakePacket;
 using ::mediapipe::Packet;
+using ::mediapipe::Image;
 }  // namespace
 
 struct freeDeleter {
   void operator()(void* ptr) { free(ptr); }
 }
 
-@implementation MPPTextPacketCreator
+@implementation MPPVisionPacketCreator
 
 + (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error {
   
-  uint8_t *pixelData = [image pixelDataWithError:error];
+  std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
-  return MakePacket<std::string>(text.cppString);
-}
+  if (!imageFrame) {
+    return nullptr;
+  }
 
-+ (absl::StatusOr<std::unique_ptr<mediapipe::ImageFrame>>)createImageFrameFromImage:(MPPImage *)image {
-
-   auto image_frame = std::make_unique<mediapipe::ImageFrame>();
-
-   image_frame->CopyPixelData(
-      format, width, height, width_step, static_cast<const uint8*>(buffer_data),
-      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
-
+  return MakePacket<Image>(std::move(imageFrame));
 }
 
 @end

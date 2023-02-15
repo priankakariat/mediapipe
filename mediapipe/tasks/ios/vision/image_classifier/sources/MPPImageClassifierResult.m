@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
 
-#include "mediapipe/framework/packet.h"
+@implementation MPPImageClassifierResult
 
-/* This class is an Objective-C wrapper around a MediaPipe graph object, and
- * helps interface it with iOS technologies such as AVFoundation.
- */
-@interface MPPVisionPacketCreator : NSObject
-
-+ (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error;
+- (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
+                                 timestampMs:(NSInteger)timestampMs {
+  self = [super initWithTimestampMs:timestampMs];
+  if (self) {
+    _classificationResult = classificationResult;
+  }
+  return self;
+}
 
 @end

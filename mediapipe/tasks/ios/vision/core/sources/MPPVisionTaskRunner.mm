@@ -19,6 +19,8 @@
 
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
+using ::mediapipe::Packet;
+using ::mediapipe::tasks::core::PacketMap;
 }  // namespace
 
 @interface MPPVisionTaskRunner () {
