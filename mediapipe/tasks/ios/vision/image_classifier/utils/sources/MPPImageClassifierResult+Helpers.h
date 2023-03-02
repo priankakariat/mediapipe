@@ -12,21 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
 
 #include "mediapipe/framework/packet.h"
 
-/**
- * This class helps create various kinds of packets for Mediapipe Vision Tasks.
- */
-@interface MPPVisionPacketCreator : NSObject
+NS_ASSUME_NONNULL_BEGIN
 
-+ (Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error;
+@interface MPPImageClassifierResult (Helpers)
 
-+ (Packet)createPacketWithMPPImage:(MPPImage *)image timestampMs:(NSInteger)timestampMs error:(NSError **)error;
-
-+ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect;
-
-+ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect timestampMs:(NSInteger)timestampMs;
++ (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
+    (const mediapipe::Packet &)packet;
 
 @end
+
+NS_ASSUME_NONNULL_END

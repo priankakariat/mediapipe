@@ -83,14 +83,14 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
   Packet packet = [MPPTextPacketCreator createWithText:text];
 
   std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};
-  absl::StatusOr<PacketMap> statusOrOutputPacketMap = [_textTaskRunner process:packetMap];
-
-  if (![MPPCommonUtils checkCppError:statusOrOutputPacketMap.status() toError:error]) {
+  std::optional<PacketMap> outputPacketMap = [_textTaskRunner processPacketMap:packetMap error:error];
+  
+  if(!outputPacketMap.has_value()) {
     return nil;
   }
 
   return [MPPTextClassifierResult
-      textClassifierResultWithClassificationsPacket:statusOrOutputPacketMap.value()
+      textClassifierResultWithClassificationsPacket:outputPacketMap.value()
                                                         [kClassificationsStreamName.cppString]];
 }
 

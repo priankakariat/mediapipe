@@ -14,7 +14,9 @@
 
 #import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/packet.h"
+
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -35,6 +37,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An std::unique_ptr<mediapipe::ImageFrame> or `nullptr` in case of errors.
  */
 - (std::unique_ptr<mediapipe::ImageFrame>)imageFrameWithError:(NSError **)error;
+
++ (MPPImage *)imageWithPacket:(<mediapipe::Packet &>)packet error:(NSError **)error;
 
 @end
 

@@ -39,7 +39,7 @@ objc_library(
     deps = [
         ":MPPRunningMode",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
-        "//mediapipe/tasks/ios/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
     ],
 )
 

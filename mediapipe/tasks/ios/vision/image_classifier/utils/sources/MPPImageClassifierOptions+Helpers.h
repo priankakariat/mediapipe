@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
 
-#include "mediapipe/framework/packet.h"
+NS_ASSUME_NONNULL_BEGIN
 
-/**
- * This class helps create various kinds of packets for Mediapipe Vision Tasks.
- */
-@interface MPPVisionPacketCreator : NSObject
+@interface MPPImageClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
 
-+ (Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error;
-
-+ (Packet)createPacketWithMPPImage:(MPPImage *)image timestampMs:(NSInteger)timestampMs error:(NSError **)error;
-
-+ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect;
-
-+ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect timestampMs:(NSInteger)timestampMs;
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END

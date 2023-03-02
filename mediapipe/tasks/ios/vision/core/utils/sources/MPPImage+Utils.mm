@@ -26,11 +26,16 @@
 
 namespace {
 using ::mediapipe::ImageFrame;
+using ::mediapipe::Image;
+}
+
+static void FreeCVPixelBufferReleaseCallback(void* releaseRefCon, const void* baseAddress) {
+  free(refCon);
 }
 
 @interface MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
++ (std::uinique_ptr<ImageFrame>)imageFrameFromVImage:(uint8_t *)pixelData
                              withWidth:(size_t)width
                                 height:(size_t)height
                                 stride:(size_t)stride
@@ -44,6 +49,7 @@ using ::mediapipe::ImageFrame;
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
 
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(const ImageFrame &)imageFrame error:(NSError **)error;
 @end
 
 @interface MPPCGImageUtils : NSObject
@@ -57,15 +63,21 @@ using ::mediapipe::ImageFrame;
 - (std::unique_ptr<ImageFrame>)imageFrameWithError:(NSError **)error;
 
 @end
+å
+
 
 @implementation MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
++ (uint8_t *)DataFromRGBPixelData:(uint8_t *)pixelData withWidth:(size_t)width height:(size_t)height stride:(size_t)stride error:(NSError **)error{
+  
+}
+
++ (std::uinique_ptr<ImageFrame>)imageFrameFromPixelData:(uint8_t *)pixelData
                              withWidth:(size_t)width
                                 height:(size_t)height
                                 stride:(size_t)stride
                      pixelBufferFormat:(OSType)pixelBufferFormatType
-                                 error:(NSError **)error {
+                                 error:(NSError **)error canOverWrite:(BOOL)canOverWrite {
   NSInteger destinationChannelCount = 3;
   size_t destinationBytesPerRow = width * destinationChannelCount;
 
@@ -82,6 +94,11 @@ using ::mediapipe::ImageFrame;
                              .width = (vImagePixelCount)width,
                              .rowBytes = stride};
 
+  vImage_Buffer destBuffer;
+
+  if (can_overwrite) {
+    return 
+  }
   vImage_Buffer destBuffer = {.data = destPixelBufferAddress,
                               .height = (vImagePixelCount)height,
                               .width = (vImagePixelCount)width,
@@ -134,7 +151,7 @@ using ::mediapipe::ImageFrame;
   size_t stride = CVPixelBufferGetBytesPerRow(pixelBuffer);
 
   uint8_t *rgbPixelData = [MPPPixelDataUtils
-      rgbPixelDataFromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
+        :(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
                       withWidth:CVPixelBufferGetWidth(pixelBuffer)
                          height:CVPixelBufferGetHeight(pixelBuffer)
                          stride:CVPixelBufferGetBytesPerRow(pixelBuffer)
@@ -176,17 +193,150 @@ using ::mediapipe::ImageFrame;
   return nullptr;
 }
 
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(const ImageFrame &)imageFrame error:(NSError **)error {
+
+  const uint8* frameData = frame.PixelData();
+
+  mediapipe::ImageFormat::Format image_format = frame.Format();
+  OSType pixel_format = 0;
+  CVReturn status;
+  unsigned char *bgraPixel = (unsigned char *)malloc([imageRGBAData length]);
+
+    vImage_Buffer src;
+    src.height = frame.Height();
+    src.width = frame.Width();
+    src.rowBytes = frame.Width() * 3;
+    src.data = (void *)frameData;
+
+    vImage_Buffer dest;
+    dest.height = height;
+    dest.width = width;
+    dest.rowBytes = frame.Width() * 4;
+    dest.data = bgraPixel;
+
+  switch (image_format) {
+    case mediapipe::ImageFormat::SRGB: {
+      pixel_format = kCVPixelFormatType_32BGRA;
+      vImage_Error error = vImagePermuteChannels_ARGB8888(&src, &dest, order, kvImageNoFlags);
+
+      NSDictionary *options = @{
+    (__bridge NSString *)kCVPixelBufferCGImageCompatibilityKey : @(YES),
+    (__bridge NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey : @(YES)
+  };
+  CVPixelBufferRef pixelBuffer;
+  CVReturn status = CVPixelBufferCreateWithBytes(
+      kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, (void *)frameData,
+      bpr, NULL, nil, (__bridge CFDictionaryRef)options, &pixelBuffer);
+
+  if (status != kCVReturnSuccess) {
+    XCTFail(@"Failed to create pixel buffer.");
+  }
+
+  CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+  CMVideoFormatDescriptionRef videoInfo = NULL;
+  CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer, &videoInfo);
+
+  CMSampleBufferRef buffer;
+  CMSampleBufferCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer, true, NULL, NULL, videoInfo,
+                                     &kCMTimingInfoInvalid, &buffer);
+
+  CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+
+      pixel_format = kCVPixelFormatType_32BGRA;
+      // Swap R and B channels.
+      vImage_Buffer v_image = vImageForImageFrame(frame);
+      vImage_Buffer v_dest;
+      if (can_overwrite) {
+        v_dest = v_image;
+      } else {
+        ASSIGN_OR_RETURN(pixel_buffer,
+                         CreateCVPixelBufferWithoutPool(
+                             frame.Width(), frame.Height(), pixel_format));
+        status = CVPixelBufferLockBaseAddress(*pixel_buffer,
+                                              kCVPixelBufferLock_ReadOnly);
+        RET_CHECK(status == kCVReturnSuccess)
+            << "CVPixelBufferLockBaseAddress failed: " << status;
+        v_dest = vImageForCVPixelBuffer(*pixel_buffer);
+      }
+      const uint8_t permute_map[4] = {2, 1, 0, 3};
+      vImage_Error vError = vImagePermuteChannels_ARGB8888(
+          &v_image, &v_dest, permute_map, kvImageNoFlags);
+      RET_CHECK(vError == kvImageNoError)
+          << "vImagePermuteChannels failed: " << vError;
+    } break;
+
+    case mediapipe::ImageFormat::GRAY8:
+      pixel_format = kCVPixelFormatType_OneComponent8;
+      break;
+
+    case mediapipe::ImageFormat::VEC32F1:
+      pixel_format = kCVPixelFormatType_OneComponent32Float;
+      break;
+
+    case mediapipe::ImageFormat::VEC32F2:
+      pixel_format = kCVPixelFormatType_TwoComponent32Float;
+      break;
+
+    default:
+      return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
+             << "unsupported ImageFrame format: " << image_format;
+  }
+
+  if (*pixel_buffer) {
+    status = CVPixelBufferUnlockBaseAddress(*pixel_buffer,
+                                            kCVPixelBufferLock_ReadOnly);
+    RET_CHECK(status == kCVReturnSuccess)
+        << "CVPixelBufferUnlockBaseAddress failed: " << status;
+  } else {
+    CVPixelBufferRef pixel_buffer_temp;
+    auto holder = absl::make_unique<std::shared_ptr<void>>(image_frame);
+    status = CVPixelBufferCreateWithBytes(
+        NULL, frame.Width(), frame.Height(), pixel_format, frame_data,
+        frame.WidthStep(), ReleaseSharedPtr, holder.get(),
+        GetCVPixelBufferAttributesForGlCompatibility(), &pixel_buffer_temp);
+    RET_CHECK(status == kCVReturnSuccess)
+        << "failed to create pixel buffer: " << status;
+    holder.release();  // will be deleted by ReleaseSharedPtr
+    pixel_buffer.adopt(pixel_buffer_temp);
+  }
+
+  return pixel_buffer;
+
+}
+
 @end
 
 @implementation MPPCGImageUtils
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCGImage:(CGImageRef)cgImage error:(NSError **)error {
+
   size_t width = CGImageGetWidth(cgImage);
   size_t height = CGImageGetHeight(cgImage);
 
   NSInteger bitsPerComponent = 8;
+  NSInteger bitsPerPixel = 32;
   NSInteger channelCount = 4;
+
+  CGImageGetB
+
+  vImage_Buffer imageBuffer;
   UInt8 *pixelDataToReturn = NULL;
+
+   vImage_CGImageFormat format = {
+    .bitsPerComponent = bitsPerComponent,
+    .bitsPerPixel = 32,
+    .colorSpace = NULL,
+    .bitmapInfo = kCGImageAlphaFirst | kCGBitmapByteOrder32Big,
+    .version = 0,
+    .decode = NULL,
+    .renderingIntent = kCGRenderingIntentDefault,
+  };
+  
+  vImage_Error ret = vImageBuffer_InitWithCGImage(&imageBuffer, &format, NULL, sourceRef, kvImageNoFlags);
+  if (ret != kvImageNoError)
+  {
+    free(imageBuffer.data);
+  }
 
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
   size_t bytesPerRow = channelCount * width;
@@ -291,6 +441,24 @@ using ::mediapipe::ImageFrame;
   }
 
   return nullptr;
+}
+
+template <typename T>
+const T& GetContent(const Packet& packet) {
+  RaisePyErrorIfNotOk(packet.ValidateAsType<T>());
+  return packet.Get<T>();
+}
+
++ (MPPImage *)imageWithPacket:(<mediapipe::Packet &>)packet error:(NSError **)error {
+   absl::Status packetValidationStatus = packet.ValidateAsType<Image>(packet);
+   if(![MPPCommonUtils checkCppError:packetValidationStatus error:error]) {
+    return nil;
+   }
+   const mediapipe::ImageFrame& imageFrame = packet.Get<Image>().GetImageFrameSharedPtr().get();
+
+   
+
+
 }
 
 @end

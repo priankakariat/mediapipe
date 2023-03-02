@@ -16,6 +16,8 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
 
+#include "mediapipe/framework/formats/rect.pb.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -52,6 +54,35 @@ NS_ASSUME_NONNULL_BEGIN
                                        packetsCallback:
                                            (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                                  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+
+- (std::optional<mediapipe::NormalizedRect>)normalizedRectFromRegionOfInterest:(CGRect)roi imageOrientation:(UIImageOrientation)imageOrientation roiAllowed:(BOOL)roiAllowed error:(NSError **)error;]- (std::optional<PacketMap>)processImagePacketMap:(PacketMap)packetMap error:(NSError **)error;
+
+/**
+ * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config proto running mode
+ * and packetsCallback.
+ * Make sure that the packets callback is set properly based on the vision task's running mode.
+ * In case of live stream running mode, a C++ packets callback that is intended to deliver inference
+ * results must be provided. In case of image or video running mode, packets callback must be set to
+ * nil.
+ *
+ * @param packetMap A MediaPipe calculator config proto.
+ * @param runningMode MediaPipe vision task running mode.
+ * @param packetsCallback An optional C++ callback function that takes a list of output packets as
+ * the input argument. If provided, the callback must in turn call the block provided by the user in
+ * the appropriate task options. Make sure that the packets callback is set properly based on the
+ * vision task's running mode. In case of live stream running mode, a C++ packets callback that is
+ * intended to deliver inference results must be provided. In case of image or video running mode,
+ * packets callback must be set to nil.
+ *
+ * @param error Pointer to the memory location where errors if any should be
+ * saved. If @c NULL, no error will be saved.
+ *
+ * @return An instance of `MPPVisionTaskRunner` initialized to the given MediaPipe calculator config
+ * proto, running mode and packets callback.
+ */
+- (std::optional<PacketMap>)processImagePacketMap:(PacketMap)packetMap error:(NSError **)error;
+- (std::optional<PacketMap>)processVideoFramePacketMap:(PacketMap &)packetMap error:(NSError **)error;
+- (BOOL)processLiveStreamPacketMap:(PacketMap &)packetMap error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 
