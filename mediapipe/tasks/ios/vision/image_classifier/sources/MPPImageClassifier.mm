@@ -21,6 +21,8 @@
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierResult+Helpers.h"
+#import "mediapipe/framework/formats/image.h"
+#include "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
@@ -61,9 +63,14 @@ static NSString *const kTaskGraphName =
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString
-                                  stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName] ]
+                                  stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+                                  [NSString
+                                  stringWithFormat:@"%@:%@", kNormRectTag, kNormRectName]
+                                   ]
                 outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                            kClassificationsStreamName] ]
+                                                            kClassificationsStreamName],
+                                  [NSString stringWithFormat:@"%@:%@", kImageTag,
+                                                            kImageOutStreamName] ]
                   taskOptions:options
            enableFlowLimiting:NO
                         error:error];
@@ -75,6 +82,7 @@ static NSString *const kTaskGraphName =
     PacketsCallback packetsCallback = nullptr;
 
     if (options.completion) {
+      NSLog(@"Completion");
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
         MPPImageClassifierResult *result;
@@ -128,13 +136,51 @@ static NSString *const kTaskGraphName =
   Packet normalizedRectPacket =
       [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
 
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
+  // std::string imageInStreamName = kImageInStreamName.cppString;
+  // std::string normRectName = kNormRectName.cppString;
+  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket); //{                                                                                      
+  //   {imageInStreamName, imagePacket}, { normRectName, normalizedRectPacket }
+  // }; //InputPacketMap(imagePacket, normalizedRectPacket);
 
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processPacketMap:inputPacketMap
                                                                            error:error];
+
+  NSLog(@"Process Done");                                                              
   if (!outputPacketMap.has_value()) {
     return nil;
   }
+  std::cout << "Class stream name " << kClassificationsStreamName.cppString << std::endl;
+  Packet classPacket = outputPacketMap.value()[kClassificationsStreamName.cppString];
+  Packet imgPacket = outputPacketMap.value()[kImageOutStreamName.cppString];
+
+  if (imgPacket.IsEmpty()){
+    NSLog(@"Image packet empty");
+  }
+
+ mediapipe::Image img = imgPacket.Get<mediapipe::Image>();
+ std::shared_ptr<mediapipe::ImageFrame> outImageFrame = imgPacket.Get<mediapipe::Image>().GetImageFrameSharedPtr();
+ const uint8* data_img = outImageFrame->PixelData();
+
+std::unique_ptr<mediapipe::ImageFrame> imageFrame = [image imageFrameWithError:error];
+const uint8* in_data_img = outImageFrame->PixelData();
+
+// for (int i=0; i < img.height(); i++) {
+//   for (int j = 0; j < img.step() * img.channels(); j++) {
+//     if (data_img[i * img.step() + j] == in_data_img[i * img.step() + j]) {
+//       NSLog(@"equal");
+//     }
+//   }
+// }
+
+
+ NSLog(@"First pixel: %d", data_img[0]);
+ NSLog(@"Width: %d", img.width());
+ NSLog(@"Height: %d", img.height());
+ NSLog(@"Channels: %d", img.channels());
+ NSLog(@"step: %d", img.step());
+
+
+
 
   return
       [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:

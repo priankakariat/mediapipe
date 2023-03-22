@@ -51,10 +51,12 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }
 
 - (std::optional<PacketMap>)processPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
-  absl::StatusOr<PacketMap> resultPacketMap = _cppTaskRunner->Process(packetMap);
+  absl::StatusOr<PacketMap> resultPacketMap = _cppTaskRunner->Process(std::move(packetMap));
+
   if (![MPPCommonUtils checkCppError:resultPacketMap.status() toError:error]) {
     return std::nullopt;
   }
+  std::cout << resultPacketMap.status() << std::endl;
   return resultPacketMap.value();
 }
 

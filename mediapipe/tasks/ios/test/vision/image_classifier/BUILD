@@ -39,10 +39,16 @@ objc_library(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        "@ios_opencv//:OpencvFramework",
     ],
     sdk_frameworks = [
         "AVFoundation",
@@ -57,6 +63,7 @@ ios_unit_test(
     deps = [
         ":MPPImageClassifierObjcTestLibrary",
     ],
+    
 )
 
 # swift_library(

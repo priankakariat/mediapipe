@@ -146,7 +146,7 @@ using ::mediapipe::ImageFrame;
   if (!rgbPixelData) {
     return nullptr;
   }
-
+  NSLog(@"Bytes per row %d",stride );
   std::unique_ptr<ImageFrame> imageFrame = absl::make_unique<ImageFrame>(
       ::mediapipe::ImageFormat::SRGB, width, height, stride, static_cast<uint8 *>(rgbPixelData),
       /*deleter=*/free);
@@ -221,7 +221,7 @@ using ::mediapipe::ImageFrame;
 
   std::unique_ptr<ImageFrame> imageFrame =
       absl::make_unique<ImageFrame>(mediapipe::ImageFormat::SRGB, (int)width, (int)height,
-                                    (int)bytesPerRow, static_cast<uint8 *>(pixelDataToReturn),
+                                    (int)3*width, static_cast<uint8 *>(pixelDataToReturn),
                                     /*deleter=*/free);
 
   return imageFrame;

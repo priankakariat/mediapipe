@@ -270,13 +270,13 @@ new_local_repository(
     # For local MacOS builds, the path should point to an opencv@3 installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",
+    path = "/opt/homebrew/",
 )
 
 new_local_repository(
     name = "macos_ffmpeg",
     build_file = "@//third_party:ffmpeg_macos.BUILD",
-    path = "/usr/local/opt/ffmpeg",
+    path = "/opt/homebrew/opt/ffmpeg",
 )
 
 new_local_repository(
@@ -297,12 +297,13 @@ http_archive(
 # trigger duplicate symbol errors in the linking stage of building a mediapipe ios app.
 # To get a higher version of OpenCV for iOS, opencv2.framework needs to be built from source with
 # '-DBUILD_PROTOBUF=OFF -DBUILD_opencv_dnn=OFF'.
+# https://www.dropbox.com/s/jdhwxi6fudcgfq3/opencv2.framework.zip?dl=0
 http_archive(
     name = "ios_opencv",
-    sha256 = "7dd536d06f59e6e1156b546bd581523d8df92ce83440002885ec5abc06558de2",
+    # sha256 = "8df0079cdbe179748a18d44731af62a245a45ebf5085223dc03133954c662973",
     build_file = "@//third_party:opencv_ios.BUILD",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
+    url = "https://dl.dropboxusercontent.com/s/jdhwxi6fudcgfq3/opencv2.framework.zip",
 )
 
 http_archive(

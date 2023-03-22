@@ -21,14 +21,32 @@ objc_library(
     deps = [":OpencvFramework"],
 )
 
+
+# genrule(
+#     name = "build_xc_framework",
+#     srcs = glob(["opencv-4.7.0/**"]),
+#     outs = ["opencv2.framework"],
+#     cmd = "$(location opencv-4.7.0/platforms/ios/build_framework.py) --iphonesimulator_archs arm64,x86_64 --build_only_specified_archs  $(RULEDIR)",
+# )
+
+# objc_library(
+#     name = "opencv_objc_lib",
+#     # hdrs = glob([
+#     #     "opencv2.framework/Versions/A/Headers/**/*.h*",
+#     # ]),
+#     deps = [":OpencvFramework"],
+#     visibility = ["//visibility:public"],
+# )
+
 cc_library(
     name = "opencv",
     hdrs = glob([
         "opencv2.framework/Versions/A/Headers/**/*.h*",
     ]),
     copts = [
-        "-std=c++11",
+        "-std=c++17",
         "-x objective-c++",
+        "-ObjC++"
     ],
     include_prefix = "opencv2",
     linkopts = [
@@ -44,5 +62,5 @@ cc_library(
     ],
     strip_include_prefix = "opencv2.framework/Versions/A/Headers",
     visibility = ["//visibility:public"],
-    deps = [":opencv_objc_lib"],
+    deps = [":opencv_objc_lib",],
 )

@@ -100,6 +100,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
 absl::Status TaskRunner::Initialize(
     CalculatorGraphConfig config,
     std::unique_ptr<tflite::OpResolver> op_resolver) {
+  std::cout << "Initialize" << std::endl;
   if (initialized_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -114,6 +115,7 @@ absl::Status TaskRunner::Initialize(
           "Graph output stream has no stream name.",
           MediaPipeTasksStatus::kRunnerInitializationError);
     }
+    std::cout << name << std::endl;
     output_stream_names_.push_back(name);
   }
   if (output_stream_names_.empty()) {
@@ -135,6 +137,7 @@ absl::Status TaskRunner::Initialize(
         &config, &input_side_packets,
         /*observe_timestamp_bounds=*/true);
   } else {
+    std::cout << "Added callback" << std::endl;
     mediapipe::tool::AddMultiStreamCallback(
         output_stream_names_,
         [this](const std::vector<Packet>& packets) {
@@ -247,6 +250,18 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
       last_seen_ = std::max(kv.second.Timestamp(), last_seen_);
     }
   }
+
+  std::map<std::string, Packet>::iterator it;
+
+
+  for (it = (*status_or_output_packets_).begin(); it != (*status_or_output_packets_).end(); it++)
+{
+    std::cout << "Key output " << it->first    // string (key)
+              << ':'
+              << it->second.DebugString()  // string's value 
+              << std::endl;
+}
+
   return status_or_output_packets_;
 }
 

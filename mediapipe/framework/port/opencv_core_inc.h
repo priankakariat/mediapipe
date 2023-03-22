@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_PORT_OPENCV_CORE_INC_H_
 #define MEDIAPIPE_PORT_OPENCV_CORE_INC_H_
 
-#include <opencv2/core/version.hpp>
+// #include <opencv2/core/version.hpp>
 
 #ifdef CV_VERSION_EPOCH  // for OpenCV 2.x
 #include <opencv2/core/core.hpp>

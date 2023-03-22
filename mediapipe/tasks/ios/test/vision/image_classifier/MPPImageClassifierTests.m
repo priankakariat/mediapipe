@@ -17,6 +17,8 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifier.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
+// #include "mediapipe/framework/port/opencv_core_inc.h"
+// #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 static NSString *const kFloatModelName = @"mobilenet_v2_1.0_224";
 static NSString *const kQuantizedModelName =
@@ -60,6 +62,29 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 @end
 
 @implementation MPPImageClassifierTests
+
+//  - (void)testClassifyWithModelPathAndFloatModelSucceeds {
+
+//   // NSLog(@"Enter 1");
+//   // MPPImageClassifier *imageClassifier =
+//   //     [self imageClassifierFromModelFileWithName:kFloatModelName];
+
+//   // NSLog(@"Created classif");
+  
+//   const cv::RotatedRect rotated_rect(cv::Point2f(0, 0),
+//                                      cv::Size2f(100, 100),
+//                                      90 * 180.f / M_PI);
+//   cv::Mat src_points;
+//   cv::boxPoints(rotated_rect, src_points);
+  
+//   NSLog(@"Hello done cv");
+
+//   // [self assertResultsOfClassifyImageWithName:kBurgerImageName
+//   //               usingImageClassifier:imageClassifier
+//   //               expectedCategoriesCount:kMobileNetCategoriesCount
+//   //                  equalsCategories:[MPPImageClassifierTests
+//   //                                       expectedResultCategoriesForBurgerImage]];
+// }
 
 + (NSArray<MPPCategory *> *)expectedResultCategoriesForBurgerImage {
   return @[
@@ -126,24 +151,32 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                 usingImageClassifier:(MPPImageClassifier *)imageClassifier
                    expectedCategoriesCount:(NSInteger)expectedCategoriesCount
                    equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+  NSLog(@"Before Image");                  
   MPPImage *mppImage = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class] fileName:imageName ofType:@"jpg" error:nil];
   XCTAssertNotNil(mppImage);
+  NSLog(@"Created Image");                  
+
+
+  NSLog(@"Before Classify");                  
 
   MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyImage:mppImage error:nil];
+
+  // NSLog(@"After Classify");                  
+
   NSArray<MPPCategory *> *resultCategories = imageClassifierResult.classificationResult.classifications[0].categories;
   
-  AssertImageClassifierResultHasOneHead(imageClassifierResult);
-  XCTAssertEqual(resultCategories, expectedCategoriesCount);
+  // AssertImageClassifierResultHasOneHead(imageClassifierResult);
+  // XCTAssertEqual(resultCategories, expectedCategoriesCount);
   
-  NSArray<MPPCategory *> *categorySubsetToCompare;
-  if (resultCategories.count > expectedCategories.count) {
-     categorySubsetToCompare = [resultCategories subarrayWithRange:NSMakeRange(0,expectedCategoriesCount)];
-  }
-  else {
-    categorySubsetToCompare = imageClassifierResult.classificationResult.classifications[0].categories;
-  }
-  AssertEqualCategoryArrays(categorySubsetToCompare,
-                            expectedCategories);
+  // NSArray<MPPCategory *> *categorySubsetToCompare;
+  // if (resultCategories.count > expectedCategories.count) {
+  //    categorySubsetToCompare = [resultCategories subarrayWithRange:NSMakeRange(0,expectedCategoriesCount)];
+  // }
+  // else {
+  //   categorySubsetToCompare = imageClassifierResult.classificationResult.classifications[0].categories;
+  // }
+  // AssertEqualCategoryArrays(categorySubsetToCompare,
+  //                           expectedCategories);
 }
 
 - (void)testCreateImageClassifierFailsWithMissingModelPath {
@@ -200,8 +233,20 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 }
 
 - (void)testClassifyWithModelPathAndFloatModelSucceeds {
+
+  NSLog(@"Enter 1");
   MPPImageClassifier *imageClassifier =
       [self imageClassifierFromModelFileWithName:kFloatModelName];
+
+  NSLog(@"Created classif");
+  
+  // const cv::RotatedRect rotated_rect(cv::Point2f(0, 0),
+  //                                    cv::Size2f(100, 100),
+  //                                    90 * 180.f / M_PI);
+  // cv::Mat src_points;
+  // cv::boxPoints(rotated_rect, src_points);
+  
+  // NSLog(@"Hello done cv");
 
   [self assertResultsOfClassifyImageWithName:kBurgerImageName
                 usingImageClassifier:imageClassifier

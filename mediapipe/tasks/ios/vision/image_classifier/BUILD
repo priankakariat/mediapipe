@@ -60,5 +60,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierResultHelpers",
+        "//mediapipe/framework/formats:image",
     ],
 )

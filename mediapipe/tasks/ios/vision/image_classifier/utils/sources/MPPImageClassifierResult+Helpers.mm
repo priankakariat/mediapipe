@@ -31,6 +31,9 @@ using ::mediapipe::Packet;
 
 + (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
+  if(packet.IsEmpty()) {
+    NSLog(@"EMpty packet");
+  }
   MPPClassificationResult *classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
