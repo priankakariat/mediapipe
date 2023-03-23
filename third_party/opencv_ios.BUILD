@@ -10,6 +10,22 @@ load(
     "apple_static_framework_import",
 )
 
+
+genrule(
+    name = "build_framework",
+    srcs = glob(["opencv-4.7.0/**"]),
+    outs = ["opencv2.framework"],
+    cmd = "$(location opencv-4.7.0/platforms/ios/build_framework.py) --iphonesimulator_archs arm64,x86_64 --build_only_specified_archs  $(RULEDIR)",
+)
+
+objc_library(
+    hdrs = glob([
+        "opencv2.framework/**",
+    ]),
+    name = "opencv_gen_objc_lib",
+    data = [":build_framework"],
+)
+
 apple_static_framework_import(
     name = "OpencvFramework",
     framework_imports = glob(["opencv2.framework/**"]),
@@ -20,23 +36,6 @@ objc_library(
     name = "opencv_objc_lib",
     deps = [":OpencvFramework"],
 )
-
-
-# genrule(
-#     name = "build_xc_framework",
-#     srcs = glob(["opencv-4.7.0/**"]),
-#     outs = ["opencv2.framework"],
-#     cmd = "$(location opencv-4.7.0/platforms/ios/build_framework.py) --iphonesimulator_archs arm64,x86_64 --build_only_specified_archs  $(RULEDIR)",
-# )
-
-# objc_library(
-#     name = "opencv_objc_lib",
-#     # hdrs = glob([
-#     #     "opencv2.framework/Versions/A/Headers/**/*.h*",
-#     # ]),
-#     deps = [":OpencvFramework"],
-#     visibility = ["//visibility:public"],
-# )
 
 cc_library(
     name = "opencv",

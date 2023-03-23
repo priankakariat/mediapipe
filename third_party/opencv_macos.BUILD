@@ -9,7 +9,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 
 # The path to OpenCV is a combination of the path set for "macos_opencv"
 # in the WORKSPACE file and the prefix here.
-PREFIX = "Cellar/opencv/4.7.0_2/"
+PREFIX = "opt/opencv@3"
 
 # /opt/homebrew/opt/opencv@4/4.7.0_2/include/opencv4/opencv2/core/version.hpp
 # /opt/homebrew/Cellar/opencv/4.7.0_2/include/opencv4/opencv2/core/version.hpp
@@ -28,8 +28,8 @@ cc_library(
             paths.join(PREFIX, "lib/libopencv_videoio.dylib"),
         ],
     ),
-    hdrs = glob([paths.join(PREFIX, "include/opencv4/opencv2/**/*.h*")]),
-    includes = [paths.join(PREFIX, "include/opencv2")],
+    hdrs = glob([paths.join(PREFIX, "includ/opencv2/**/*.h*")]),
+    includes = [paths.join(PREFIX, "include")],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )

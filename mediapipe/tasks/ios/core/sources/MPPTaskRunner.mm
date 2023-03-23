@@ -56,7 +56,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   if (![MPPCommonUtils checkCppError:resultPacketMap.status() toError:error]) {
     return std::nullopt;
   }
-  std::cout << resultPacketMap.status() << std::endl;
+
   return resultPacketMap.value();
 }
 

@@ -29,4 +29,18 @@
   return [[MPPImage alloc] initWithUIImage:image error:error];
 }
 
++ (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
+                              fileName:(NSString *)name
+                                ofType:(NSString *)type
+                                orientation:(UIImageOrientation)imageOrientation
+                                error:(NSError **)error {
+  NSString *imagePath = [[NSBundle bundleForClass:classObject] pathForResource:name ofType:type];
+  if (!imagePath) return nil;
+
+  UIImage *image = [[UIImage alloc] initWithContentsOfFile:imagePath];
+  if (!image) return nil;
+
+  return [[MPPImage alloc] initWithUIImage:image orientation:imageOrientation error:error];
+}
+
 @end

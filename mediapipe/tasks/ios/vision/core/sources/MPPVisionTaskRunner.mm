@@ -88,7 +88,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return std::nullopt;
   }
 
-  CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? roi : CGRectMake(0.0, 0.0, 1.0, 1.0);
+  CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ?  CGRectMake(0.0, 0.0, 1.0, 1.0) : roi;
+
+  NSLog(@"Cal %f %f %f %f",calculatedRoi.origin.x, calculatedRoi.origin.y, calculatedRoi.size.width, calculatedRoi.size.height);
 
   NormalizedRect normalizedRect;
   normalizedRect.set_x_center(CGRectGetMidX(calculatedRoi));
@@ -96,12 +98,14 @@ using ::mediapipe::tasks::core::PacketsCallback;
   normalizedRect.set_width(CGRectGetWidth(calculatedRoi));
   normalizedRect.set_height(CGRectGetHeight(calculatedRoi));
 
-  int rotationDegrees = 0;
+  NSInteger rotationDegrees = 0;
   switch (imageOrientation) {
     case UIImageOrientationUp:
       break;
     case UIImageOrientationRight: {
+      NSLog(@"Oriented Right");
       rotationDegrees = -90;
+       NSLog(@"%d", rotationDegrees);
       break;
     }
     case UIImageOrientationDown: {
@@ -123,7 +127,10 @@ using ::mediapipe::tasks::core::PacketsCallback;
                     @"UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`)"];
   }
 
+ NSLog(@"%d", rotationDegrees);
+ NSLog(@"%f", M_PI);
   normalizedRect.set_rotation(-rotationDegrees * M_PI / 180.0);
+  NSLog(@"%f",-rotationDegrees * M_PI / 180.0);
 
   return normalizedRect;
 }

@@ -82,7 +82,6 @@ static NSString *const kTaskGraphName =
     PacketsCallback packetsCallback = nullptr;
 
     if (options.completion) {
-      NSLog(@"Completion");
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
         MPPImageClassifierResult *result;
@@ -110,7 +109,6 @@ static NSString *const kTaskGraphName =
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPImageClassifierOptions *options = [[MPPImageClassifierOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
 
   return [self initWithOptions:options error:error];
@@ -145,42 +143,9 @@ static NSString *const kTaskGraphName =
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processPacketMap:inputPacketMap
                                                                            error:error];
 
-  NSLog(@"Process Done");                                                              
   if (!outputPacketMap.has_value()) {
     return nil;
   }
-  std::cout << "Class stream name " << kClassificationsStreamName.cppString << std::endl;
-  Packet classPacket = outputPacketMap.value()[kClassificationsStreamName.cppString];
-  Packet imgPacket = outputPacketMap.value()[kImageOutStreamName.cppString];
-
-  if (imgPacket.IsEmpty()){
-    NSLog(@"Image packet empty");
-  }
-
- mediapipe::Image img = imgPacket.Get<mediapipe::Image>();
- std::shared_ptr<mediapipe::ImageFrame> outImageFrame = imgPacket.Get<mediapipe::Image>().GetImageFrameSharedPtr();
- const uint8* data_img = outImageFrame->PixelData();
-
-std::unique_ptr<mediapipe::ImageFrame> imageFrame = [image imageFrameWithError:error];
-const uint8* in_data_img = outImageFrame->PixelData();
-
-// for (int i=0; i < img.height(); i++) {
-//   for (int j = 0; j < img.step() * img.channels(); j++) {
-//     if (data_img[i * img.step() + j] == in_data_img[i * img.step() + j]) {
-//       NSLog(@"equal");
-//     }
-//   }
-// }
-
-
- NSLog(@"First pixel: %d", data_img[0]);
- NSLog(@"Width: %d", img.width());
- NSLog(@"Height: %d", img.height());
- NSLog(@"Channels: %d", img.channels());
- NSLog(@"step: %d", img.step());
-
-
-
 
   return
       [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:

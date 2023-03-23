@@ -39,6 +39,13 @@ NS_ASSUME_NONNULL_BEGIN
                                           error:(NSError **)error
     NS_SWIFT_NAME(imageFromBundle(class:filename:type:));
 
++ (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
+                              fileName:(NSString *)name
+                                ofType:(NSString *)type
+                                orientation:(UIImageOrientation)imageOrientation
+                                error:(NSError **)error
+    NS_SWIFT_NAME(imageFromBundle(class:filename:type:orientation:));                             
+
 @end
 
 NS_ASSUME_NONNULL_END

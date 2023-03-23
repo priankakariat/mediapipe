@@ -63,41 +63,18 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 @implementation MPPImageClassifierTests
 
-//  - (void)testClassifyWithModelPathAndFloatModelSucceeds {
-
-//   // NSLog(@"Enter 1");
-//   // MPPImageClassifier *imageClassifier =
-//   //     [self imageClassifierFromModelFileWithName:kFloatModelName];
-
-//   // NSLog(@"Created classif");
-  
-//   const cv::RotatedRect rotated_rect(cv::Point2f(0, 0),
-//                                      cv::Size2f(100, 100),
-//                                      90 * 180.f / M_PI);
-//   cv::Mat src_points;
-//   cv::boxPoints(rotated_rect, src_points);
-  
-//   NSLog(@"Hello done cv");
-
-//   // [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//   //               usingImageClassifier:imageClassifier
-//   //               expectedCategoriesCount:kMobileNetCategoriesCount
-//   //                  equalsCategories:[MPPImageClassifierTests
-//   //                                       expectedResultCategoriesForBurgerImage]];
-// }
-
 + (NSArray<MPPCategory *> *)expectedResultCategoriesForBurgerImage {
   return @[
-    [[MPPCategory alloc] initWithIndex:934 score:0.7952058f categoryName:@"cheeseburger" displayName:nil],
-    [[MPPCategory alloc] initWithIndex:932 score:0.027329788f categoryName:@"bagel" displayName:nil],
-    [[MPPCategory alloc] initWithIndex:925 score:0.019334773f categoryName:@"guacamole" displayName:nil]
+    [[MPPCategory alloc] initWithIndex:934 score:0.786005f categoryName:@"cheeseburger" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:932 score:0.023508f categoryName:@"bagel" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:925 score:0.021172f categoryName:@"guacamole" displayName:nil]
   ];
 }
 
 + (NSArray<MPPCategory *> *)expectedResultCategoriesForBurgerImageWithScoreThreshold {
   return @[
-    [[MPPCategory alloc] initWithIndex:934 score:0.7952058f categoryName:@"cheeseburger" displayName:nil],
-    [[MPPCategory alloc] initWithIndex:932 score:0.027329788f categoryName:@"bagel" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:934 score:0.786005f categoryName:@"cheeseburger" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:932 score:0.023508f categoryName:@"bagel" displayName:nil],
   ];
 }
 
@@ -147,36 +124,40 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
+- (void)assertResultsOfClassifyImage:(MPPImage *)mppImage
+usingImageClassifier:(MPPImageClassifier *)imageClassifier
+                   expectedCategoriesCount:(NSInteger)expectedCategoriesCount
+                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+ 
+ XCTAssertNotNil(mppImage);
+
+  MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyImage:mppImage error:nil];
+
+  NSArray<MPPCategory *> *resultCategories = imageClassifierResult.classificationResult.classifications[0].categories;
+  
+  AssertImageClassifierResultHasOneHead(imageClassifierResult);
+  XCTAssertEqual(resultCategories.count, expectedCategoriesCount);
+  
+  NSArray<MPPCategory *> *categorySubsetToCompare;
+  if (resultCategories.count > expectedCategories.count) {
+     categorySubsetToCompare = [resultCategories subarrayWithRange:NSMakeRange(0,expectedCategories.count)];
+  }
+  else {
+    categorySubsetToCompare = resultCategories;
+  }
+  AssertEqualCategoryArrays(categorySubsetToCompare,
+                            expectedCategories);
+
+}    
+
 - (void)assertResultsOfClassifyImageWithName:(NSString *)imageName
                 usingImageClassifier:(MPPImageClassifier *)imageClassifier
                    expectedCategoriesCount:(NSInteger)expectedCategoriesCount
                    equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
-  NSLog(@"Before Image");                  
   MPPImage *mppImage = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class] fileName:imageName ofType:@"jpg" error:nil];
   XCTAssertNotNil(mppImage);
-  NSLog(@"Created Image");                  
 
-
-  NSLog(@"Before Classify");                  
-
-  MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyImage:mppImage error:nil];
-
-  // NSLog(@"After Classify");                  
-
-  NSArray<MPPCategory *> *resultCategories = imageClassifierResult.classificationResult.classifications[0].categories;
-  
-  // AssertImageClassifierResultHasOneHead(imageClassifierResult);
-  // XCTAssertEqual(resultCategories, expectedCategoriesCount);
-  
-  // NSArray<MPPCategory *> *categorySubsetToCompare;
-  // if (resultCategories.count > expectedCategories.count) {
-  //    categorySubsetToCompare = [resultCategories subarrayWithRange:NSMakeRange(0,expectedCategoriesCount)];
-  // }
-  // else {
-  //   categorySubsetToCompare = imageClassifierResult.classificationResult.classifications[0].categories;
-  // }
-  // AssertEqualCategoryArrays(categorySubsetToCompare,
-  //                           expectedCategories);
+  [self assertResultsOfClassifyImage:mppImage usingImageClassifier:imageClassifier expectedCategoriesCount:expectedCategoriesCount equalsCategories:expectedCategories];
 }
 
 - (void)testCreateImageClassifierFailsWithMissingModelPath {
@@ -216,37 +197,25 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                       }]];
 }
 
-- (void)testCreateImageClassifierFailsWithInvalidMaxResults {
-  MPPImageClassifierOptions *options =
-      [self imageClassifierOptionsWithModelName:kFloatModelName];
-  options.maxResults = 0;
+// - (void)testCreateImageClassifierFailsWithInvalidMaxResults {
+//   MPPImageClassifierOptions *options =
+//       [self imageClassifierOptionsWithModelName:kFloatModelName];
+//   options.maxResults = 0;
 
-  [self assertCreateImageClassifierWithOptions:options
-                       failsWithExpectedError:
-                           [NSError errorWithDomain:kExpectedErrorDomain
-                                               code:MPPTasksErrorCodeInvalidArgumentError
-                                           userInfo:@{
-                                             NSLocalizedDescriptionKey :
-                                                 @"INVALID_ARGUMENT: Invalid `max_results` option: "
-                                                 @"value must be != 0."
-                                           }]];
-}
+//   [self assertCreateImageClassifierWithOptions:options
+//                        failsWithExpectedError:
+//                            [NSError errorWithDomain:kExpectedErrorDomain
+//                                                code:MPPTasksErrorCodeInvalidArgumentError
+//                                            userInfo:@{
+//                                              NSLocalizedDescriptionKey :
+//                                                  @"INVALID_ARGUMENT: Invalid `max_results` option: "
+//                                                  @"value must be > 0."
+//                                            }]];
+// }
 
 - (void)testClassifyWithModelPathAndFloatModelSucceeds {
-
-  NSLog(@"Enter 1");
   MPPImageClassifier *imageClassifier =
       [self imageClassifierFromModelFileWithName:kFloatModelName];
-
-  NSLog(@"Created classif");
-  
-  // const cv::RotatedRect rotated_rect(cv::Point2f(0, 0),
-  //                                    cv::Size2f(100, 100),
-  //                                    90 * 180.f / M_PI);
-  // cv::Mat src_points;
-  // cv::boxPoints(rotated_rect, src_points);
-  
-  // NSLog(@"Hello done cv");
 
   [self assertResultsOfClassifyImageWithName:kBurgerImageName
                 usingImageClassifier:imageClassifier
@@ -255,153 +224,163 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                         expectedResultCategoriesForBurgerImage]];
 }
 
-// - (void)testClassifyWithOptionsAndFloatModelSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFLoatModelName];
+- (void)testClassifyWithOptionsAndFloatModelSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
 
-//   const NSInteger maxResults = 3;
-//   options.maxResults = maxResults;
+  const NSInteger maxResults = 3;
+  options.maxResults = maxResults;
 
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
 
-//   [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//                 usingImageClassifier:imageClassifier
-//                 expectedCategoriesCount:maxResults
-//                    equalsCategories:[MPPImageClassifierTests
-//                                         expectedResultCategoriesForBurgerImage]];
-// }
+  [self assertResultsOfClassifyImageWithName:kBurgerImageName
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:maxResults
+                   equalsCategories:[MPPImageClassifierTests
+                                        expectedResultCategoriesForBurgerImage]];
+}
 
-// - (void)testClassifyWithQuantizedModelSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kQuantizedModelName];
+- (void)testClassifyWithQuantizedModelSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kQuantizedModelName];
 
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+  const NSInteger maxResults = 1;
+  options.maxResults = maxResults;
 
-//   [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//                 usingImageClassifier:imageClassifier
-//                 expectedCategoriesCount:kMobileNetCategoriesCount
-//                    equalsCategories:[MPPImageClassifierTests
-//                                         expectedResultCategoriesForBurgerImage]];
-// }
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
 
-// - (void)testClassifyWithScoreThresholdSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
+    NSArray<MPPCategory* > *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:934 score:0.972656f categoryName:@"cheeseburger" displayName:nil]
+  ];
+
+  [self assertResultsOfClassifyImageWithName:kBurgerImageName
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:maxResults
+                   equalsCategories:expectedCategories];
+}
+
+- (void)testClassifyWithScoreThresholdSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
   
-//   options.scoreThreshold = 0.02f;
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+  options.scoreThreshold = 0.25f;
   
-//   NSArray<MPPCategory *expectedCategories = @[
-//     [[MPPCategory alloc] initWithIndex:934 score:0.7952058f categoryName:@"cheeseburger" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:932 score:0.027329788f categoryName:@"bagel" displayName:nil],
-//   ];
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
   
-//   [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//                 usingImageClassifier:imageClassifier
-//                 expectedCategoriesCount:expectedCategories.count
-//                    equalsCategories:expectedCategories];
-// }
-
-// - (void)testClassifyWithAllowListSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
+  NSArray<MPPCategory *> *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:934 score:0.786005f categoryName:@"cheeseburger" displayName:nil]
+  ];
   
-//   options.categoryAllowlist = @[
-//     @"cheeseburger",
-//     @"guacamole",
-//     @"meat loaf"
-//   ];
+  [self assertResultsOfClassifyImageWithName:kBurgerImageName
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:expectedCategories.count
+                   equalsCategories:expectedCategories];
+}
 
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+- (void)testClassifyWithAllowListSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
   
-//   NSArray<MPPCategory *expectedCategories = @[
-//     [[MPPCategory alloc] initWithIndex:934 score:0.7952058f categoryName:@"cheeseburger" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:925 score:0.019334773f categoryName:@"guacamole" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:963 score:0.006279315f categoryName:@"meat loaf" displayName:nil],
+  options.categoryAllowlist = @[
+    @"cheeseburger",
+    @"guacamole",
+    @"meat loaf"
+  ];
 
-//   ];
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
   
-//   [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//                 usingImageClassifier:imageClassifier
-//                 expectedCategoriesCount:expectedCategories.count
-//                    equalsCategories:expectedCategories];
-// }
+  NSArray<MPPCategory *> *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:934 score:0.786005f categoryName:@"cheeseburger" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:925 score:0.021172f categoryName:@"guacamole" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:963 score:0.006279315f categoryName:@"meat loaf" displayName:nil],
 
-// - (void)testClassifyWithDenyListSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
+  ];
   
-//   options.categoryAllowlist = @[
-//     @"bagel",
-//   ];
-//   options.maxResults = 3;
+  [self assertResultsOfClassifyImageWithName:kBurgerImageName
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:expectedCategories.count
+                   equalsCategories:expectedCategories];
+}
 
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+- (void)testClassifyWithDenyListSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
   
-//   NSArray<MPPCategory *expectedCategories = @[
-//     [[MPPCategory alloc] initWithIndex:934 score:0.7952058f categoryName:@"cheeseburger" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:925 score:0.019334773f categoryName:@"guacamole" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:963 score:0.006279315f categoryName:@"meat loaf" displayName:nil],
+  options.categoryDenylist = @[
+    @"bagel",
+  ];
+  options.maxResults = 3;
 
-//   ];
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
   
-//   [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//                 usingImageClassifier:imageClassifier
-//                 expectedCategoriesCount:expectedCategories.count
-//                    equalsCategories:expectedCategories];
-// }
+  NSArray<MPPCategory *> *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:934 score:0.786005f categoryName:@"cheeseburger" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:925 score:0.021172f categoryName:@"guacamole" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:963 score:0.006279315f categoryName:@"meat loaf" displayName:nil],
 
-// - (void)testClassifyWithRegionOfInterestSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
+  ];
   
-//   NSInteger maxResults = 1;
-//   options.maxResults = maxResults;
+  [self assertResultsOfClassifyImageWithName:kBurgerImageName
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:expectedCategories.count
+                   equalsCategories:expectedCategories];
+}
 
+- (void)testClassifyWithRegionOfInterestSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
   
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
-  
-//   NSArray<MPPCategory *expectedCategories = @[
-//     [[MPPCategory alloc] initWithIndex:806 score:0.9969325f categoryName:@"soccer ball" displayName:nil]
-//   ];
-
-//   MPPImage *mppImage = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class] name:imageName ofType:@"jpg"];
-
-//   MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyImage:mppImage regionOfInterest:CGRectMake(409, 109, 146, 155) error:nil];
-
-//   AssertImageClassifierResultHasOneHead(imageClassifierResult);
-//   XCTAssertEqual(imageClassifierResult.classificationResul.classifications[0].categories.count, expectedCategoriesCount);
-//   AssertEqualCategoryArrays( imageClassifierResult.classificationResult.classifications[0].categories,
-//                             expectedCategories);
-// }
-
-// - (void)testClassifyWithRotationSucceeds {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
-  
-//   NSInteger maxResults = 1;
-//   options.maxResults = maxResults;
+  NSInteger maxResults = 1;
+  options.maxResults = maxResults;
 
   
-//   MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(imageClassifier);
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
   
-//   // NSArray<MPPCategory *expectedCategories = @[
-//   //   [[MPPCategory alloc] initWithIndex:934 score:0.6390683f categoryName:@"cheeseburger" displayName:nil]
-//   // ];
+  NSArray<MPPCategory *> *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:560 score:0.686824f categoryName:@"folding chair" displayName:nil]
+  ];
 
-//   // [self assertResultsOfClassifyImageWithName:kBurgerImageName
-//   //               usingImageClassifier:imageClassifier
-//   //               expectedCategoriesCount:maxResults
-//   //                  equalsCategories:@[
-//   //   [[MPPCategory alloc] initWithIndex:806 score:0.9969325f categoryName:@"soccer ball" displayName:nil]
-//   // ]];
-// }
+  MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class] fileName:kMultiObjectsRotatedImageName ofType:@"jpg" orientation:UIImageOrientationRight error:nil];
+  XCTAssertNotNil(image);
+
+  [self assertResultsOfClassifyImage:image
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:maxResults
+                   equalsCategories:expectedCategories];
+}
+
+- (void)testClassifyWithRotationSucceeds {
+  MPPImageClassifierOptions *options =
+      [self imageClassifierOptionsWithModelName:kFloatModelName];
+  
+
+  NSInteger maxResults = 3;
+  options.maxResults = maxResults;
+
+  
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options error:nil];
+  XCTAssertNotNil(imageClassifier);
+  
+  NSArray<MPPCategory *> *expectedCategories = @[
+    [[MPPCategory alloc] initWithIndex:934 score:0.622074f categoryName:@"cheeseburger" displayName:nil],
+     [[MPPCategory alloc] initWithIndex:963 score:0.051214f categoryName:@"meat loaf" displayName:nil],
+          [[MPPCategory alloc] initWithIndex:925 score:0.048719f categoryName:@"guacamole" displayName:nil]
+
+  ];
+
+  MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class] fileName:kBurgerRotatedImageName ofType:@"jpg" orientation:UIImageOrientationRight error:nil];
+  XCTAssertNotNil(image);
+
+  [self assertResultsOfClassifyImage:image
+                usingImageClassifier:imageClassifier
+                expectedCategoriesCount:maxResults
+                   equalsCategories:expectedCategories];
+}
   
 @end

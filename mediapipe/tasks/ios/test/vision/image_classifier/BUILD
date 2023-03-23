@@ -48,7 +48,6 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
-        "@ios_opencv//:OpencvFramework",
     ],
     sdk_frameworks = [
         "AVFoundation",

@@ -1,3 +1,5 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -59,5 +61,26 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
         "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
-    ],
+    ]
+    + select({
+        "//mediapipe:ios_sim_arm64": [
+            "@ios_opencv_sim_arm64//:OpencvFramework"
+        ],
+        "//mediapipe:ios_i386": [
+            "@ios_opencv//:OpencvFramework"
+        ],
+        "//mediapipe:ios_armv7": [
+            "@ios_opencv//:OpencvFramework"
+        ],
+        "//mediapipe:ios_arm64": [
+            "@ios_opencv//:OpencvFramework"
+        ],
+        "//mediapipe:ios_arm64e": [
+            "@ios_opencv//:OpencvFramework"
+        ],
+        "//conditions:default": [
+             "@ios_opencv//:OpencvFramework"
+        ],
+    }),
+
 )

@@ -35,11 +35,8 @@ using ::mediapipe::Timestamp;
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
   if (!imageFrame) {
-        NSLog(@"Not Image Frame");
     return Packet();
   }
-
-    NSLog(@"Image Frame Done");
 
   return MakePacket<Image>(std::move(imageFrame));
 }
@@ -50,10 +47,9 @@ using ::mediapipe::Timestamp;
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
   if (!imageFrame) {
-    NSLog(@"Not Image Frame");
     return Packet();
   }
-    NSLog(@"Image Frame Done");
+
   return MakePacket<Image>(std::move(imageFrame))
       .At(Timestamp(int64(timestampMs * kMicroSecondsPerMilliSecond)));
 }
