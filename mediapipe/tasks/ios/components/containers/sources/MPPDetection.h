@@ -17,8 +17,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static const float kTolerance = 1e-6;
-
 /**
  * Normalized keypoint represents a point in 2D space with x, y coordinates. x and y are normalized
  * to [0.0, 1.0] by the image width and height respectively.
@@ -37,16 +35,19 @@ NS_SWIFT_NAME(NormalizedKeypoint)
 
 /**
  * Initializes a new `MPPNormalizedKeypoint` object with the given location, label and score.
- * You must pass 0.0 if score is not present.
+ * You must pass 0.0 for `score` if it is not present.
  *
  * @param location The (x,y) coordinates location of the normalized keypoint.
  * @param label  The optional label of the normalized keypoint.
- * @param score The optional score of the normalized keypoint. You must pass 0.0 if score is not present. 
+ * @param score The optional score of the normalized keypoint. You must pass 0.0 for score if it
+ * is not present.
  *
- * @return An instance of `MPPNormalizedKeypoint` initialized with the given given location, label and score.
+ * @return An instance of `MPPNormalizedKeypoint` initialized with the given given location, label
+ * and score.
  */
 - (instancetype)initWithLocation:(CGPoint)location
-                       label:(nullable NSString *)label score:(float)score;
+                           label:(nullable NSString *)label
+                           score:(float)score NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -54,94 +55,41 @@ NS_SWIFT_NAME(NormalizedKeypoint)
 
 @end
 
-/**
- * Represents the list of classification for a given classifier head. Typically used as a result
- * for classification tasks.
- */
+/** Represents one detected object in the results of `MPPObjectDetector`. */
 NS_SWIFT_NAME(Detection)
 @interface MPPDetection : NSObject
 
 /** An array of `MPPCategory` objects containing the predicted categories. */
 @property(nonatomic, readonly) NSArray<MPPCategory *> *categories;
 
-/**
- * The bounding box of the detected object.
- */
+/** The bounding box of the detected object. */
 @property(nonatomic, readonly) CGRect boundingBox;
 
-
-
-/**
- * Initializes a new `MPPClassifications` object with the given head index and array of categories.
- * Head name is initialized to `nil`.
- *
- * @param headIndex The index of the classifier head.
- * @param categories  An array of `MPPCategory` objects containing the predicted categories.
- *
- * @return An instance of `MPPClassifications` initialized with the given head index and
- * array of categories.
- */
-- (instancetype)initWithHeadIndex:(NSInteger)headIndex
-                       categories:(NSArray<MPPCategory *> *)categories;
+/** An optional array of `MPPNormalizedKeypoint` objects associated with the detection. Keypoints
+ * represent interesting points related to the detection. For example, the keypoints represent the
+ * eyes, ear and mouth from face detection model. Or in the template matching detection, e.g. KNIFT,
+ * they can represent the feature points for template matching. */
+@property(nonatomic, readonly, nullable) NSArray<MPPNormalizedKeypoint *> *keypoints;
 
 /**
- * Initializes a new `MPPClassifications` with the given head index, head name and array of
- * categories.
+ * Initializes a new `MPPDetection` object with the given array of categories, bounding box and
+ * optional array of keypoints;
  *
- * @param headIndex The index of the classifier head.
- * @param headName The name of the classifier head, which is the corresponding tensor metadata
- * name.
- * @param categories An array of `MPPCategory` objects containing the predicted categories.
+ * @param categories A list of `MPPCategory` objects that contain category name, display name,
+ * score, and the label index.
+ * @param boundingBox  A `CGRect` that represents the bounding box.
+ * @param keypoints: An optional array of `MPPNormalizedKeypoint` objects associated with the
+ * detection. Keypoints represent interesting points related to the detection. For example, the
+ * keypoints represent the eyes, ear and mouth from face detection model. Or in the template
+ * matching detection, e.g. KNIFT, they can represent the feature points for template matching.
  *
- * @return An object of `MPPClassifications` initialized with the given head index, head name and
- * array of categories.
+ * @return An instance of `MPPDetection` initialized with the given array of categories, bounding
+ * box and `nil` keypoints.
  */
-- (instancetype)initWithHeadIndex:(NSInteger)headIndex
-                         headName:(nullable NSString *)headName
-                       categories:(NSArray<MPPCategory *> *)categories NS_DESIGNATED_INITIALIZER;
-
-- (instancetype)init NS_UNAVAILABLE;
-
-+ (instancetype)new NS_UNAVAILABLE;
-
-@end
-
-/**
- * Represents the classification results of a model. Typically used as a result for classification
- * tasks.
- */
-NS_SWIFT_NAME(ClassificationResult)
-@interface MPPClassificationResult : NSObject
-
-/**
- * An Array of `MPPClassifications` objects containing the predicted categories for each head of
- * the model.
- */
-@property(nonatomic, readonly) NSArray<MPPClassifications *> *classifications;
-
-/**
- * The optional timestamp (in milliseconds) of the start of the chunk of data corresponding to
- * these results. If it is set to the value -1, it signifies the absence of a timestamp. This is
- * only used for classification on time series (e.g. audio classification). In these use cases, the
- * amount of data to process might exceed the maximum size that the model can process: to solve
- * this, the input data is split into multiple chunks starting at different timestamps.
- */
-@property(nonatomic, readonly) NSInteger timestampMs;
-
-/**
- * Initializes a new `MPPClassificationResult` with the given array of classifications and time
- * stamp (in milliseconds).
- *
- * @param classifications An Array of `MPPClassifications` objects containing the predicted
- * categories for each head of the model.
- * @param timestampMs The timestamp (in milliseconds) of the start of the chunk of data
- * corresponding to these results.
- *
- * @return An instance of `MPPClassificationResult` initialized with the given array of
- * classifications and timestampMs.
- */
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                            timestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithCategories:(NSArray<MPPCategory *> *)categories
+                       boundingBox:(CGRect)boundingBox
+                         keypoints:(nullable NSArray<MPPNormalizedKeypoint *> *)keypoints
+    NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

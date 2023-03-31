@@ -12,41 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPDetection.h"
 
-static const float kTolerance = 1e-6;
+@implementation MPPNormalizedKeypoint
 
-@implementation MPPClassifications
-
-- (instancetype)initWithHeadIndex:(NSInteger)headIndex
-                         headName:(nullable NSString *)headName
-                       categories:(NSArray<MPPCategory *> *)categories {
+- (instancetype)initWithLocation:(CGPoint)location
+                           label:(nullable NSString *)label
+                           score:(float)score {
   self = [super init];
   if (self) {
-    _headIndex = headIndex;
-    _headName = headName;
-    _categories = categories;
+    _location = location;
+    _label = label;
+    _score = score;
   }
   return self;
 }
 
-- (instancetype)initWithHeadIndex:(NSInteger)headIndex
-                       categories:(NSArray<MPPCategory *> *)categories {
-  return [self initWithHeadIndex:headIndex headName:nil categories:categories];
+// TODO: Implement hash
+
+- (BOOL)isEqual:(nullable id)object {
+  if (!object) {
+    return NO;
+  }
+
+  if (self == object) {
+    return YES;
+  }
+
+  if (![object isKindOfClass:[MPPNormalizedKeypoint class]]) {
+    return NO;
+  }
+
+  MPPNormalizedKeypoint *otherKeypoint = (MPPNormalizedKeypoint *)object;
+
+  if (CGPointEqualToPoint(self.location, otherKeypoint.location) &&
+      (self.label == otherKeypoint.label) && (self.score == otherKeypoint.score)) {
+    return YES;
+  }
 }
 
 @end
 
-@implementation MPPClassificationResult
+@implementation MPPDetection
 
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                            timestampMs:(NSInteger)timestampMs {
+- (instancetype)initWithCategories:(NSArray<MPPCategory *> *)categories
+                       boundingBox:(CGRect)boundingBox
+                         keypoints:(nullable NSArray<MPPNormalizedKeypoint *> *)keypoints {
   self = [super init];
   if (self) {
-    _classifications = classifications;
-    _timestampMs = timestampMs;
+    _categories = categories;
+    _boundingBox = boundingBox;
+    _keypoints = keypoints;
   }
-
   return self;
 }
 

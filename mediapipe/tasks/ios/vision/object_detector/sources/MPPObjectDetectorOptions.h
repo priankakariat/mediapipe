@@ -16,15 +16,13 @@
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
-#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectionResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * Options for setting up a `MPPImageClassifier`.
- */
-NS_SWIFT_NAME(ImageClassifierOptions)
-@interface MPPImageClassifierOptions : MPPTaskOptions <NSCopying>
+/** Options for setting up a `MPPObjectDetector`. */
+NS_SWIFT_NAME(ObjectDetectorOptions)
+@interface MPPObjectDetectorOptions : MPPTaskOptions <NSCopying>
 
 @property(nonatomic) MPPRunningMode runningMode;
 
@@ -33,7 +31,8 @@ NS_SWIFT_NAME(ImageClassifierOptions)
  * be specified when the running mode is set to the live stream mode.
  * TODO: Add parameter `MPPImage` in the callback.
  */
-@property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSInteger timestampMs, NSError *error);
+@property(nonatomic, copy) void (^completion)
+    (MPPObjectDetectionResult *result, NSInteger timestampMs, NSError *error);
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

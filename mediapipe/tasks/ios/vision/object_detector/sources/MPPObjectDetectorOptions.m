@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorOptions.h"
 
-@implementation MPPImageClassifierOptions
+@implementation MPPObjectDetectorOptions
 
 - (instancetype)init {
   self = [super init];
@@ -26,16 +26,16 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-  MPPImageClassifierOptions *imageClassifierOptions = [super copyWithZone:zone];
+  MPPObjectDetectorOptions *objectDetectorOptions = [super copyWithZone:zone];
 
-  imageClassifierOptions.scoreThreshold = self.scoreThreshold;
-  imageClassifierOptions.maxResults = self.maxResults;
-  imageClassifierOptions.categoryDenylist = self.categoryDenylist;
-  imageClassifierOptions.categoryAllowlist = self.categoryAllowlist;
-  imageClassifierOptions.displayNamesLocale = self.displayNamesLocale;
-  imageClassifierOptions.completion = self.completion;
+  objectDetectorOptions.scoreThreshold = self.scoreThreshold;
+  objectDetectorOptions.maxResults = self.maxResults;
+  objectDetectorOptions.categoryDenylist = self.categoryDenylist;
+  objectDetectorOptions.categoryAllowlist = self.categoryAllowlist;
+  objectDetectorOptions.displayNamesLocale = self.displayNamesLocale;
+  objectDetectorOptions.completion = self.completion;
 
-  return imageClassifierOptions;
+  return objectDetectorOptions;
 }
 
 @end

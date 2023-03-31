@@ -24,7 +24,6 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
 @implementation MPPEmbedding (Helpers)
 
 + (MPPEmbedding *)embeddingWithProto:(const EmbeddingProto &)embeddingProto {
-
   NSMutableArray<NSNumber *> *floatEmbedding;
   NSMutableArray<NSNumber *> *quantizedEmbedding;
   NSString *headName;

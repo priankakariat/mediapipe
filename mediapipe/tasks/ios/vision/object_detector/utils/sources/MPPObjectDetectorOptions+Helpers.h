@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorOptions.h"
 
-@implementation MPPImageClassifierResult
+NS_ASSUME_NONNULL_BEGIN
 
-- (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
-                                 timestampMs:(NSInteger)timestampMs {
-  self = [super initWithTimestampMs:timestampMs];
-  if (self) {
-    _classificationResult = classificationResult;
-  }
-  return self;
-}
+@interface MPPObjectDetectorOptions (Helpers) <MPPTaskOptionsProtocol>
+
+/**
+ * Populates the provided `CalculatorOptions` proto container with the current settings.
+ *
+ * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
+ */
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END
