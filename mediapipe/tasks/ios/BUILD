@@ -18,11 +18,12 @@ load(
     "strip_api_include_path_prefix",
 )
 load(
-    "@build_bazel_rules_apple//apple:ios.bzl",
+    "@build_bazel_rules_apple//apple:apple.bzl",
     "apple_static_xcframework",
+    "apple_static_library",
 )
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -55,17 +56,74 @@ apple_static_xcframework(
         ":MPPTextClassifierResult.h",
     ],
     bundle_name = "MediaPipeTaskText",
-    minimum_os_version = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION
-    },
     ios = {
-        "simulator" : ["arm64"],
-    }
-    minimum_os_version = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION
+        # "simulator" : ["arm64"],
+        "device" : ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
     deps = [
-        # "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
     ],
 )
+
+# apple_static_xcframework(
+#     name = "MediaPipeTaskGraph",
+#     # public_hdrs = [
+#     #     ":MPPBaseOptions.h",
+#     #     ":MPPCategory.h",
+#     #     ":MPPClassificationResult.h",
+#     #     ":MPPCommon.h",
+#     #     ":MPPTaskOptions.h",
+#     #     ":MPPTaskResult.h",
+#     #     ":MPPTextClassifier.h",
+#     #     ":MPPTextClassifierOptions.h",
+#     #     ":MPPTextClassifierResult.h",
+#     # ],
+#     bundle_name = "MediaPipeTaskGraph",
+#     ios = {
+#         "simulator" : ["arm64"],
+#         "device" : ["arm64"],
+#     },
+#     minimum_os_versions = {
+#         "ios": MPP_TASK_MINIMUM_OS_VERSION,
+#     },
+#     deps = [
+#         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+#         "@org_tensorflow//third_party/icu/data:conversion_data",
+#     ],
+# )
+
+apple_static_library(
+    name = "MediaPipeTaskGraph",
+    # public_hdrs = [
+    #     ":MPPBaseOptions.h",
+    #     ":MPPCategory.h",
+    #     ":MPPClassificationResult.h",
+    #     ":MPPCommon.h",
+    #     ":MPPTaskOptions.h",
+    #     ":MPPTaskResult.h",
+    #     ":MPPTextClassifier.h",
+    #     ":MPPTextClassifierOptions.h",
+    #     ":MPPTextClassifierResult.h",
+    # ],
+    platform_type = "ios",
+    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
+    deps = [
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+)
+
+# apple_static_xcframework_import(
+#     name = "my_static_xcframework",
+#     xcframework_imports = glob(["MediaPipeTaskGraph.xcframework/**"])
+# )
+
+# objc_library(
+#     name = "foo_lib",
+#     deps = [
+#         ":my_static_xcframework",
+#     ],
+# )

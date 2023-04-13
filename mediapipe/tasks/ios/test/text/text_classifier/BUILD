@@ -7,7 +7,7 @@ load(
     "swift_library",
 )
 load(
-    "//mediapipe/tasks:ios/ios.bzl",
+    "//mediapipe/tasks/ios:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
 )
 load(

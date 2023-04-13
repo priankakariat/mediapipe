@@ -46,6 +46,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
+    NSLog(@"Attempt65 with linkopts -force_load -Wl absolute path");
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]

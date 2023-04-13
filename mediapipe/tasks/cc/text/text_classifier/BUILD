@@ -46,6 +46,9 @@ cc_library(
 cc_library(
     name = "text_classifier_graph",
     srcs = ["text_classifier_graph.cc"],
+    copts = [
+        "-ObjC++",
+    ],
     deps = [
         "//mediapipe/calculators/tensor:inference_calculator_cpu",
         "//mediapipe/framework:calculator_cc_proto",
@@ -65,7 +68,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
-    alwayslink = 1,
+    # alwayslink = 1,
 )
 
 cc_test(
