@@ -68,7 +68,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
-    # alwayslink = 1,
+    alwayslink = 1,
 )
 
 cc_test(

@@ -13,8 +13,9 @@ Pod::Spec.new do |s|
   s.module_name = 'MediaPipeTaskText'
   s.static_framework = true
   s.pod_target_xcconfig = {
-    'VALID_ARCHS' => 'x86_64, arm64, armv7',
+    'OTHER_LINKER_FLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/MediaPipeTaskText_simulator_graph_lib.a"',
+    'OTHER_LINKER_FLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/MediaPipeTaskText_simulator_graph_lib.a"',
   }
   s.library = 'c++'
-  s.vendored_frameworks = 'Frameworks/MediaPipeTaskText.framework'
+  s.vendored_frameworks = 'F=frameworks/MediaPipeTaskText.xcframework'
 end
