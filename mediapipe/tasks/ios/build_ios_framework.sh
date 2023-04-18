@@ -94,14 +94,14 @@ function build_ios_frameworks_and_libraries {
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
   FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
 
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=$1 --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=$1 --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define MEDIAPIPE_DISABLE_GPU=$1 \
+  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define MEDIAPIPE_DISABLE_GPU=$1 --apple_generate_dsym=false \
    ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
 
-  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define MEDIAPIPE_DISABLE_GPU=$1 \
+  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define MEDIAPIPE_DISABLE_GPU=$1 --apple_generate_dsym=false \
    ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
 }
