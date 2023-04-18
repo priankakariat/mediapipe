@@ -27,14 +27,6 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-config_setting(
-    name = "avoid_linking_graphs",
-    define_values = {
-        "MEDIAPIPE_AVOID_LINKING_GRAPHS": "1",
-    },
-    visibility = ["//visibility:public"],
-)
-
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
     hdr_labels = [
@@ -61,17 +53,17 @@ apple_static_xcframework(
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
         ":MPPClassificationResult.h",
-        ":MPPEmbedding.h",
-        ":MPPEmbeddingResult.h",
+        # ":MPPEmbedding.h",
+        # ":MPPEmbeddingResult.h",
         ":MPPCommon.h",
         ":MPPTaskOptions.h",
         ":MPPTaskResult.h",
         ":MPPTextClassifier.h",
         ":MPPTextClassifierOptions.h",
         ":MPPTextClassifierResult.h",
-        ":MPPTextEmbedder.h",
-        ":MPPTextEmbedderOptions.h",
-        ":MPPTextEmbedderResult.h",
+        # ":MPPTextEmbedder.h",
+        # ":MPPTextEmbedderOptions.h",
+        # ":MPPTextEmbedderResult.h",
     ],
     bundle_name = "MediaPipeTaskText",
     ios = {
@@ -83,35 +75,7 @@ apple_static_xcframework(
     },
     deps = [
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
-        "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+        # "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
         "@org_tensorflow//third_party/icu/data:conversion_data",
     ],
 )
-
-apple_static_xcframework(
-    name = "MediaPipeTaskText_GraphLibrary",
-    bundle_name = "MediaPipeTaskGraph",
-    ios = {
-        "simulator" : ["arm64", "x86_64"],
-        "device" : ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = [
-        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
-    ],
-)
-
-# apple_static_library(
-#     name = "MediaPipeTaskText_GraphLibrar",
-#     platform_type = "ios",
-#     minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
-#     deps = [
-#         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-#         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-#         "@org_tensorflow//third_party/icu/data:conversion_data",
-#     ],
-# )
