@@ -44,9 +44,6 @@ objc_library(
         "-std=c++17",
         "-x objective-c++",
     ],
-    # linkopts = [
-    #     "-all_load",
-    # ],
     module_name = "MPPTextClassifier",
     deps = [
         ":MPPTextClassifierOptions",

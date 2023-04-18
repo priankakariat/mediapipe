@@ -88,30 +88,30 @@ apple_static_xcframework(
     ],
 )
 
-apple_static_xcframework(
-    name = "MediaPipeTaskText_GraphLibrary",
-    bundle_name = "MediaPipeTaskGraph",
-    ios = {
-        "simulator" : ["arm64", "x86_64"],
-        "device" : ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = [
-        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
-    ],
-)
-
-# apple_static_library(
-#     name = "MediaPipeTaskText_GraphLibrar",
-#     platform_type = "ios",
-#     minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
+# apple_static_xcframework(
+#     name = "MediaPipeTaskText_GraphLibrary",
+#     bundle_name = "MediaPipeTaskGraph",
+#     ios = {
+#         "simulator" : ["arm64", "x86_64"],
+#         "device" : ["arm64"],
+#     },
+#     minimum_os_versions = {
+#         "ios": MPP_TASK_MINIMUM_OS_VERSION,
+#     },
 #     deps = [
 #         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
 #         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
 #         "@org_tensorflow//third_party/icu/data:conversion_data",
 #     ],
 # )
+
+apple_static_library(
+    name = "MediaPipeTaskText_GraphLibrary",
+    platform_type = "ios",
+    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
+    deps = [
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        # "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+)
