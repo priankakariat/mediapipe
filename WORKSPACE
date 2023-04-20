@@ -367,12 +367,12 @@ http_archive(
 # trigger duplicate symbol errors in the linking stage of building a mediapipe ios app.
 # To get a higher version of OpenCV for iOS, opencv2.framework needs to be built from source with
 # '-DBUILD_PROTOBUF=OFF -DBUILD_opencv_dnn=OFF'.
+# https://www.dropbox.com/s/v8vydb4gspf8rmn/opencv2.xcframework.zip?dl=0
 http_archive(
     name = "ios_opencv",
-    sha256 = "7dd536d06f59e6e1156b546bd581523d8df92ce83440002885ec5abc06558de2",
     build_file = "@//third_party:opencv_ios.BUILD",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
+    url = "https://dl.dropboxusercontent.com/s/v8vydb4gspf8rmn/opencv2.xcframework.zip",
 )
 
 http_archive(
