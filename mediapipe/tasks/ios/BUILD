@@ -43,6 +43,7 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/components/containers:sources/MPPClassificationResult.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPEmbedding.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPEmbeddingResult.h",
+        "//mediapipe/tasks/ios/components/containers:sources/MPPDetection.h",
         "//mediapipe/tasks/ios/core:sources/MPPBaseOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskResult.h",
@@ -52,6 +53,14 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedder.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderOptions.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderResult.h",
+        "//mediapipe/tasks/ios/vision/core:sources/MPPImage.h",
+        "//mediapipe/tasks/ios/vision/core:sources/MPPRunningMode.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifier.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierOptions.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierResult.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectionResult.h",
     ],
 )
 
@@ -95,6 +104,51 @@ apple_static_library(
     deps = [
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTaskVision_framework",
+    public_hdrs = [
+        ":MPPBaseOptions.h",
+        ":MPPCategory.h",
+        ":MPPClassificationResult.h",
+        ":MPPDetection.h",
+        ":MPPCommon.h",
+        ":MPPTaskOptions.h",
+        ":MPPTaskResult.h",
+        ":MPPImage.h",
+        ":MPPRunningMode.h",
+        ":MPPImageClassifier.h",
+        ":MPPImageClassifierOptions.h",
+        ":MPPImageClassifierResult.h",
+        ":MPPObjectDetector.h",
+        ":MPPObjectDetectorOptions.h",
+        ":MPPObjectDetectionResult.h",
+    ],
+    bundle_name = "MediaPipeTaskVision",
+    ios = {
+        "simulator" : ["arm64", "x86_64"],
+        "device" : ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    deps = [
+        "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+)
+
+apple_static_library(
+    name = "MediaPipeTaskVision_GraphLibrary",
+    platform_type = "ios",
+    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
+    deps = [
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "@org_tensorflow//third_party/icu/data:conversion_data",
     ],
 )
