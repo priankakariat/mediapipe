@@ -17,7 +17,7 @@
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
+#import "mediapipe/tasks/ios/text/core/sources/MPPTextPacketCreator.h"
 #import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
@@ -46,6 +46,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
+    NSLog(@"Avoiding deps");
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]

@@ -32,7 +32,6 @@ fi
 BAZEL="${BAZEL:-$(which bazel)}"
 MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
-MPP_DISABLE_GPU=1
 
 if [[ ! -x "${BAZEL}" ]]; then
   echo "bazel executable is not found."
@@ -48,6 +47,10 @@ case $FRAMEWORK_NAME in
   "MediaPipeTaskText")
     ;;
   "MediaPipeTaskVision")
+    ;;
+  "MediaPipeTaskCommonObjects")
+    ;;
+  "MediaPipeTaskGraphs")
     ;;
   *)
     echo "Wrong framework name. The following framework names are allowed: MediaPipeTaskText"
@@ -97,9 +100,10 @@ function build_target {
 # 3. Static library including graphs needed for the xcframework for all iOS device 
 #    archs (arm64).
 function build_ios_frameworks_and_libraries {
+  
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
-  FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
+  # FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
   
   # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of 
   # the order of GBs. All iOS framework and library build commands for distribution via 
@@ -107,20 +111,33 @@ function build_ios_frameworks_and_libraries {
   # the order of a few MBs.
 
   # Build Text Task Library xcframework without the graph dependencies.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
-  --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  # Build fat static library for text task graphs for simulator archs.
-  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define \
-  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
-  IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
+  case $FRAMEWORK_NAME in
+    "MediaPipeTaskCommonObjects")
+      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
   
-  # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
-  # our deployment target is iOS 11.0. iOS 11.0 d anupwards is not supported by old armv7 devices.
-  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define \
-  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
-  IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
+      # our deployment target is iOS 11.0. iOS 11.0 d anupwards is not supported by old armv7 devices.
+      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      ;;
+  *)
+  ;;
+  esac
+
+  # # Build fat static library for text task graphs for simulator archs.
+  # local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define \
+  # MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
+  # IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
+  
+  # # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
+  # # our deployment target is iOS 11.0. iOS 11.0 d anupwards is not supported by old armv7 devices.
+  # local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define \
+  # MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
+  # IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
 }
 
 function create_framework_archive {
@@ -139,24 +156,32 @@ function create_framework_archive {
 
   echo ${IOS_FRAMEWORK_PATH}
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
-  
-  local GRAPH_LIBRARIES_DIR="graph_libraries"
-  
-  # Create the parent folder which will hold the graph libraries of all architectures.
-  mkdir -p "${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}"
 
-  local SIMULATOR_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator_graph.a"
+  case $FRAMEWORK_NAME in
+    "MediaPipeTaskCommonObjects")
+      
+      local GRAPH_LIBRARIES_DIR="graph_libraries"
+  
+      # Create the parent folder which will hold the graph libraries of all architectures.
+      mkdir -p "${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}"
+
+      local SIMULATOR_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator_graph.a"
     
-  # Copy ios simulator fat library into a separate directory.
-  echo ${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}
-  cp "${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GRAPH_LIBRARY_PATH}"
+      # Copy ios simulator fat library into a separate directory.
+      echo ${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}
+      cp "${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GRAPH_LIBRARY_PATH}"
 
   
-  local IOS_DEVICE_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device_graph.a"
+      local IOS_DEVICE_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device_graph.a"
 
-  # Copy ios device library into a separate directory.
-  echo ${IOS_GRAPHS_DEVICE_LIBRARY_PATH}
-  cp "${IOS_GRAPHS_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GRAPH_LIBRARY_PATH}"
+      # Copy ios device library into a separate directory.
+      echo ${IOS_GRAPHS_DEVICE_LIBRARY_PATH}
+      cp "${IOS_GRAPHS_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GRAPH_LIBRARY_PATH}"
+
+      ;;
+  *)
+  ;;
+  esac
 
   #----- (3) Move the framework to the destination -----
   if [[ "${ARCHIVE_FRAMEWORK}" == true ]]; then

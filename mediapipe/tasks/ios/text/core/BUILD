@@ -26,3 +26,17 @@ objc_library(
     ],
     deps = ["//mediapipe/tasks/ios/core:MPPTaskRunner"],
 )
+
+objc_library(
+    name = "MPPTextPacketCreator",
+    srcs = ["sources/MPPTextPacketCreator.mm"],
+    hdrs = ["sources/MPPTextPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+    ],
+)

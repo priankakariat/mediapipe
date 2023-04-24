@@ -49,7 +49,6 @@ objc_library(
     deps = [
         ":MPPObjectDetectionResult",
         ":MPPObjectDetectorOptions",
-        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
@@ -59,5 +58,10 @@ objc_library(
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectionResultHelpers",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
         "//third_party/apple_frameworks:UIKit",
-    ],
+    ] + select({
+        "//mediapipe/tasks/ios:avoid_linking_graphs": [],
+        "//conditions:default": [
+            "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        ],
+    }),
 )

@@ -22,6 +22,10 @@ load(
     "apple_static_xcframework",
     "apple_static_library",
 )
+load(
+    "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_static_framework",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -34,6 +38,17 @@ config_setting(
     },
     visibility = ["//visibility:public"],
 )
+
+OBJC_COMMON_DEPS = [
+    "//mediapipe/tasks/ios/core:MPPBaseOptions",
+    "//mediapipe/tasks/ios/core:MPPTaskInfo",
+    "//mediapipe/tasks/ios/core:MPPTaskOptions",
+    "//mediapipe/tasks/ios/core:MPPTaskResult",
+    "//mediapipe/tasks/ios/core:MPPTaskRunner",
+    "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    "//mediapipe/tasks/ios/components/containers:MPPCategory",
+    "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+]
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
@@ -93,18 +108,27 @@ apple_static_xcframework(
     deps = [
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
     ],
-)
-
-apple_static_library(
-    name = "MediaPipeTaskText_GraphLibrary",
-    platform_type = "ios",
-    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
-    deps = [
+    avoid_deps = OBJC_COMMON_DEPS + [
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_geometry:face_geometry_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
+        "//mediapipe/tasks/cc/vision/hand_detector:hand_detector_graph",
+        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_detector:pose_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/audio_classifier:audio_classifier_graph",
+        "//mediapipe/tasks/cc/vision/audio_embedder:audio_embedder_graph",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
+        "//mediapipe/gpu:metal_shared_resources",
     ],
 )
 
@@ -138,17 +162,105 @@ apple_static_xcframework(
     deps = [
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+    avoid_deps = OBJC_COMMON_DEPS + [
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_geometry:face_geometry_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
+        "//mediapipe/tasks/cc/vision/hand_detector:hand_detector_graph",
+        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_detector:pose_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/audio_classifier:audio_classifier_graph",
+        "//mediapipe/tasks/cc/vision/audio_embedder:audio_embedder_graph",
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "@ios_opencv//:OpencvFramework"
     ],
 )
 
+# apple_static_library(
+#     name = "MediaPipeTaskGraphs_framework",
+#     bundle_name = "MediaPipeTaskGraphs",
+#     # ios = {
+#     #     "simulator" : ["arm64", "x86_64"],
+#     #     "device" : ["arm64"],
+#     # },
+#     minimum_os_versions = {
+#         "ios": MPP_TASK_MINIMUM_OS_VERSION,
+#     },
+#     deps = [
+#         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+#         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+#         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+#         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+#         "@org_tensorflow//third_party/icu/data:conversion_data",
+#         "@ios_opencv//:OpencvFramework"
+#     ],
+# )
+
 apple_static_library(
-    name = "MediaPipeTaskVision_GraphLibrary",
+    name = "MediaPipeTaskGraphs_library",
+    # ios = {
+    #     "simulator" : ["arm64", "x86_64"],
+    #     "device" : ["arm64"],
+    # },
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
-    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
     deps = [
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
+        "//mediapipe/tasks/cc/vision/hand_detector:hand_detector_graph",
+        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_detector:pose_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
+        "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "@org_tensorflow//third_party/icu/data:conversion_data",
+        "@ios_opencv//:OpencvFramework"
+    ],
+    avoid_deps = [
+        "@zlib//:zlib",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTaskCommonObjects_framework",
+    bundle_name = "MediaPipeTaskCommon",
+    ios = {
+        "simulator" : ["arm64", "x86_64"],
+        "device" : ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    avoid_deps = [
+        "//mediapipe/gpu:metal_shared_resources",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPBaseOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )

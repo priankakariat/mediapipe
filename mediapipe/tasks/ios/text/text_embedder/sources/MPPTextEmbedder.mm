@@ -18,7 +18,7 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
+#import "mediapipe/tasks/ios/text/core/sources/MPPTextPacketCreator.h"
 #import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderResult+Helpers.h"

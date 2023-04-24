@@ -20,10 +20,12 @@ objc_library(
     name = "MPPBaseOptions",
     srcs = ["sources/MPPBaseOptions.m"],
     hdrs = ["sources/MPPBaseOptions.h"],
+    module_name = "MPPBaseOptions",
 )
 
 objc_library(
     name = "MPPTaskOptions",
+    module_name = "MPPTaskOptions",
     srcs = ["sources/MPPTaskOptions.m"],
     hdrs = ["sources/MPPTaskOptions.h"],
     deps = [":MPPBaseOptions"],
@@ -57,20 +59,6 @@ objc_library(
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-    ],
-)
-
-objc_library(
-    name = "MPPTextPacketCreator",
-    srcs = ["sources/MPPTextPacketCreator.mm"],
-    hdrs = ["sources/MPPTextPacketCreator.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++17",
-    ],
-    deps = [
-        "//mediapipe/framework:packet",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
     ],
 )

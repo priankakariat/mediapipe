@@ -21,8 +21,13 @@
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierResult+Helpers.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
+#import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/framework/subgraph.h"
 
 namespace {
 using ::mediapipe::NormalizedRect;

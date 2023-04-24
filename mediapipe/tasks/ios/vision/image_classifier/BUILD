@@ -51,7 +51,6 @@ objc_library(
         ":MPPImageClassifierOptions",
         ":MPPImageClassifierResult",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
@@ -61,5 +60,11 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierResultHelpers",
-    ],
+        "//mediapipe/framework:subgraph",
+    ] + select({
+        "//mediapipe/tasks/ios:avoid_linking_graphs": [],
+        "//conditions:default": [
+            "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        ],
+    }),
 )

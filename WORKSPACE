@@ -368,11 +368,12 @@ http_archive(
 # To get a higher version of OpenCV for iOS, opencv2.framework needs to be built from source with
 # '-DBUILD_PROTOBUF=OFF -DBUILD_opencv_dnn=OFF'.
 # https://www.dropbox.com/s/v8vydb4gspf8rmn/opencv2.xcframework.zip?dl=0
+# https://www.dropbox.com/s/481t01ew9cxietd/opencv2.xcframework.zip?dl=0
 http_archive(
     name = "ios_opencv",
     build_file = "@//third_party:opencv_ios.BUILD",
     type = "zip",
-    url = "https://dl.dropboxusercontent.com/s/v8vydb4gspf8rmn/opencv2.xcframework.zip",
+    url = "https://dl.dropboxusercontent.com/s/481t01ew9cxietd/opencv2.xcframework.zip",
 )
 
 http_archive(

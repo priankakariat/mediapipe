@@ -53,7 +53,7 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/core:MPPTextPacketCreator",
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
