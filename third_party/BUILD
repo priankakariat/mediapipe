@@ -61,10 +61,21 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+config_setting(
+    name = "opencv_ios_source_build",
+    values = {
+        "apple_platform_type": "ios",
+    },
+    define_values = {
+        "OPENCV": "source",
+    },
+)
+
 alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
+        ":opencv_ios_source_build" : "@ios_opencv_source//:opencv_source",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],

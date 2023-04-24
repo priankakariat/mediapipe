@@ -377,6 +377,14 @@ http_archive(
 )
 
 http_archive(
+    name = "ios_opencv_source",
+    sha256 = "5fbc26ee09e148a4d494b225d04217f7c913ca1a4d46115b70cca3565d7bbe05",
+    build_file = "@//third_party:opencv_ios.BUILD",
+    type = "zip",
+    url = "https://github.com/opencv/opencv/archive/refs/tags/4.5.1.zip",
+)
+
+http_archive(
     name = "stblib",
     strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
     sha256 = "13a99ad430e930907f5611325ec384168a958bf7610e63e60e2fd8e7b7379610",
