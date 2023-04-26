@@ -11,64 +11,107 @@ load(
 )
 
 load(
-    "@build_bazel_rules_apple//apple:apple.bzl",
-    "apple_static_xcframework_import",
-)
-
-load(
     "@//third_party:ios_opencv_xcframework_files.bzl",
     "OPEN_CV_XCFRAMEWORK_FILE_LIST",
+    "unzip",
+    "print_names",
+    "sequence",
 )
 
 filegroup(
     name = "opencv_files",
-    srcs = OPEN_CV_XCFRAMEWORK_FILE_LIST,
-    data = [":build_xcframework"],
+    # srcs = glob([":opencv2/**"]),
+    # srcs = glob(["aaa/**"]),
+    srcs = [":opencv2_great"],
+    # data = [":build_xcframework"],
+    # output_group = "gen_dir",
 )
 
-apple_static_xcframework_import(
-    name = "OpencvFramework",
-    xcframework_imports = glob(["opencv2.xcframework/**"]),
-    visibility = ["//visibility:public"],
+unzip (
+    name = "opencv2_great",
+    zip_file = "opencv2.xcframework.zip",
 )
 
+# for file_name in 
+
+genrule(
+    name = "build_xcframework",
+    srcs = glob(["opencv-4.5.1/**"]),
+    # outs = ["opencv2.xcframework"],
+    outs = ["opencv2.xcframework.zip"],
+    # outs = OPEN_CV_XCFRAMEWORK_FILE_LIST + ['opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers'],
+    # outs = ['opencv2.xcframework/Info.plist',
+    #         'opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers/opencv_modules.hpp',],
+    #         'opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers/opencv_modules.hpp',],
+    # output_to_bindir = True,
+
+    # cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR) && cd $(RULEDIR)/opencv2.xcframework && ln -s ios-arm64-simulator/opencv2.framework/Versions/A/Headers Headers",
+
+    # cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR) && cd $(RULEDIR) && zip -r opencv2.xcframework.zip opencv2.xcframework/*",
+    cmd = "&&".join(["$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(@D)", 
+    "cd $(@D)",
+    "ls",
+    "pwd",
+    "zip --symlinks -r opencv2.xcframework.zip opencv2.xcframework",
+    ]),
+)
 
 # genrule(
 #     name = "build_xcframework",
 #     srcs = glob(["opencv-4.5.1/**"]),
-#     outs = OPEN_CV_XCFRAMEWORK_FILE_LIST,
-#     cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs x86_64,arm64 --iphoneos_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR)",
+#     # outs = ["opencv2.xcframework"],
+#     # outs = ["opencv2.xcframework.zip"],
+#     outs = OPEN_CV_XCFRAMEWORK_FILE_LIST + ['opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers'],
+#     # outs = ['opencv2.xcframework/Info.plist',
+#     #         'opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers/opencv_modules.hpp',],
+#     #         'opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers/opencv_modules.hpp',],
+#     # output_to_bindir = True,
+
+#     cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR) && cd $(RULEDIR)/opencv2.xcframework && ln -s ios-arm64-simulator/opencv2.framework/Versions/A/Headers Headers",
+
+#     # cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR) && cd $(RULEDIR) && zip -r opencv2.xcframework.zip opencv2.xcframework/*",
+#     # cmd = "&&".join(["$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(@D)", 
+#     # "cd $(@D)",
+#     # "ls",
+#     # "pwd",
+#     # "zip --symlinks -r opencv2.xcframework.zip opencv2.xcframework",
+#     # ]),
 # )
 
 apple_static_xcframework_import(
-    name = "OpencvXCFramework",
-    xcframework_imports = [":opencv_files"],
+    name = "opencv",
+    xcframework_imports = [':opencv2_great'],
     visibility = ["//visibility:public"],
-)
+    # includes = ["Headers/core/version.hpp",],
 
-objc_library(
-    name = "opencv_objc_lib",
-    deps = [":OpencvFramework"],
+    # deps = [":opencv_files"],
 )
 
 objc_library(
     name = "opencv_xcframework_objc_lib",
-    deps = [":OpencvXCFramework"],
+    deps = [":opencv"],
+    visibility = ["//visibility:public"],
 )
 
+
+#print_names()
+# sequence(
+#     name = "opencv_cc",
+# )
 cc_library(
-    name = "opencv",
-    hdrs = select({
-        "@//mediapipe:ios_x86_64" : glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "@//mediapipe:ios_sim_arm64" : glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "@//mediapipe:ios_arm64" : glob(["opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "//conditions:default": glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-    }),
+    name = "opencv_cc",
+    # hdrs = print_names(),
+    hdrs = [":opencv"],
     copts = [
         "-std=c++11",
         "-x objective-c++",
+        # "-Iopencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers"
     ],
     include_prefix = "opencv2",
+    # include_prefix = "opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers/core/",
+    includes = [
+        ".",
+    ],
     linkopts = [
         "-framework AssetsLibrary",
         "-framework CoreFoundation",
@@ -80,47 +123,13 @@ cc_library(
         "-framework CoreVideo",
         "-framework QuartzCore",
     ],
-    strip_include_prefix = select({
-        "@//mediapipe:ios_x86_64" : "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_sim_arm64" : "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_arm64" : "opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers",
-        "//conditions:default": "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-    }),
+    # strip_include_prefix = select({
+    #     "@//mediapipe:ios_x86_64" : "opencv2.xcframework/ios-arm64-simulator",
+    #     "@//mediapipe:ios_sim_arm64" :"opencv2.xcframework/ios-arm64-simulator",
+    #     "@//mediapipe:ios_arm64" : "opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers",
+    #     "//conditions:default": "opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers",
+    # }),
     visibility = ["//visibility:public"],
-    deps = [":opencv_objc_lib"],
+    data = [":opencv_files"],
+    deps = [":opencv"]
 )
-
-cc_library(
-    name = "opencv_source",
-    hdrs = select({
-        "@//mediapipe:ios_x86_64" : glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "@//mediapipe:ios_sim_arm64" : glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "@//mediapipe:ios_arm64" : glob(["opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-        "//conditions:default": glob(["opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers/**/*.h*"]),
-    }),
-    copts = [
-        "-std=c++11",
-        "-x objective-c++",
-    ],
-    include_prefix = "opencv2",
-    linkopts = [
-        "-framework AssetsLibrary",
-        "-framework CoreFoundation",
-        "-framework CoreGraphics",
-        "-framework CoreMedia",
-        "-framework Accelerate",
-        "-framework CoreImage",
-        "-framework AVFoundation",
-        "-framework CoreVideo",
-        "-framework QuartzCore",
-    ],
-    strip_include_prefix = select({
-        "@//mediapipe:ios_x86_64" : "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_sim_arm64" : "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_arm64" : "opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers",
-        "//conditions:default": "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-    }),
-    visibility = ["//visibility:public"],
-    deps = [":opencv_xcframework_objc_lib"],
-)
-

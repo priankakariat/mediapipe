@@ -15,7 +15,13 @@
 #ifndef MEDIAPIPE_PORT_OPENCV_CORE_INC_H_
 #define MEDIAPIPE_PORT_OPENCV_CORE_INC_H_
 
-#include <opencv2/core/version.hpp>
+#include <opencv2/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers/core/version.hpp>
+
+#include <opencv2/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers/core.hpp>
+
+
+// #include <opencv2/core/version.hpp>
+
 
 #ifdef CV_VERSION_EPOCH  // for OpenCV 2.x
 #include <opencv2/core/core.hpp>
@@ -24,7 +30,7 @@
 #include <opencv2/cvconfig.h>
 #endif
 
-#include <opencv2/core.hpp>
+// #include <opencv2/core.hpp>
 #endif
 
 #endif  // MEDIAPIPE_PORT_OPENCV_CORE_INC_H_

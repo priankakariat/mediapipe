@@ -75,7 +75,7 @@ alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
-        ":opencv_ios_source_build" : "@ios_opencv_source//:opencv_source",
+        ":opencv_ios_source_build" : "@ios_opencv_source//:opencv_cc",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],

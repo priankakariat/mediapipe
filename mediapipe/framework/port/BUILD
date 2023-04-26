@@ -237,6 +237,9 @@ config_setting(
 cc_library(
     name = "opencv_core",
     hdrs = ["opencv_core_inc.h"],
+    copts = [
+        "-Iopencv2/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers",
+    ],
     deps = [
         "//third_party:opencv",
     ],
