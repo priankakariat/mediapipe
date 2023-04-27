@@ -62,9 +62,41 @@ config_setting(
 )
 
 config_setting(
-    name = "opencv_ios_source_build",
+    name = "opencv_ios_arm64_source_build",
     values = {
         "apple_platform_type": "ios",
+        "cpu": "ios_arm64"
+    },
+    define_values = {
+        "OPENCV": "source",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_sim_arm64_source_build",
+    values = {
+        "config": "ios_sim_arm64",
+    },
+    define_values = {
+        "OPENCV": "source",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_x86_64_source_build",
+    values = {
+        "apple_platform_type": "ios",
+        "cpu": "ios_x86_64"
+    },
+    define_values = {
+        "OPENCV": "source",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_sim_fat_source_build",
+    values = {
+        "config": "ios_sim_fat",
     },
     define_values = {
         "OPENCV": "source",
@@ -75,7 +107,10 @@ alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
-        ":opencv_ios_source_build" : "@ios_opencv_source//:opencv_cc",
+        ":opencv_ios_sim_arm64_source_build" : "@ios_opencv_source//:opencv",
+        ":opencv_ios_sim_fat_source_build" : "@ios_opencv_source//:opencv",
+        ":opencv_ios_sim_arm64_source_build" : "@ios_opencv_source//:opencv",
+        ":opencv_ios_arm64_source_build" : "@ios_opencv_source//:opencv",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],

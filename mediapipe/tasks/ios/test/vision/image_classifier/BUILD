@@ -60,7 +60,7 @@ objc_library(
     #     "//mediapipe/tasks/testdata/vision:test_models",
     # ],
     deps = [
-        "@ios_opencv_source//:opencv",
+        "@ios_opencv_source//:opencv_xcframework",
         # "//mediapipe/tasks/ios/common:MPPCommon",
         # "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         # "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",

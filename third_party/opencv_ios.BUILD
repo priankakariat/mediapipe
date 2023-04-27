@@ -32,14 +32,6 @@ apple_static_xcframework_import(
     visibility = ["//visibility:public"],
 )
 
-
-# genrule(
-#     name = "build_xcframework",
-#     srcs = glob(["opencv-4.5.1/**"]),
-#     outs = OPEN_CV_XCFRAMEWORK_FILE_LIST,
-#     cmd = "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) --iphonesimulator_archs x86_64,arm64 --iphoneos_archs arm64 --without dnn --without ml --without stitching --without photo --without objdetect --without gapi --without flann --disable PROTOBUF --disable-bitcode --disable-swift --build_only_specified_archs --out $(RULEDIR)",
-# )
-
 apple_static_xcframework_import(
     name = "OpencvXCFramework",
     xcframework_imports = [":opencv_files"],
