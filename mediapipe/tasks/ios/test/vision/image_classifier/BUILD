@@ -32,10 +32,12 @@ objc_library(
         "-ObjC++",
         "-std=c++17",
         "-x objective-c++",
+        "-Lexternal/ios_opencv_source/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2"
     ],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
+        "@ios_opencv_source//:opencv",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",

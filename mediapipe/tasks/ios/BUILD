@@ -233,7 +233,7 @@ apple_static_library(
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "@org_tensorflow//third_party/icu/data:conversion_data",
-        "@ios_opencv//:OpencvFramework"
+        "@ios_opencv_source//:opencv"
     ],
     avoid_deps = [
         "@zlib//:zlib",

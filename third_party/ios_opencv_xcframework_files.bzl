@@ -30,6 +30,18 @@ def print_names():
     print(c)
     return files
 
+
+def _select_headers_impl(ctx):
+    _files = [f for f in ctx.files.srcs if f.basename.endswith(".h") or f.basename.endswith(".hpp")]
+    return [DefaultInfo(files = depset(_files))]
+
+select_headers = rule(
+    implementation = _select_headers_impl,
+    attrs = {
+        "srcs": attr.label_list(mandatory = True, allow_files=True),
+    },
+)
+
 def _impl(ctx):
     # The list of arguments we pass to the script.
     # directory = ctx.actions.declare_directory(ctx.attr.name + ".xcframework")
@@ -45,6 +57,8 @@ def _impl(ctx):
     # file = ctx.actions.declare_directory(ctx.attr.name + ".xcframework")
     args = ctx.actions.args()
     args.add(ctx.file.zip_file.dirname)
+    print(ctx.file.zip_file.dirname)
+    print(ctx.file.zip_file.path)
     args.add(ctx.file.zip_file.path)
 
     # Action to call the script.
@@ -58,7 +72,12 @@ def _impl(ctx):
         ])
     )
 
-    return [ DefaultInfo(files=depset(out_file_list + [sym1, sym2, sym3, sym4, sym5])) ]
+    # ctx.actions.symlink(
+
+    # )
+
+    runfiles = ctx.runfiles(files = out_file_list + [sym1, sym2, sym3, sym4, sym5])
+    return [ DefaultInfo(files=depset(out_file_list + [sym1, sym2, sym3, sym4, sym5]), runfiles = runfiles) ]
 
 unzip = rule(
     implementation = _impl,
@@ -71,6 +90,7 @@ unzip = rule(
         #     default = Label("@//thirdparty:unzip_tool"),
         # ),
     },
+    # is_executable = True,
 )
 
 # def _impl(ctx):
