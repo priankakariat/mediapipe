@@ -46,38 +46,53 @@ def _impl(ctx):
     # The list of arguments we pass to the script.
     # directory = ctx.actions.declare_directory(ctx.attr.name + ".xcframework")
     out_file_list = []
+    opencv2_executable = ctx.actions.declare_file("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2")
+    out_file_list.append(opencv2_executable)
     for file_name in OPEN_CV_XCFRAMEWORK_FILE_LIST:
-        out_file_list.append(ctx.actions.declare_file(file_name))
+        if file_name != "opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2":
+            out_file_list.append(ctx.actions.declare_file(file_name))
+            
     
     sym5 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/Current")
-    sym1 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers/")
-    sym2 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Modules/")
-    sym3 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Resources/")
-    sym4 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/opencv2/")
+    sym1 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers")
+    sym2 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Modules")
+    sym3 = ctx.actions.declare_symlink("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Resources")
+    sym4 = ctx.actions.declare_file("opencv2.xcframework/ios-arm64-simulator/opencv2.framework/opencv2")
     # file = ctx.actions.declare_directory(ctx.attr.name + ".xcframework")
+    # symlinks = [sym1, sym2, sym3, sym4, sym5]
     args = ctx.actions.args()
     args.add(ctx.file.zip_file.dirname)
+    print("Dir name")
     print(ctx.file.zip_file.dirname)
+    print("FUll path")
     print(ctx.file.zip_file.path)
+    print("Short path")
+    print(ctx.file.zip_file.short_path)
+
     args.add(ctx.file.zip_file.path)
 
     # Action to call the script.
     ctx.actions.run_shell(
         inputs = [ctx.file.zip_file],
-        outputs = out_file_list + [sym1, sym2, sym3, sym4, sym5],
+        outputs = out_file_list + [sym1, sym2, sym3, sym5],
         arguments = [args],
         progress_message = "Unzipping %s" % ctx.file.zip_file.short_path,
-        command = "&&".join(["unzip -qq $2 -d $1",
+        command = "&&".join(["echo $PWD",
+            "unzip -qq $2 -d $1",
         # "ln -s opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/Headers opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Headers",
         ])
     )
+    
 
-    # ctx.actions.symlink(
+    ctx.actions.symlink(output = sym4, target_file = opencv2_executable)
+    out_file_list.append(sym4)
+    out_file_list.append(sym1)
+    out_file_list.append(sym2)
+    out_file_list.append(sym3)
+    out_file_list.append(sym5)
 
-    # )
-
-    runfiles = ctx.runfiles(files = out_file_list + [sym1, sym2, sym3, sym4, sym5])
-    return [ DefaultInfo(files=depset(out_file_list + [sym1, sym2, sym3, sym4, sym5]), runfiles = runfiles) ]
+    # runfiles = ctx.runfiles(files = out_file_list + [sym1, sym2, sym3, sym4, sym5])
+    return [ DefaultInfo(files=depset(out_file_list)) ]
 
 unzip = rule(
     implementation = _impl,
@@ -90,6 +105,7 @@ unzip = rule(
         #     default = Label("@//thirdparty:unzip_tool"),
         # ),
     },
+    
     # is_executable = True,
 )
 

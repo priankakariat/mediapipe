@@ -32,17 +32,48 @@ objc_library(
         "-ObjC++",
         "-std=c++17",
         "-x objective-c++",
-        "-Lexternal/ios_opencv_source/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2"
+        # "-L../external/ios_opencv_source/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2"
     ],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
-        "@ios_opencv_source//:opencv",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+    ],
+)
+
+objc_library(
+    name = "MPPLinkLibObjcTestLibrary",
+    testonly = 1,
+    srcs = ["MPPLinkLibTest.m"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+        # "-L../external/ios_opencv_source/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/Versions/A/opencv2"
+    ],
+    # data = [
+    #     "//mediapipe/tasks/testdata/vision:test_images",
+    #     "//mediapipe/tasks/testdata/vision:test_models",
+    # ],
+    deps = [
+        "@ios_opencv_source//:opencv",
+        # "//mediapipe/tasks/ios/common:MPPCommon",
+        # "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        # "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+    ],
+)
+
+ios_unit_test(
+    name = "MPPLinkLibObjcTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":MPPLinkLibObjcTestLibrary",
     ],
 )
 
