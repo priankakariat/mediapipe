@@ -20,6 +20,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol MPPImageClassifierDelegate <NSObject>
+@required
+-(void)didFinishClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult error:(NSError **)error;
+@end
+
 /**
  * Options for setting up a `MPPImageClassifier`.
  */
@@ -34,6 +39,8 @@ NS_SWIFT_NAME(ImageClassifierOptions)
  * TODO: Add parameter `MPPImage` in the callback.
  */
 @property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSError *error);
+
+@property(nonatomic, weak) id <MPPImageClassifierDelegate> imageClassifierDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
