@@ -20,6 +20,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol MPPObjectDetectorDelegate <NSObject>
+@required
+- (void)didFinishObjectDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                    error:(NSError **)error;
+@end
+
+
 /** Options for setting up a `MPPObjectDetector`. */
 NS_SWIFT_NAME(ObjectDetectorOptions)
 @interface MPPObjectDetectorOptions : MPPTaskOptions <NSCopying>
@@ -33,6 +41,8 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
  */
 @property(nonatomic, copy) void (^completion)
     (MPPObjectDetectionResult *__nullable result, NSInteger timestampMs, NSError *error);
+
+@property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

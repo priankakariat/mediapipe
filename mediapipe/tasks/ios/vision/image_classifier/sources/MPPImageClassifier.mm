@@ -53,7 +53,7 @@ static NSString *const kTaskGraphName =
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
-@property (nonatomic, weak) id <MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 @end
 
 @implementation MPPImageClassifier
@@ -92,7 +92,14 @@ static NSString *const kTaskGraphName =
               imageClassifierResultWithClassificationsPacket:
                   status_or_packets.value()[kClassificationsStreamName.cppString]];
         }
-        [_imageClassifierDelegate didFinishClassificationWithImageClassifierResult:result error:&callbackError];
+        [_imageClassifierDelegate
+            didFinishClassificationWithImageClassifierResult:result
+                                     timestampInMilliseconds:outputPacketMap[kImageOutStreamName
+                                                                                 .cppString]
+                                                                 .Timestamp()
+                                                                 .Value() /
+                                                             kMicroSecondsPerMilliSecond
+                                                       error:&callbackError];
       };
     }
 
