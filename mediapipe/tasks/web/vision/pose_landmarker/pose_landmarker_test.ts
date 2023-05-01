@@ -18,6 +18,7 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {createLandmarks, createWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {PoseLandmarker} from './pose_landmarker';
@@ -221,12 +222,10 @@ describe('PoseLandmarker', () => {
           .toHaveBeenCalledTimes(1);
       expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
-      expect(result).toEqual({
-        'landmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'worldLandmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'auxilaryLandmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'segmentationMasks': [new Float32Array([0, 1, 2, 3])],
-      });
+      expect(result.landmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
+      expect(result.worldLandmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
+      expect(result.auxilaryLandmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
+      expect(result.segmentationMasks![0]).toBeInstanceOf(MPImage);
       done();
     });
   });
@@ -260,5 +259,39 @@ describe('PoseLandmarker', () => {
     // poses.
     expect(landmarks1).toBeDefined();
     expect(landmarks1).toEqual(landmarks2);
+  });
+
+  it('invokes listener once masks are avaiblae', (done) => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
+    const masks = [
+      {data: new Float32Array([0, 1, 2, 3]), width: 2, height: 2},
+    ];
+    let listenerCalled = false;
+
+
+    poseLandmarker.setOptions({outputSegmentationMasks: true});
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('auxiliary_landmarks')!
+          (landmarksProto, 1337);
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
+      expect(listenerCalled).toBeTrue();
+      done();
+    });
+
+    // Invoke the pose landmarker
+    poseLandmarker.detect({} as HTMLImageElement, () => {
+      listenerCalled = true;
+    });
   });
 });

@@ -1,7 +1,4 @@
-load(
-    "@build_bazel_rules_apple//apple:ios.bzl",
-    "ios_unit_test",
-)
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
     "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
@@ -28,29 +25,31 @@ TFL_DISABLED_SANITIZER_TAGS = [
 ]
 
 objc_library(
-    name = "MPPImageObjcTestLibrary",
+    name = "MPPObjectDetectorObjcTestLibrary",
     testonly = 1,
-    srcs = ["MPPImageTests.m"],
+    srcs = ["MPPObjectDetectorTests.m"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/vision/core:MPPImage",
-        "//third_party/apple_frameworks:Accelerate",
-        "//third_party/apple_frameworks:CoreGraphics",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:UIKit",
+        "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
     ],
 )
 
 ios_unit_test(
-    name = "MPPImageObjcTest",
+    name = "MPPObjectDetectorObjcTest",
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     runner = tflite_ios_lab_runner("IOS_LATEST"),
     tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
     deps = [
-        ":MPPImageObjcTestLibrary",
+        ":MPPObjectDetectorObjcTestLibrary",
     ],
 )

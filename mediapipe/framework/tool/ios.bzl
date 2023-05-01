@@ -1,3 +1,17 @@
+# Copyright 2023 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """MediaPipe Task Library Helper Rules for iOS"""
 
 MPP_TASK_MINIMUM_OS_VERSION = "11.0"
@@ -21,7 +35,7 @@ def strip_api_include_path_prefix(name, hdr_labels, prefix = ""):
         hdr_filename = hdr_label.split(":")[-1]
 
         # The last path component of iOS header files is sources/some_file.h
-        # Hence it wiill contain a '/'. So the string can be split at '/' to get 
+        # Hence it wiill contain a '/'. So the string can be split at '/' to get
         # the header file name.
         if "/" in hdr_filename:
             hdr_filename = hdr_filename.split("/")[-1]
@@ -37,4 +51,3 @@ def strip_api_include_path_prefix(name, hdr_labels, prefix = ""):
             > "$@"
             """.format(prefix, hdr_label),
         )
-

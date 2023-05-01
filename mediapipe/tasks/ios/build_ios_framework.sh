@@ -79,7 +79,6 @@ def format(target):
 EOF
 
   local OUTPUT_PATH=$(bazel cquery $1 --output=starlark --starlark:file="${STARLARK_FILE}" 2> /dev/null)
-   
   rm -rf "${STARLARK_OUTPUT_TMPDIR}"
 
   echo ${OUTPUT_PATH}
@@ -103,10 +102,10 @@ function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
   FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
-  
-  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of 
-  # the order of GBs. All iOS framework and library build commands for distribution via 
-  # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to 
+
+  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of
+  # the order of GBs. All iOS framework and library build commands for distribution via
+  # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to
   # the order of a few MBs.
 
   # Build Task Library xcframework.
@@ -149,7 +148,7 @@ function create_framework_archive {
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
 
   # If the framwork being built is `MediaPipeTasksCommon`, the built graph
-  # libraries should be copied to the output directory which is to be archived. 
+  # libraries should be copied to the output directory which is to be archived.
   case $FRAMEWORK_NAME in
     "MediaPipeTasksCommon")
       local GRAPH_LIBRARIES_DIR="graph_libraries"
@@ -157,11 +156,11 @@ function create_framework_archive {
       mkdir -p "${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}"
 
       local SIMULATOR_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator_graph.a"
-    
+
       # Copy ios simulator fat library into a separate directory.
       echo ${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}
       cp "${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GRAPH_LIBRARY_PATH}"
-  
+
       local IOS_DEVICE_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device_graph.a"
 
       # Copy ios device library into a separate directory.
