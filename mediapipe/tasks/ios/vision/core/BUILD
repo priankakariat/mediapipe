@@ -74,6 +74,5 @@ objc_library(
         "//conditions:default": [
             "@ios_opencv//:OpencvFramework"
         ],
-    })
-        
+    })       
 )

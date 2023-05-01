@@ -381,10 +381,10 @@ http_archive(
 # build the same from source using a script provided in OpenCV 4.5.0 upwards. 
 http_archive(
     name = "ios_opencv_source",
-    sha256 = "5fbc26ee09e148a4d494b225d04217f7c913ca1a4d46115b70cca3565d7bbe05",
+    # sha256 = "5fbc26ee09e148a4d494b225d04217f7c913ca1a4d46115b70cca3565d7bbe05",
     build_file = "@//third_party:opencv_ios_source.BUILD",
     type = "zip",
-    url = "https://github.com/opencv/opencv/archive/refs/tags/4.5.1.zip",
+    url = "https://github.com/opencv/opencv/archive/refs/tags/4.5.3.zip",
 )
 
 http_archive(

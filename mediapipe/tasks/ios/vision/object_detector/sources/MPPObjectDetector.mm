@@ -78,15 +78,23 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
-      packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
+    if (options.objectDetectorDelegate) {
+      _objectDetectorDelegate = options.objectDetectorDelegate;
+      packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
-          options.completion(nil, Timestamp::Unset().Value(), callbackError);
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          if ([_objectDetectorDelegate
+                  respondsToSelector:@selector(objectDetector:
+                                         didFinishObjectDetectionWithResult:timestampInMilliseconds:error:)]) {
+            [_objectDetectorDelegate objectDetector:self
+                didFinishObjectDetectionWithResult:nil
+                               timestampInMilliseconds:Timestamp::Unset().Value()
+                                                 error:&callbackError];
+          }
           return;
         }
 
-        PacketMap &outputPacketMap = statusOrPackets.value();
+         PacketMap &outputPacketMap = status_or_packets.value();
         if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
           return;
         }
@@ -95,10 +103,18 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
             objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
                                                                                   .cppString]];
 
-        options.completion(result,
-                           outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-                               kMicroSecondsPerMilliSecond,
-                           callbackError);
+        if ([_objectDetectorDelegate
+                respondsToSelector:@selector(objectDetector:
+                                         didFinishObjectDetectionWithResult:timestampInMilliseconds:error:)]) {
+                           
+            [_objectDetectorDelegate objectDetector:self
+              didFinishObjectDetectionWithResult:result
+                             timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                         .Timestamp()
+                                                         .Value() /
+                                                     kMicroSecondsPerMilliSecond
+                                               error:&callbackError];
+        }
       };
     }
 

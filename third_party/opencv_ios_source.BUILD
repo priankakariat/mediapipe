@@ -28,10 +28,10 @@ load(
 # an iOS project.
 genrule(
     name = "build_opencv_xcframework",
-    srcs = glob(["opencv-4.5.1/**"]),
+    srcs = glob(["opencv-4.5.3/**"]),
     outs = ["opencv2.xcframework.zip"],
     cmd = "&&".join([
-        "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) \
+        "$(location opencv-4.5.3/platforms/apple/build_xcframework.py) \
         --iphonesimulator_archs arm64,x86_64 \
         --iphoneos_archs arm64 \
         --without dnn \
@@ -91,7 +91,7 @@ cc_library(
             ":opencv_xcframework_simulator_headers"
         ],
         "@//mediapipe:ios_arm64" : [
-            ":opencv_xcframework_simulator_headers"
+            ":opencv_xcframework_device_headers"
         ],
         # A value from above is chosen arbitarily.
         "//conditions:default": [

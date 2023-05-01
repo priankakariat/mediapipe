@@ -29,6 +29,7 @@ using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
+using ::mediapipe::Timestamp;
 }  // namespace
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
@@ -86,20 +87,39 @@ static NSString *const kTaskGraphName =
       _imageClassifierDelegate = options.imageClassifierDelegate;
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
-        MPPImageClassifierResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPImageClassifierResult
-              imageClassifierResultWithClassificationsPacket:
-                  status_or_packets.value()[kClassificationsStreamName.cppString]];
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          if ([_imageClassifierDelegate
+                  respondsToSelector:@selector(imageClassifier:
+                                         didFinishImageClassificationWithResult:timestampInMilliseconds:error:)]) {
+            [_imageClassifierDelegate imageClassifier:self
+                didFinishImageClassificationWithResult:nil
+                               timestampInMilliseconds:Timestamp::Unset().Value()
+                                                 error:&callbackError];
+          }
+          return;
         }
-        [_imageClassifierDelegate
-            didFinishClassificationWithImageClassifierResult:result
-                                     timestampInMilliseconds:outputPacketMap[kImageOutStreamName
-                                                                                 .cppString]
-                                                                 .Timestamp()
-                                                                 .Value() /
-                                                             kMicroSecondsPerMilliSecond
-                                                       error:&callbackError];
+
+         PacketMap &outputPacketMap = status_or_packets.value();
+        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+          return;
+        }
+
+        MPPImageClassifierResult *result =
+            [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
+                                          outputPacketMap[kClassificationsStreamName.cppString]];
+
+        if ([_imageClassifierDelegate
+                respondsToSelector:@selector(imageClassifier:
+                                       didFinishImageClassificationWithResult:timestampInMilliseconds:error:)]) {
+                           
+            [_imageClassifierDelegate imageClassifier:self
+              didFinishImageClassificationWithResult:result
+                             timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                         .Timestamp()
+                                                         .Value() /
+                                                     kMicroSecondsPerMilliSecond
+                                               error:&callbackError];
+        }
       };
     }
 

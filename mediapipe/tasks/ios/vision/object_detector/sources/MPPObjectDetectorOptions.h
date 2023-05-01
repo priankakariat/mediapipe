@@ -20,11 +20,22 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class MPPObjectDetector;
+
+/**
+ * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
+ * results of performing asynchronous object detection of images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
+ * 
+ * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
+ * The methods in this protocol are optional.
+ * TODO: Add parameter `MPPImage` in the callback.
+ */
 @protocol MPPObjectDetectorDelegate <NSObject>
-@required
-- (void)didFinishObjectDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
-                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                    error:(NSError **)error;
+@optional
+- (void)objectDetector:(MPPObjectDetector *)imageClassobjectDetectorifier
+    didFinishObjectDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                     error:(NSError **)error;
 @end
 
 
@@ -42,6 +53,14 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 @property(nonatomic, copy) void (^completion)
     (MPPObjectDetectionResult *__nullable result, NSInteger timestampMs, NSError *error);
 
+/**
+ * An object that confirms to `MPPObjectDetectorDelegate` protocol. This object must implement
+ * the optional [MPPObjectDetectorDelegate objectDetector:
+ *                didFinishObjectDetectionWithResult:
+                                 timestampInMilliseconds:
+                                                   error:]
+ * to receive the results of performing asynchronous object detection on images (i.e, when runningMode = `MPPRunningModeLiveStream`).
+ */
 @property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 
 /**

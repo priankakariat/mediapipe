@@ -20,11 +20,23 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class MPPImageClassifier;
+
+/**
+ * The protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
+ * results of asynchronous classification of images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
+ * 
+ * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
+ * The methods in this protocol are optional.
+ * TODO: Add parameter `MPPImage` in the callback.
+ */
+NS_SWIFT_NAME(ImageClassifierDelegate)
 @protocol MPPImageClassifierDelegate <NSObject>
 @optional
-- (void)didFinishImageClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
-                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                    error:(NSError **)error;
+- (void)imageClassifier:(MPPImageClassifier *)imageClassifier
+    didFinishImageClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
+                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                     error:(NSError **)error;
 @end
 
 /**
@@ -35,13 +47,17 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 
 @property(nonatomic) MPPRunningMode runningMode;
 
-/**
- * The user-defined result callback for processing live stream data. The result callback should only
- * be specified when the running mode is set to the live stream mode.
- * TODO: Add parameter `MPPImage` in the callback.
- */
+
 @property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSError *error);
 
+/**
+ * An object that confirms to `MPPImageClassifierDelegate` protocol. This object must implement
+ * the optional [ImageClassifierDelegate imageClassifier:
+ *                didFinishImageClassificationWithResult:
+                                 timestampInMilliseconds:
+                                                   error:]
+ * to receive the results of asynchronous classification on images (i.e, when runningMode = `MPPRunningModeLiveStream`).
+ */
 @property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 
 /**
