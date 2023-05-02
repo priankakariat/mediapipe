@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 NS_SWIFT_NAME(ImageClassifierDelegate)
 @protocol MPPImageClassifierDelegate <NSObject>
-@required
+@optional
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
     didFinishClassificationWithResult:(nullable MPPImageClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
@@ -64,7 +64,7 @@ NS_SWIFT_NAME(ImageClassifierOptions)
  * to receive the results of asynchronous classification on images (i.e, when `runningMode =
  * MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak, nullable) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

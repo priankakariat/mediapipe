@@ -61,6 +61,7 @@ static NSString *const kTaskGraphName =
 
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
+  NSLog(@"Initializing with weak self");
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
@@ -87,16 +88,23 @@ static NSString *const kTaskGraphName =
       _imageClassifierDelegate = options.imageClassifierDelegate;
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          if ([_imageClassifierDelegate
-                  respondsToSelector:@selector
-                  (imageClassifier:
-                      didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-            [_imageClassifierDelegate imageClassifier:self
-                    didFinishClassificationWithResult:nil
-                              timestampInMilliseconds:Timestamp::Unset().Value()
-                                                error:callbackError];
-          }
+
+        // Capturing `self` as weak in order to avoid `self` being kept in memory 
+        // by the callback.
+        MPPImageClassifier *__weak weakSelf = self;
+        if (![_imageClassifierDelegate
+                respondsToSelector:@selector
+                (imageClassifier:
+                    didFinishClassificationWithResult:timestampInMilliseconds:error:)] ||
+            !weakSelf) {
+          return;
+        }
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError] &&
+            weakSelf) {
+          [_imageClassifierDelegate imageClassifier:weakSelf
+                  didFinishClassificationWithResult:nil
+                            timestampInMilliseconds:Timestamp::Unset().Value()
+                                              error:callbackError];
           return;
         }
 
@@ -109,18 +117,13 @@ static NSString *const kTaskGraphName =
             [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
                                           outputPacketMap[kClassificationsStreamName.cppString]];
 
-        if ([_imageClassifierDelegate
-                respondsToSelector:@selector
-                (imageClassifier:
-                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-          [_imageClassifierDelegate imageClassifier:self
-                  didFinishClassificationWithResult:result
-                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                        .Timestamp()
-                                                        .Value() /
-                                                    kMicroSecondsPerMilliSecond
-                                              error:callbackError];
-        }
+        [_imageClassifierDelegate imageClassifier:weakSelf
+                didFinishClassificationWithResult:result
+                          timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                      .Timestamp()
+                                                      .Value() /
+                                                  kMicroSecondsPerMilliSecond
+                                            error:callbackError];
       };
     }
 
