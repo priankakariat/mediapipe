@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
- * results of asynchronous classification of images 
+ * results of asynchronous classification of images
  * (i.e, when `runningMode = MPPRunningModeLiveStream`).
  *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
