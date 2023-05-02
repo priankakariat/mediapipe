@@ -23,21 +23,22 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPImageClassifier;
 
 /**
- * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
- * results of asynchronous classification of images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
- * 
+ * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
+ * results of asynchronous classification of images 
+ * (i.e, when `runningMode = MPPRunningModeLiveStream`).
+ *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
  * The methods in this protocol are optional.
  * TODO: Add parameter `MPPImage` in the callback.
  */
 NS_SWIFT_NAME(ImageClassifierDelegate)
 @protocol MPPImageClassifierDelegate <NSObject>
-@optional
-NS_SWIFT_NAME(imageClassifier(_:didFinishImageClassificationWithResult:timestampInMilliseconds:error:));
+@required
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
-    didFinishImageClassificationWithResult:(nullable MPPImageClassifierResult *)imageClassifierResult
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(nullable NSError *)error;
+    didFinishClassificationWithResult:(nullable MPPImageClassifierResult *)result
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                error:(nullable NSError *)error
+    NS_SWIFT_NAME(imageClassifier(_:didFinishClassification:timestampInMilliseconds:error:));
 @end
 
 /**
@@ -46,15 +47,22 @@ NS_SWIFT_NAME(imageClassifier(_:didFinishImageClassificationWithResult:timestamp
 NS_SWIFT_NAME(ImageClassifierOptions)
 @interface MPPImageClassifierOptions : MPPTaskOptions <NSCopying>
 
+/**
+ * Running mode of the image classifier task. Defaults to `MPPRunningModeImage`.
+ * `MPPImageClassifier` can be created with one of the following running modes:
+ *  1. `MPPRunningModeImage`: The mode for performing classification on single image inputs.
+ *  2. `MPPRunningModeVideo`: The mode for performing classification on the decoded frames of a
+ *      video.
+ *  3. `MPPRunningModeLiveStream`: The mode for performing classification on a live stream of input
+ *      data, such as from the camera.
+ */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
  * An object that confirms to `MPPImageClassifierDelegate` protocol. This object must implement
- * the optional [ImageClassifierDelegate imageClassifier:
- *                didFinishImageClassificationWithResult:
-                                 timestampInMilliseconds:
-                                                   error:]
- * to receive the results of asynchronous classification on images (i.e, when runningMode = `MPPRunningModeLiveStream`).
+ * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
+ * to receive the results of asynchronous classification on images (i.e, when `runningMode =
+ * MPPRunningModeLiveStream`).
  */
 @property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 

@@ -23,36 +23,43 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPObjectDetector;
 
 /**
- * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
- * results of performing asynchronous object detection of images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
- * 
+ * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
+ * results of performing asynchronous object detection on images
+ * (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
+ *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
  * The methods in this protocol are optional.
  * TODO: Add parameter `MPPImage` in the callback.
  */
 @protocol MPPObjectDetectorDelegate <NSObject>
-@optional
-NS_SWIFT_NAME(objectDetector(_:didFinishObjectDetectionWithResult:timestampInMilliseconds:error:));
-- (void)objectDetector:(MPPObjectDetector *)imageClassobjectDetectorifier
-    didFinishObjectDetectionWithResult:(nullable MPPObjectDetectionResult *)objectDetectionResult
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(nullable NSError *)error;
+@required
+- (void)objectDetector:(MPPObjectDetector *)objectDetector
+    didFinishDetectionWithResult:(nullable MPPObjectDetectionResult *)result
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(nullable NSError *)error
+    NS_SWIFT_NAME(objectDetector(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
-
 
 /** Options for setting up a `MPPObjectDetector`. */
 NS_SWIFT_NAME(ObjectDetectorOptions)
 @interface MPPObjectDetectorOptions : MPPTaskOptions <NSCopying>
 
+/**
+ * Running mode of the object detector task. Defaults to `MPPRunningModeImage`.
+ * `MPPImageClassifier` can be created with one of the following running modes:
+ *  1. `MPPRunningModeImage`: The mode for performing object detection on single image inputs.
+ *  2. `MPPRunningModeVideo`: The mode for performing object detection on the decoded frames of a
+ *      video.
+ *  3. `MPPRunningModeLiveStream`: The mode for performing object detection on a live stream of
+ *      input data, such as from the camera.
+ */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
  * An object that confirms to `MPPObjectDetectorDelegate` protocol. This object must implement
- * the optional [MPPObjectDetectorDelegate objectDetector:
- *                didFinishObjectDetectionWithResult:
-                                 timestampInMilliseconds:
-                                                   error:]
- * to receive the results of performing asynchronous object detection on images (i.e, when runningMode = `MPPRunningModeLiveStream`).
+ * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
+ * to receive the results of performing asynchronous object detection on images (i.e, when
+ * `runningMode` = `MPPRunningModeLiveStream`).
  */
 @property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 
