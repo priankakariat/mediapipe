@@ -94,7 +94,7 @@ static NSString *const kTaskGraphName =
             [_imageClassifierDelegate imageClassifier:self
                 didFinishImageClassificationWithResult:nil
                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                 error:&callbackError];
+                                                 error:callbackError];
           }
           return;
         }
@@ -118,7 +118,7 @@ static NSString *const kTaskGraphName =
                                                          .Timestamp()
                                                          .Value() /
                                                      kMicroSecondsPerMilliSecond
-                                               error:&callbackError];
+                                               error:callbackError];
         }
       };
     }

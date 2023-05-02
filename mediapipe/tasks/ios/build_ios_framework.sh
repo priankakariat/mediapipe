@@ -109,7 +109,7 @@ function build_ios_frameworks_and_libraries {
   # the order of a few MBs.
 
   # Build Task Library xcframework.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
   # `MediaPipeTasksCommon` pods must also include the task graph libraries which

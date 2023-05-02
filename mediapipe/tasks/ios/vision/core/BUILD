@@ -61,18 +61,6 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
         "//third_party/apple_frameworks:UIKit",
         "@com_google_absl//absl/status:statusor",
-    ] + select({
-        "@//third_party:opencv_ios_sim_arm64_source_build" : [
-            "@ios_opencv_source//:opencv_xcframework"
-        ],
-        "@//third_party:opencv_ios_sim_fat_source_build" : [
-            "@ios_opencv_source//:opencv_xcframework"
-        ],
-        "@//third_party:opencv_ios_arm64_source_build" : [
-            "@ios_opencv_source//:opencv_xcframework"
-        ],
-        "//conditions:default": [
-            "@ios_opencv//:OpencvFramework"
-        ],
-    })       
+        "@ios_opencv_source//:opencv_xcframework"
+    ]     
 )

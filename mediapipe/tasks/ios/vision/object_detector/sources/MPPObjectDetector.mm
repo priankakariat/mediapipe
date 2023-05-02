@@ -51,6 +51,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
+@property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 @end
 
 @implementation MPPObjectDetector
@@ -80,21 +81,21 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
     if (options.objectDetectorDelegate) {
       _objectDetectorDelegate = options.objectDetectorDelegate;
-      packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
+      packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
         NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+        if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
           if ([_objectDetectorDelegate
                   respondsToSelector:@selector(objectDetector:
                                          didFinishObjectDetectionWithResult:timestampInMilliseconds:error:)]) {
             [_objectDetectorDelegate objectDetector:self
                 didFinishObjectDetectionWithResult:nil
                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                 error:&callbackError];
+                                                 error:callbackError];
           }
           return;
         }
 
-         PacketMap &outputPacketMap = status_or_packets.value();
+         PacketMap &outputPacketMap = statusOrPackets.value();
         if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
           return;
         }
@@ -113,7 +114,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
                                                          .Timestamp()
                                                          .Value() /
                                                      kMicroSecondsPerMilliSecond
-                                               error:&callbackError];
+                                               error:callbackError];
         }
       };
     }
@@ -239,6 +240,5 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
   return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
 }
-
 
 @end

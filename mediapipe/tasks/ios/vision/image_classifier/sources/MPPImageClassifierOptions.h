@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPImageClassifier;
 
 /**
- * The protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
+ * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive 
  * results of asynchronous classification of images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
  * 
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
@@ -33,10 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ImageClassifierDelegate)
 @protocol MPPImageClassifierDelegate <NSObject>
 @optional
+NS_SWIFT_NAME(imageClassifier(_:didFinishImageClassificationWithResult:timestampInMilliseconds:error:));
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
-    didFinishImageClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
+    didFinishImageClassificationWithResult:(nullable MPPImageClassifierResult *)imageClassifierResult
                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(NSError **)error;
+                                     error:(nullable NSError *)error;
 @end
 
 /**
@@ -46,9 +47,6 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 @interface MPPImageClassifierOptions : MPPTaskOptions <NSCopying>
 
 @property(nonatomic) MPPRunningMode runningMode;
-
-
-@property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSError *error);
 
 /**
  * An object that confirms to `MPPImageClassifierDelegate` protocol. This object must implement

@@ -32,10 +32,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @protocol MPPObjectDetectorDelegate <NSObject>
 @optional
+NS_SWIFT_NAME(objectDetector(_:didFinishObjectDetectionWithResult:timestampInMilliseconds:error:));
 - (void)objectDetector:(MPPObjectDetector *)imageClassobjectDetectorifier
-    didFinishObjectDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+    didFinishObjectDetectionWithResult:(nullable MPPObjectDetectionResult *)objectDetectionResult
                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(NSError **)error;
+                                     error:(nullable NSError *)error;
 @end
 
 
@@ -44,14 +45,6 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 @interface MPPObjectDetectorOptions : MPPTaskOptions <NSCopying>
 
 @property(nonatomic) MPPRunningMode runningMode;
-
-/**
- * The user-defined result callback for processing live stream data. The result callback should only
- * be specified when the running mode is set to the live stream mode.
- * TODO: Add parameter `MPPImage` in the callback.
- */
-@property(nonatomic, copy) void (^completion)
-    (MPPObjectDetectionResult *__nullable result, NSInteger timestampMs, NSError *error);
 
 /**
  * An object that confirms to `MPPObjectDetectorDelegate` protocol. This object must implement
