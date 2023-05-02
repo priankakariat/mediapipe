@@ -392,17 +392,14 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   NSArray<MPPCategory *> *expectedCategories = @[
     [[MPPCategory alloc] initWithIndex:934
-                                 score:0.622074f
+                                 score:0.753852f
                           categoryName:@"cheeseburger"
                            displayName:nil],
-    [[MPPCategory alloc] initWithIndex:963
-                                 score:0.051214f
-                          categoryName:@"meat loaf"
-                           displayName:nil],
     [[MPPCategory alloc] initWithIndex:925
-                                 score:0.048719f
+                                 score:0.028609f
                           categoryName:@"guacamole"
-                           displayName:nil]
+                           displayName:nil],
+    [[MPPCategory alloc] initWithIndex:932 score:0.027782f categoryName:@"bagel" displayName:nil]
 
   ];
 
@@ -425,6 +422,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   NSArray<MPPCategory *> *expectedCategories =
       @[ [[MPPCategory alloc] initWithIndex:560
+                                      score:0.604605f
                                categoryName:@"folding chair"
                                 displayName:nil] ];
 
