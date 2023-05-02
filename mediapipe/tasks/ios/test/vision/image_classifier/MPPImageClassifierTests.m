@@ -425,7 +425,6 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   NSArray<MPPCategory *> *expectedCategories =
       @[ [[MPPCategory alloc] initWithIndex:560
-                                      score:0.682305f
                                categoryName:@"folding chair"
                                 displayName:nil] ];
 
@@ -444,7 +443,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Running Mode Tests
 
-- (void)testCreateImageClassifierFailsWithResultListenerInNonLiveStreamMode {
+- (void)testCreateImageClassifierFailsWithDelegateInNonLiveStreamMode {
   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
     MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
@@ -455,18 +454,17 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     [self
         assertCreateImageClassifierWithOptions:options
                         failsWithExpectedError:
-                            [NSError
-                                errorWithDomain:kExpectedErrorDomain
-                                           code:MPPTasksErrorCodeInvalidArgumentError
-                                       userInfo:@{
-                                         NSLocalizedDescriptionKey :
-                                             @"The vision task is in image or video mode. "
-                                             @"The delegate must not be set in the task's options."
-                                       }]];
+                            [NSError errorWithDomain:kExpectedErrorDomain
+                                                code:MPPTasksErrorCodeInvalidArgumentError
+                                            userInfo:@{
+                                              NSLocalizedDescriptionKey :
+                                                  @"The vision task is in image or video mode. The "
+                                                  @"delegate must not be set in the task's options."
+                                            }]];
   }
 }
 
-- (void)testCreateImageClassifierFailsWithMissingResultListenerInLiveStreamMode {
+- (void)testCreateImageClassifierFailsWithMissingDelegateInLiveStreamMode {
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
@@ -479,7 +477,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                        userInfo:@{
                                          NSLocalizedDescriptionKey :
                                              @"The vision task is in live stream mode. An object "
-                                             @"must be set as the delegate of the task in the its "
+                                             @"must be set as the delegate of the task in its "
                                              @"options to ensure asynchronous delivery of results."
                                        }]];
 }
@@ -707,9 +705,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 }
 
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
-    didFinishImageClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(NSError *)error {
+    didFinishClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                error:(NSError *)error {
   NSInteger maxResults = 3;
   [self assertImageClassifierResult:imageClassifierResult
          hasExpectedCategoriesCount:maxResults
