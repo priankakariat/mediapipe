@@ -25,7 +25,7 @@
 }
 
 + (NSString *)uuidString{
-  return [[NSUUID UUID] uuidString];
+  return [[NSUUID UUID] UUIDString];
 }
 
 @end

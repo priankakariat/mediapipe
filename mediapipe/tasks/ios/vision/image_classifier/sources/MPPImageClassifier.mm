@@ -61,7 +61,7 @@ static NSString *const kTaskName = @"imageClassifier";
 
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
-  NSLog(@"Initializing with weak self");
+  NSLog(@"Image Classifier Initializing with dispatch queu and weak self");
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
@@ -90,21 +90,24 @@ static NSString *const kTaskName = @"imageClassifier";
       // by the callback.
       MPPImageClassifier *__weak weakSelf = self;
       
-      dispatch_queue_t callbackQueue = dispatch_queue_create([MPPVisionTaskRunner queueNameWithTaskName:kTaskName], NULL);
+      // Create a private serial dispatch queue in which the deleagte method will be called asynchronously. This is to ensure that if the client performs a long running operation in the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is freed up to continue with its operations.
+      const char *queueName = [MPPVisionTaskRunner uniqueQueueNameWithTaskName:kTaskName];
+      dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        if (![_imageClassifierDelegate
+        if (!weakSelf) {
+          return;
+        }
+        if (![weakSelf.imageClassifierDelegate
                 respondsToSelector:@selector
                 (imageClassifier:
-                    didFinishClassificationWithResult:timestampInMilliseconds:error:)] ||
-            !weakSelf) {
+                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
           return;
         }
 
         NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError] &&
-            weakSelf) {
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
           dispatch_async(callbackQueue, ^{
-             [_imageClassifierDelegate imageClassifier:weakSelf
+             [weakSelf.imageClassifierDelegate imageClassifier:weakSelf
                   didFinishClassificationWithResult:nil
                             timestampInMilliseconds:Timestamp::Unset().Value()
                                               error:callbackError];
@@ -126,7 +129,7 @@ static NSString *const kTaskName = @"imageClassifier";
                                                       .Value() /
                                                   kMicroSecondsPerMilliSecond;
         dispatch_async(callbackQueue, ^{
-        [_imageClassifierDelegate imageClassifier:weakSelf
+        [weakSelf.imageClassifierDelegate imageClassifier:weakSelf
                 didFinishClassificationWithResult:result
                           timestampInMilliseconds:timeStampInMilliseconds
                                             error:callbackError];

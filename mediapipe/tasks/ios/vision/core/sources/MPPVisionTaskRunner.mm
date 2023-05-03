@@ -16,6 +16,7 @@
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
 #include "absl/status/statusor.h"
 
@@ -36,6 +37,8 @@ static const NSInteger kMPPOrientationDegreesDown = -180;
 
 /** Rotation degrees for a 90 degree rotation to the left. */
 static const NSInteger kMPPOrientationDegreesLeft = -270;
+
+static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
@@ -200,8 +203,8 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   return [self sendPacketMap:packetMap error:error];
 }
 
-+ (const char *)queueNameWithTaskName:(NSString *)taskName {
-  return [NSString stringWithFormat@"com.mediapipe.tasks.vision.ImageClassifier_%@", [NSString uuidString]].UTF8String;
++ (const char *)uniqueQueueNameWithTaskName:(NSString *)taskName {
+  return [NSString stringWithFormat:@"%@.%@_%@",kTaskPrefix, taskName, [NSString uuidString]].UTF8String;
 }
 
 @end

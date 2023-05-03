@@ -141,7 +141,8 @@ NS_ASSUME_NONNULL_BEGIN
                                   (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                         error:(NSError **)error NS_UNAVAILABLE;
 
-+ (const char *)queueNameWithTaskName:(NSString *)taskName;
++ (const char *)uniqueQueueNameWithTaskName:(NSString *)taskName;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 + (instancetype)new NS_UNAVAILABLE;

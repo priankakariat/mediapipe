@@ -81,6 +81,7 @@ constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 constexpr char kSizeTag[] = "SIZE";
 constexpr char kStylizedImageTag[] = "STYLIZED_IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
+constexpr int kFaceAlignmentOutputSize = 256;
 
 // Struct holding the different output streams produced by the face stylizer
 // graph.
@@ -169,7 +170,7 @@ void ConfigureTensorsToImageCalculator(
   if (image_to_tensor_options.has_output_tensor_float_range()) {
     auto* mutable_range =
         tensors_to_image_options->mutable_input_tensor_float_range();
-    // TODO: Make the float range flexiable.
+    // TODO: Make the float range flexible.
     mutable_range->set_min(0);
     mutable_range->set_max(1);
   } else if (image_to_tensor_options.has_output_tensor_uint_range()) {
@@ -225,8 +226,8 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    bool output_stylized = !HasInput(sc->OriginalNode(), kStylizedImageTag);
-    bool output_alignment = !HasInput(sc->OriginalNode(), kFaceAlignmentTag);
+    bool output_stylized = HasOutput(sc->OriginalNode(), kStylizedImageTag);
+    bool output_alignment = HasOutput(sc->OriginalNode(), kFaceAlignmentTag);
     ASSIGN_OR_RETURN(
         const auto* model_asset_bundle_resources,
         CreateModelAssetBundleResources<FaceStylizerGraphOptions>(sc));
@@ -265,7 +266,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
           graph[Output<Image>(kStylizedImageTag)];
     }
     if (output_alignment) {
-      output_streams.stylized_image.value() >>
+      output_streams.face_alignment_image.value() >>
           graph[Output<Image>(kFaceAlignmentTag)];
     }
     output_streams.original_image >> graph[Output<Image>(kImageTag)];
@@ -345,6 +346,9 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
           image_to_tensor.GetOptions<ImageToTensorCalculatorOptions>();
       image_to_tensor_options.mutable_output_tensor_float_range()->set_min(-1);
       image_to_tensor_options.mutable_output_tensor_float_range()->set_max(1);
+      image_to_tensor_options.set_output_tensor_width(kFaceAlignmentOutputSize);
+      image_to_tensor_options.set_output_tensor_height(
+          kFaceAlignmentOutputSize);
       image_to_tensor_options.set_keep_aspect_ratio(true);
       image_to_tensor_options.set_border_mode(
           mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
