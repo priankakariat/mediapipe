@@ -200,4 +200,8 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   return [self sendPacketMap:packetMap error:error];
 }
 
++ (const char *)queueNameWithTaskName:(NSString *)taskName {
+  return [NSString stringWithFormat@"com.mediapipe.tasks.vision.ImageClassifier_%@", [NSString uuidString]].UTF8String;
+}
+
 @end

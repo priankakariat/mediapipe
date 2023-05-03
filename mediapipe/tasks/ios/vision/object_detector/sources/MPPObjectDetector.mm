@@ -37,8 +37,8 @@ static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
 static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
-
 static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorGraph";
+static NSString *const kTaskName = @"objectDetector";
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
@@ -78,7 +78,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
     }
 
     PacketsCallback packetsCallback = nullptr;
-
+    dispatch_queue_t callbackQueue = dispatch_queue_create([MPPVisionTaskRunner queueNameWithTaskName:kTaskName], NULL);
     if (options.objectDetectorDelegate) {
       _objectDetectorDelegate = options.objectDetectorDelegate;
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
