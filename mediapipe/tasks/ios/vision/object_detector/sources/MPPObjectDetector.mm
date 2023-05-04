@@ -86,7 +86,7 @@ static NSString *const kTaskName = @"objectDetector";
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
       MPPObjectDetector *__weak weakSelf = self;
-      dispatch_queue_t callbackQueue = dispatch_queue_create([MPPVisionTaskRunner uniqueQueueNameWithTaskName:kTaskName], NULL);
+      dispatch_queue_t callbackQueue = dispatch_queue_create([MPPVisionTaskRunner uniqueQueueNameWithSuffix:kTaskName], NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
         if (!weakSelf) {
           return;

@@ -203,7 +203,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return [self sendPacketMap:packetMap error:error];
 }
 
-+ (const char *)uniqueQueueNameWithTaskName:(NSString *)taskName {
++ (const char *)uniqueQueueNameWithSuffix:(NSString *)taskName {
   return [NSString stringWithFormat:@"%@.%@_%@",kTaskPrefix, taskName, [NSString uuidString]].UTF8String;
 }
 

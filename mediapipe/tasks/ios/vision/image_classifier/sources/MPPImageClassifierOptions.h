@@ -24,25 +24,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
- * results of asynchronous classification of images 
+ * results of asynchronous classification of images
  * (i.e, when `runningMode = MPPRunningModeLiveStream`).
  *
- * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
+ * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(ImageClassifierDelegate)
-@protocol MPPImageClassifierDelegate <NSObject>
+NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
+@protocol MPPImageClassifierLiveStreamDelegate <NSObject>
 
 @optional
 /**
  * This method notifies a delegate that the results of asynchronous classification of
  * an image submitted to the `MPPImageClassifier` is available.
- * 
+ *
  * This method is called on a private serial queue created by the `MPPImageClassifier`
  * for performing the asynchronous delegates calls.
  *
  * @param imageClassifier The image classifier which performed the classification.
- * This is useful to test equality when there are multiple instances of `MPPImageClassifier`. 
+ * This is useful to test equality when there are multiple instances of `MPPImageClassifier`.
  * @param result An `MPPImageClassifierResult` object that contains a list of image classifications.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the image classifier.
@@ -75,12 +75,12 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPImageClassifierDelegate` protocol. This object must implement
+ * An object that confirms to `MPPImageClassifierLiveStreamDelegate` protocol. This object must implement
  * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
  * to receive the results of asynchronous classification on images (i.e, when `runningMode =
  * MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak, nullable) id<MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak, nullable) id<MPPImageClassifierLiveStreamDelegate> imageClassifierLiveStreamDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

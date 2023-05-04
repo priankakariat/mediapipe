@@ -54,7 +54,7 @@ static NSString *const kTaskName = @"imageClassifier";
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
-@property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate> imageClassifierLiveStreamDelegate;
 @end
 
 @implementation MPPImageClassifier
@@ -62,6 +62,8 @@ static NSString *const kTaskName = @"imageClassifier";
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   NSLog(@"Image Classifier Initializing with dispatch queu and weak self");
+  NSString *label = nil;
+  NSLog(@"hasshhhh test %@", 2 ^ label);
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
@@ -84,20 +86,23 @@ static NSString *const kTaskName = @"imageClassifier";
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.imageClassifierDelegate) {
-      _imageClassifierDelegate = options.imageClassifierDelegate;
-      // Capturing `self` as weak in order to avoid `self` being kept in memory 
+    if (options.imageClassifierLiveStreamDelegate) {
+      _imageClassifierLiveStreamDelegate = options.imageClassifierLiveStreamDelegate;
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
       // by the callback.
       MPPImageClassifier *__weak weakSelf = self;
-      
-      // Create a private serial dispatch queue in which the deleagte method will be called asynchronously. This is to ensure that if the client performs a long running operation in the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is freed up to continue with its operations.
-      const char *queueName = [MPPVisionTaskRunner uniqueQueueNameWithTaskName:kTaskName];
+
+      // Create a private serial dispatch queue in which the deleagte method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
+      const char *queueName = [MPPVisionTaskRunner uniqueQueueNameWithSuffix:kTaskName];
       dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         if (!weakSelf) {
           return;
         }
-        if (![weakSelf.imageClassifierDelegate
+        if (![weakSelf.imageClassifierLiveStreamDelegate
                 respondsToSelector:@selector
                 (imageClassifier:
                     didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
@@ -107,10 +112,10 @@ static NSString *const kTaskName = @"imageClassifier";
         NSError *callbackError = nil;
         if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
           dispatch_async(callbackQueue, ^{
-             [weakSelf.imageClassifierDelegate imageClassifier:weakSelf
-                  didFinishClassificationWithResult:nil
-                            timestampInMilliseconds:Timestamp::Unset().Value()
-                                              error:callbackError];
+            [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
+                            didFinishClassificationWithResult:nil
+                                      timestampInMilliseconds:Timestamp::Unset().Value()
+                                                        error:callbackError];
           });
           return;
         }
@@ -122,17 +127,16 @@ static NSString *const kTaskName = @"imageClassifier";
 
         MPPImageClassifierResult *result =
             [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                        outputPacketMap[kClassificationsStreamName.cppString]];
+                                          outputPacketMap[kClassificationsStreamName.cppString]];
 
-        NSInteger timeStampInMilliseconds = outputPacketMap[kImageOutStreamName.cppString]
-                                                      .Timestamp()
-                                                      .Value() /
-                                                  kMicroSecondsPerMilliSecond;
+        NSInteger timeStampInMilliseconds =
+            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+            kMicroSecondsPerMilliSecond;
         dispatch_async(callbackQueue, ^{
-        [weakSelf.imageClassifierDelegate imageClassifier:weakSelf
-                didFinishClassificationWithResult:result
-                          timestampInMilliseconds:timeStampInMilliseconds
-                                            error:callbackError];
+          [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
+                          didFinishClassificationWithResult:result
+                                    timestampInMilliseconds:timeStampInMilliseconds
+                                                      error:callbackError];
         });
       };
     }
