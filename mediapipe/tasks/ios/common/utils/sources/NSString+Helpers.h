@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)stringWithCppString:(std::string)text;
 
 + (NSString *)uuidString;
+
 @end
 
 NS_ASSUME_NONNULL_END
