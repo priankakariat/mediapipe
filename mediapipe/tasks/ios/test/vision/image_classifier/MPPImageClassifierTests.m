@@ -56,7 +56,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications.count, 1); \
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications[0].headIndex, 0);
 
-@interface MPPImageClassifierTests : XCTestCase <MPPImageClassifierDelegate> {
+@interface MPPImageClassifierTests : XCTestCase <MPPImageClassifierLiveStreamDelegate> {
   NSDictionary *liveStreamSucceedsTestDict;
   NSDictionary *outOfOrderTimestampTestDict;
 }

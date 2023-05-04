@@ -20,7 +20,7 @@ import XCTest
 
 typealias FileInfo = (name: String, type: String)
 
-class ImageClassifierTests: XCTestCase, ImageClassifierDelegate {
+class ImageClassifierTests: XCTestCase, ImageClassifierLiveStreamDelegate {
 
   static let bundle = Bundle(for: ImageClassifierTests.self)
 
@@ -525,7 +525,7 @@ class ImageClassifierTests: XCTestCase, ImageClassifierDelegate {
         imageClassifierOptionsWithModelPath(
           ImageClassifierTests.floatModelPath))
       imageClassifierOptions.runningMode = runningMode
-      imageClassifierOptions.imageClassifierDelegate = self;
+      imageClassifierOptions.imageClassifierLiveStreamDelegate = self;
       // imageClassifierOptions.completion = {(
       //   result: ImageClassifierResult?, 
       //   timestampInMilliseconds: Int,
@@ -648,7 +648,7 @@ class ImageClassifierTests: XCTestCase, ImageClassifierDelegate {
         ImageClassifierTests.floatModelPath))
     
     imageClassifierOptions.runningMode = .liveStream
-    imageClassifierOptions.imageClassifierDelegate = self
+    imageClassifierOptions.imageClassifierLiveStreamDelegate = self
     // imageClassifierOptions.completion = {(
     //   result: ImageClassifierResult?, 
     //   timestampInMilliseconds: Int,
@@ -735,7 +735,7 @@ class ImageClassifierTests: XCTestCase, ImageClassifierDelegate {
       description: "classifyWithOutOfOrderTimestampsAndLiveStream")
     expectation.expectedFulfillmentCount = 1;
 
-    imageClassifierOptions.imageClassifierDelegate = self;
+    imageClassifierOptions.imageClassifierLiveStreamDelegate = self;
   
     // imageClassifierOptions.completion = {(
     //   result: ImageClassifierResult?, 
@@ -810,7 +810,7 @@ class ImageClassifierTests: XCTestCase, ImageClassifierDelegate {
     expectation.expectedFulfillmentCount = iterationCount + 1;
     expectation.isInverted = true;
     
-    imageClassifierOptions.imageClassifierDelegate = self
+    imageClassifierOptions.imageClassifierLiveStreamDelegate = self
   
     // imageClassifierOptions.completion = {(
     //   result: ImageClassifierResult?, 

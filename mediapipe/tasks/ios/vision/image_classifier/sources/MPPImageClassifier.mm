@@ -61,9 +61,6 @@ static NSString *const kTaskName = @"imageClassifier";
 
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
-  NSLog(@"Image Classifier Initializing with dispatch queu and weak self");
-  NSString *label = nil;
-  NSLog(@"hasshhhh test %@", 2 ^ label);
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
