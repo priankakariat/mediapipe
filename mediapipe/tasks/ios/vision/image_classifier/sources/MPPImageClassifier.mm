@@ -54,7 +54,8 @@ static NSString *const kTaskName = @"imageClassifier";
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
-@property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate> imageClassifierLiveStreamDelegate;
+@property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate>
+    imageClassifierLiveStreamDelegate;
 @end
 
 @implementation MPPImageClassifier
@@ -93,7 +94,7 @@ static NSString *const kTaskName = @"imageClassifier";
       // asynchronously. This is to ensure that if the client performs a long running operation in
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
-      const char *queueName = [MPPVisionTaskRunner uniqueQueueNameWithSuffix:kTaskName];
+      const char *queueName = [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName];
       dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         if (!weakSelf) {
@@ -110,9 +111,9 @@ static NSString *const kTaskName = @"imageClassifier";
         if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
           dispatch_async(callbackQueue, ^{
             [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
-                            didFinishClassificationWithResult:nil
-                                      timestampInMilliseconds:Timestamp::Unset().Value()
-                                                        error:callbackError];
+                                      didFinishClassificationWithResult:nil
+                                                timestampInMilliseconds:Timestamp::Unset().Value()
+                                                                  error:callbackError];
           });
           return;
         }
@@ -131,9 +132,9 @@ static NSString *const kTaskName = @"imageClassifier";
             kMicroSecondsPerMilliSecond;
         dispatch_async(callbackQueue, ^{
           [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
-                          didFinishClassificationWithResult:result
-                                    timestampInMilliseconds:timeStampInMilliseconds
-                                                      error:callbackError];
+                                    didFinishClassificationWithResult:result
+                                              timestampInMilliseconds:timeStampInMilliseconds
+                                                                error:callbackError];
         });
       };
     }

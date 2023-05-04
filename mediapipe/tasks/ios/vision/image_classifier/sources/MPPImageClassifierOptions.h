@@ -75,12 +75,13 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPImageClassifierLiveStreamDelegate` protocol. This object must implement
- * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
- * to receive the results of asynchronous classification on images (i.e, when `runningMode =
+ * An object that confirms to `MPPImageClassifierLiveStreamDelegate` protocol. This object must
+ * implement `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
+ * the results of asynchronous classification on images (i.e, when `runningMode =
  * MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak, nullable) id<MPPImageClassifierLiveStreamDelegate> imageClassifierLiveStreamDelegate;
+@property(nonatomic, weak, nullable) id<MPPImageClassifierLiveStreamDelegate>
+    imageClassifierLiveStreamDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
