@@ -104,7 +104,7 @@ config_setting(
     },
     values = {
         "apple_platform_type": "ios",
-        "ios_multi_cpus": "sim_arm64, x86_64",
+        "ios_multi_cpus": "sim_arm64,x86_64",
     },
 )
 
