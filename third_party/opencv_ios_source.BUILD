@@ -9,7 +9,6 @@ load(
     "@build_bazel_rules_apple//apple:apple.bzl",
     "apple_static_xcframework_import",
 )
-
 load(
     "@//third_party:opencv_ios_source.bzl",
     "select_headers",
@@ -18,7 +17,7 @@ load(
 
 # Build opencv2.xcframework from source using a convenience script provided in
 # OPENCV sources and zip the xcframework. We only build the modules required by MediaPipe by specifying
-# the modules to be ignored as command line arguments. 
+# the modules to be ignored as command line arguments.
 # We also specify the simulator and device architectures we are building for.
 # Currently we only support iOS arm64 (M1 Macs) and x86_64(Intel Macs) simulators
 # and arm64 iOS devices.
@@ -53,7 +52,7 @@ genrule(
 
 # Unzips `opencv2.xcframework.zip` built from source by `build_opencv_xcframework`
 # genrule and returns an exhaustive list of all its files including symlinks.
-unzip_opencv_xcframework (
+unzip_opencv_xcframework(
     name = "opencv2_unzipped_xcframework_files",
     zip_file = "opencv2.xcframework.zip",
 )
@@ -62,8 +61,8 @@ unzip_opencv_xcframework (
 # framework which can be linked to iOS targets.
 apple_static_xcframework_import(
     name = "opencv_xcframework",
-    xcframework_imports = [":opencv2_unzipped_xcframework_files"],
     visibility = ["//visibility:public"],
+    xcframework_imports = [":opencv2_unzipped_xcframework_files"],
 )
 
 # Filters the headers for each platform in `opencv2.xcframework` which will be
@@ -84,18 +83,18 @@ select_headers(
 cc_library(
     name = "opencv",
     hdrs = select({
-        "@//mediapipe:ios_x86_64" : [
-            ":opencv_xcframework_simulator_headers"
+        "@//mediapipe:ios_x86_64": [
+            ":opencv_xcframework_simulator_headers",
         ],
-        "@//mediapipe:ios_sim_arm64" : [
-            ":opencv_xcframework_simulator_headers"
+        "@//mediapipe:ios_sim_arm64": [
+            ":opencv_xcframework_simulator_headers",
         ],
         "@//mediapipe:ios_arm64" : [
             ":opencv_xcframework_device_headers"
         ],
         # A value from above is chosen arbitarily.
         "//conditions:default": [
-            ":opencv_xcframework_simulator_headers"
+            ":opencv_xcframework_simulator_headers",
         ],
     }),
     copts = [
@@ -115,9 +114,9 @@ cc_library(
         "-framework QuartzCore",
     ],
     strip_include_prefix = select({
-        "@//mediapipe:ios_x86_64" : "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_sim_arm64" :"opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
-        "@//mediapipe:ios_arm64" : "opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers",
+        "@//mediapipe:ios_x86_64": "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
+        "@//mediapipe:ios_sim_arm64": "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
+        "@//mediapipe:ios_arm64": "opencv2.xcframework/ios-arm64/opencv2.framework/Versions/A/Headers",
         # Random value is selected for default cases.
         "//conditions:default": "opencv2.xcframework/ios-arm64_x86_64-simulator/opencv2.framework/Versions/A/Headers",
     }),

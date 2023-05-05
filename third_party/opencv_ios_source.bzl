@@ -16,16 +16,15 @@
 
 load(
     "@//third_party:opencv_ios_xcframework_files.bzl",
-    "OPENCV_XCFRAMEWORK_IOS_SIMULATOR_FILE_PATHS",
+    "OPENCV_XCFRAMEWORK_INFO_PLIST_PATH",
     "OPENCV_XCFRAMEWORK_IOS_DEVICE_FILE_PATHS",
-    "OPENCV_XCFRAMEWORK_INFO_PLIST_PATH"
+    "OPENCV_XCFRAMEWORK_IOS_SIMULATOR_FILE_PATHS",
 )
 
 _OPENCV_XCFRAMEWORK_DIR_NAME = "opencv2.xcframework"
 _OPENCV_FRAMEWORK_DIR_NAME = "opencv2.framework"
 _OPENCV_SIMULATOR_PLATFORM_DIR_NAME = "ios-arm64_x86_64-simulator"
 _OPENCV_DEVICE_PLATFORM_DIR_NAME = "ios-arm64"
-_OPENCV_PLATFORM_DIR_NAMES = [_OPENCV_SIMULATOR_PLATFORM_DIR_NAME, _OPENCV_DEVICE_PLATFORM_DIR_NAME]
 
 def _select_headers_impl(ctx):
     # Should match with `/`. Othewise `ios-arm64` matches to `ios-arm64_x86-64` 
@@ -34,12 +33,12 @@ def _select_headers_impl(ctx):
             and f.dirname.find(ctx.attr.platform + "/") != -1]
     return [DefaultInfo(files = depset(_files))]
 
-# This rule selects only the headers from an apple static xcframework filtered by 
+# This rule selects only the headers from an apple static xcframework filtered by
 # an input platform string.
 select_headers = rule(
     implementation = _select_headers_impl,
     attrs = {
-        "srcs": attr.label_list(mandatory = True, allow_files=True),
+        "srcs": attr.label_list(mandatory = True, allow_files = True),
         "platform": attr.string(mandatory = True),
     },
 )
@@ -47,26 +46,28 @@ select_headers = rule(
 # This function declares and returns symlinks to the directories within each platform
 # in `opencv2.xcframework` expected to be present.
 # The symlinks are created according to the structure stipulated by apple xcframeworks
-# do that they can be correctly consumed by `apple_static_xcframework_import` rule. 
+# do that they can be correctly consumed by `apple_static_xcframework_import` rule.
 def _opencv2_directory_symlinks(ctx, platforms):
-    basenames = ['Resources', 'Headers', 'Modules', 'Versions/Current']
+    basenames = ["Resources", "Headers", "Modules", "Versions/Current"]
     symlinks = []
-    
+
     for platform in platforms:
-       symlinks =  symlinks + [
+        symlinks = symlinks + [
             ctx.actions.declare_symlink(
-                _OPENCV_XCFRAMEWORK_DIR_NAME + "/{}/{}/{}".format(platform, _OPENCV_FRAMEWORK_DIR_NAME, name)
-            ) for name in basenames]
+                _OPENCV_XCFRAMEWORK_DIR_NAME + "/{}/{}/{}".format(platform, _OPENCV_FRAMEWORK_DIR_NAME, name),
+            )
+            for name in basenames
+        ]
 
     return symlinks
 
-# This function declares and returns all the files for each platform expected 
+# This function declares and returns all the files for each platform expected
 # to be present in  `opencv2.xcframework` after the unzipping action is run.
-def _opencv2_file_list(ctx, platform_filepath_lists): 
+def _opencv2_file_list(ctx, platform_filepath_lists):
     binary_name = "opencv2"
     output_files = []
     binaries_to_symlink = []
-      
+
     for (platform, filepaths) in platform_filepath_lists:
         for path in filepaths:
             file = ctx.actions.declare_file(path)
@@ -74,35 +75,40 @@ def _opencv2_file_list(ctx, platform_filepath_lists):
             if path.endswith(binary_name):
                 symlink_output = ctx.actions.declare_file(
                     _OPENCV_XCFRAMEWORK_DIR_NAME + "/{}/{}/{}".format(
-                        platform, _OPENCV_FRAMEWORK_DIR_NAME ,binary_name))
+                        platform,
+                        _OPENCV_FRAMEWORK_DIR_NAME,
+                        binary_name,
+                    ),
+                )
                 binaries_to_symlink.append((symlink_output, file))
 
     return output_files, binaries_to_symlink
 
 def _unzip_opencv_xcframework_impl(ctx):
-
     # Array to iterate over the various platforms to declare output files and
     # symlinks.
     platform_filepath_lists = [
         (_OPENCV_SIMULATOR_PLATFORM_DIR_NAME, OPENCV_XCFRAMEWORK_IOS_SIMULATOR_FILE_PATHS),
-        (_OPENCV_DEVICE_PLATFORM_DIR_NAME, OPENCV_XCFRAMEWORK_IOS_DEVICE_FILE_PATHS)
+        (_OPENCV_DEVICE_PLATFORM_DIR_NAME, OPENCV_XCFRAMEWORK_IOS_DEVICE_FILE_PATHS),
     ]
-    
+
     # Gets an exhaustive list of output files which are  present in the xcframework.
     # Also gets array of `(binary simlink, binary)` pairs which are to be symlinked
     # using `ctx.actions.symlink()`.
     output_files, binaries_to_symlink = _opencv2_file_list(ctx, platform_filepath_lists)
     output_files.append(ctx.actions.declare_file(OPENCV_XCFRAMEWORK_INFO_PLIST_PATH))
 
-    # xcframeworks have a directory structure in which the `opencv2.framework` folders for each 
+    # xcframeworks have a directory structure in which the `opencv2.framework` folders for each
     # platform contain directories which are symlinked to the respective folders of the version
     # in use. Simply unzipping the zip of the framework will not make Bazel treat these
-    # as symlinks. They have to be explicity declared as symlinks using `ctx.actions.declare_symlink()`. 
+    # as symlinks. They have to be explicity declared as symlinks using `ctx.actions.declare_symlink()`.
     directory_symlinks = _opencv2_directory_symlinks(
-        ctx, [_OPENCV_SIMULATOR_PLATFORM_DIR_NAME, _OPENCV_DEVICE_PLATFORM_DIR_NAME])
-    
+        ctx,
+        [_OPENCV_SIMULATOR_PLATFORM_DIR_NAME, _OPENCV_DEVICE_PLATFORM_DIR_NAME],
+    )
+
     output_files = output_files + directory_symlinks
-    
+
     args = ctx.actions.args()
 
     # Add the path of the zip file to be unzipped as an argument to be passed to
@@ -119,8 +125,8 @@ def _unzip_opencv_xcframework_impl(ctx):
         progress_message = "Unzipping %s" % ctx.file.zip_file.short_path,
         command = "unzip -qq $1 -d $2",
     )
-    
-    # The symlinks of the opencv2 binaries for each platform in the xcframework 
+
+    # The symlinks of the opencv2 binaries for each platform in the xcframework
     # have to be symlinked using the `ctx.actions.symlink` unlike the directory
     # symlinks which can be expected to be valid when unzipping is completed.
     # Otherwise, when tests are run, the linker complaints that the binary is
@@ -129,23 +135,22 @@ def _unzip_opencv_xcframework_impl(ctx):
     for (symlink_output, binary_file) in binaries_to_symlink:
         ctx.actions.symlink(output = symlink_output, target_file = binary_file)
         binary_symlink_files.append(symlink_output)
-    
+
     # Return all the declared output files and symlinks as the output of this
     # rule.
-    return [ DefaultInfo(files=depset(output_files + binary_symlink_files)) ]
+    return [DefaultInfo(files = depset(output_files + binary_symlink_files))]
 
-
-# This rule unzips an `opencv2.xcframework.zip` created by a genrule that 
+# This rule unzips an `opencv2.xcframework.zip` created by a genrule that
 # invokes a python script in the opencv 4.5.1 github archive.
-# It returns all the contents of  opencv2.xcframework as a list of files in the 
+# It returns all the contents of  opencv2.xcframework as a list of files in the
 # output. This rule works by explicitly declaring files at hardcoded
 # paths in the opencv2 xcframework bundle which are expected to be present when
 # the zip file is unzipped. This is a prerequisite since the outputs of this rule
 # will be consumed by apple_static_xcframework_import which can only take a list
-# of files as inputs. 
+# of files as inputs.
 unzip_opencv_xcframework = rule(
     implementation = _unzip_opencv_xcframework_impl,
     attrs = {
-        "zip_file": attr.label(mandatory = True, allow_single_file=True),
+        "zip_file": attr.label(mandatory = True, allow_single_file = True),
     },
 )

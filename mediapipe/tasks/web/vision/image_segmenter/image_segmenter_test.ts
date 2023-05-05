@@ -263,7 +263,7 @@ describe('ImageSegmenter', () => {
     });
   });
 
-  it('invokes listener once masks are avaiblae', async () => {
+  it('invokes listener once masks are available', async () => {
     const categoryMask = new Uint8ClampedArray([1]);
     const confidenceMask = new Float32Array([0.0]);
     let listenerCalled = false;
@@ -291,5 +291,22 @@ describe('ImageSegmenter', () => {
         resolve();
       });
     });
+  });
+
+  it('returns result', () => {
+    const confidenceMask = new Float32Array([0.0]);
+
+    // Pass the test data to our listener
+    imageSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      imageSegmenter.confidenceMasksListener!(
+          [
+            {data: confidenceMask, width: 1, height: 1},
+          ],
+          1337);
+    });
+
+    const result = imageSegmenter.segment({} as HTMLImageElement);
+    expect(result.confidenceMasks![0]).toBeInstanceOf(MPImage);
+    result.confidenceMasks![0].close();
   });
 });

@@ -222,9 +222,9 @@ describe('PoseLandmarker', () => {
           .toHaveBeenCalledTimes(1);
       expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
-      expect(result.landmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
-      expect(result.worldLandmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
-      expect(result.auxilaryLandmarks).toEqual([{'x': 0, 'y': 0, 'z': 0}]);
+      expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+      expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+      expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
       expect(result.segmentationMasks![0]).toBeInstanceOf(MPImage);
       done();
     });
@@ -261,7 +261,44 @@ describe('PoseLandmarker', () => {
     expect(landmarks1).toEqual(landmarks2);
   });
 
-  it('invokes listener once masks are avaiblae', (done) => {
+  it('supports multiple poses', (done) => {
+    const landmarksProto = [
+      createLandmarks(0.1, 0.2, 0.3).serializeBinary(),
+      createLandmarks(0.4, 0.5, 0.6).serializeBinary()
+    ];
+    const worldLandmarksProto = [
+      createWorldLandmarks(1, 2, 3).serializeBinary(),
+      createWorldLandmarks(4, 5, 6).serializeBinary()
+    ];
+
+    poseLandmarker.setOptions({numPoses: 1});
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+      poseLandmarker.listeners.get('auxiliary_landmarks')!
+          (landmarksProto, 1337);
+    });
+
+    // Invoke the pose landmarker
+    poseLandmarker.detect({} as HTMLImageElement, result => {
+      expect(result.landmarks).toEqual([
+        [{'x': 0.1, 'y': 0.2, 'z': 0.3}], [{'x': 0.4, 'y': 0.5, 'z': 0.6}]
+      ]);
+      expect(result.worldLandmarks).toEqual([
+        [{'x': 1, 'y': 2, 'z': 3}], [{'x': 4, 'y': 5, 'z': 6}]
+      ]);
+      expect(result.auxilaryLandmarks).toEqual([
+        [{'x': 0.1, 'y': 0.2, 'z': 0.3}], [{'x': 0.4, 'y': 0.5, 'z': 0.6}]
+      ]);
+      done();
+    });
+  });
+
+  it('invokes listener once masks are available', (done) => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
     const masks = [
@@ -293,5 +330,27 @@ describe('PoseLandmarker', () => {
     poseLandmarker.detect({} as HTMLImageElement, () => {
       listenerCalled = true;
     });
+  });
+
+  it('returns result', () => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+      poseLandmarker.listeners.get('auxiliary_landmarks')!
+          (landmarksProto, 1337);
+    });
+
+    // Invoke the pose landmarker
+    const result = poseLandmarker.detect({} as HTMLImageElement);
+    expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+    expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
   });
 });

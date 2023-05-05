@@ -17,8 +17,9 @@
 import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {MPImage, MPImageShaderContext} from '../../../../tasks/web/vision/core/image';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 import {isWebKit} from '../../../../web/graph_runner/platform_utils';
@@ -229,7 +230,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * (adding an alpha channel if necessary), passes through WebGLTextures and
    * throws for Float32Array-backed images.
    */
-  protected convertToMPImage(wasmImage: WasmImage): MPImage {
+  protected convertToMPImage(wasmImage: WasmImage, shouldCopyData: boolean):
+      MPImage {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
@@ -262,10 +264,11 @@ export abstract class VisionTaskRunner extends TaskRunner {
       container = data;
     }
 
-    return new MPImage(
-      [container], /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-      this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
-      height);
+    const image = new MPImage(
+        [container], /* ownsImageBitmap= */ false,
+        /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
+        this.shaderContext, width, height);
+    return shouldCopyData ? image.clone() : image;
   }
 
   /** Closes and cleans up the resources held by this task. */
