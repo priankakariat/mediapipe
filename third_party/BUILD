@@ -94,16 +94,16 @@ config_setting(
     },
 )
 
-# config_setting(
-#     name = "opencv_ios_sim_fat_source_build",
-#     values = {
-#         "apple_platform_type": "ios",
-#         "ios_multi_cpus": "x86_64,sim_arm64"
-#     },
-#     define_values = {
-#         "OPENCV": "source",
-#     },
-# )
+config_setting(
+    name = "opencv_ios_sim_fat_source_build",
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "x86_64,sim_arm64"
+    },
+    define_values = {
+        "OPENCV": "source",
+    },
+)
 
 alias(
     name = "opencv",
@@ -111,6 +111,7 @@ alias(
         ":opencv_ios_sim_arm64_source_build" : "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build" : "@ios_opencv_source//:opencv",
         ":opencv_ios_x86_64_source_build" : "@ios_opencv_source//:opencv",
+        # ":opencv_ios_sim_fat_source_build" : "@ios_opencv_source//:opencv",
         ":opencv_source_build": ":opencv_cmake",
         "//conditions:default": ":opencv_binary",
     }),

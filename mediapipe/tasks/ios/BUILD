@@ -125,7 +125,7 @@ apple_static_xcframework(
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with
     # ":MediaPipeTaskGraphs_library".
-    avoid_deps = OBJC_COMMON_DEPS + ["@ios_opencv_source//:opencv_xcframework"],  
+    avoid_deps = OBJC_COMMON_DEPS,  
     bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator": [
@@ -177,8 +177,13 @@ apple_static_library(
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "@org_tensorflow//third_party/icu/data:conversion_data",
-        "@ios_opencv_source//:opencv_xcframework",
-    ]
+    ] + select({
+        "//third_party:opencv_ios_sim_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_x86_64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_sim_fat_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//conditions:default": ["@ios_opencv//:OpencvFramework"],
+    }),
 )
 
 apple_static_xcframework(
