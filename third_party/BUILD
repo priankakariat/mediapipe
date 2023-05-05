@@ -114,7 +114,7 @@ alias(
         ":opencv_source_build": ":opencv_cmake",
         ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
-        ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv"
+        ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],
