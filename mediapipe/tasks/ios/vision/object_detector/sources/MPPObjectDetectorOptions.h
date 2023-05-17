@@ -52,7 +52,6 @@ NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
  * image was sent to the object detector.
  * @param error An optional error parameter populated when there is an error in performing object
  * detection on the input live stream image data.
- *
  */
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
     didFinishDetectionWithResult:(nullable MPPObjectDetectionResult *)result
@@ -67,7 +66,7 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 
 /**
  * Running mode of the object detector task. Defaults to `MPPRunningModeImage`.
- * `MPPImageClassifier` can be created with one of the following running modes:
+ * `MPPObjectDetector` can be created with one of the following running modes:
  *  1. `MPPRunningModeImage`: The mode for performing object detection on single image inputs.
  *  2. `MPPRunningModeVideo`: The mode for performing object detection on the decoded frames of a
  *      video.
