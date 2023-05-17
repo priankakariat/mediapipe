@@ -18,18 +18,28 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static const int kMicroSecondsPerMilliSecond = 1000;
+
 @interface MPPGestureRecognizerResult (Helpers)
 
 /**
- * Creates an `MPPImageClassifierResult` from a MediaPipe packet containing an
- * `ClassificationResultProto`.
+ * Creates an `MPPGestureRecognizerResult` from hand gestures, handedness, hand landmarks and world
+ * landmarks packets.
  *
- * @param packet a MediaPipe packet wrapping a ClassificationResultProto.
+ * @param handGesturesPacket a MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
+ * @param handednessPacket a MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
+ * @param handLandmarksPacket a MediaPipe packet wrapping
+ * a`std::vector<NormalizedlandmarkListProto>`.
+ * @param handLandmarksPacket a MediaPipe packet wrapping a`std::vector<LandmarkListProto>`.
  *
- * @return  An `MPPImageClassifierResult` object that contains a list of image classifications.
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
  */
-+ (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet;
++ (MPPGestureRecognizerResult *)
+    gestureRecognizerResultWithHandGesturesPacket:(const mediapipe::Packet &)handGesturesPacket
+                                 handednessPacket:(const mediapipe::Packet &)handednessPacket
+                              handLandmarksPacket:(const mediapipe::Packet &)handLandmarksPacket
+                             worldLandmarksPacket:(const mediapipe::Packet &)worldLandmarksPacket;
 
 @end
 

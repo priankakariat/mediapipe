@@ -28,8 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
  * results of performing asynchronous gesture recognition on images (i.e, when `runningMode` =
  * `MPPRunningModeLiveStream`).
  *
- * The delegate of `MPPGestureRecognizer` must adopt `MPPGestureRecognizerLiveStreamDelegate` protocol.
- * The methods in this protocol are optional.
+ * The delegate of `MPPGestureRecognizer` must adopt `MPPGestureRecognizerLiveStreamDelegate`
+ * protocol. The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
 @protocol MPPGestureRecognizerLiveStreamDelegate <NSObject>
@@ -56,12 +56,11 @@ NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
  *
  */
 - (void)gestureRecognizer:(MPPGestureRecognizer *)gestureRecognizer
-    didFinishGestureRecognitionWithResult:(nullable MPPGestureRecognizerResult *)result
-         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                           error:(nullable NSError *)error
+    didFinishRecognitionWithResult:(nullable MPPGestureRecognizerResult *)result
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                             error:(nullable NSError *)error
     NS_SWIFT_NAME(gestureRecognizer(_:didFinishGestureRecognition:timestampInMilliseconds:error:));
 @end
-
 
 /** Options for setting up a `MPPGestureRecognizer`. */
 NS_SWIFT_NAME(GestureRecognizerOptions)
@@ -80,15 +79,15 @@ NS_SWIFT_NAME(GestureRecognizerOptions)
 
 /**
  * An object that confirms to `MPPGestureRecognizerLiveStreamDelegate` protocol. This object must
- * implement `gestureRecognizer:didFinishGestureRecognitionWithResult:timestampInMilliseconds:error:` to receive
- * the results of performing asynchronous gesture recognition on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * implement `gestureRecognizer:didFinishRecognitionWithResult:timestampInMilliseconds:error:` to
+ * receive the results of performing asynchronous gesture recognition on images (i.e, when
+ * `runningMode` = `MPPRunningModeLiveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPGestureRecognizerLiveStreamDelegate>
     gestureRecognizerLiveStreamDelegate;
 
 /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
-@property(nonatomic) NSInteger numHands;
+@property(nonatomic) NSInteger numberOfHands;
 
 /** Sets minimum confidence score for the hand detection to be considered successful */
 @property(nonatomic) float minHandDetectionConfidence;

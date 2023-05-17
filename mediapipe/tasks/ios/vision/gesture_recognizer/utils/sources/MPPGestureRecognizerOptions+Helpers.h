@@ -14,11 +14,11 @@
 
 #include "mediapipe/framework/calculator_options.pb.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
-#import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureReecognizerOptions.h"
+#import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizerOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPGestureReecognizerOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPGestureRecognizerOptions (Helpers) <MPPTaskOptionsProtocol>
 
 /**
  * Populates the provided `CalculatorOptions` proto container with the current settings.

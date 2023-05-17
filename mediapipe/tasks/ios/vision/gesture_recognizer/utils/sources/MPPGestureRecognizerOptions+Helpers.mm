@@ -15,19 +15,19 @@
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/utils/sources/MPPGestureRecognizerOptions+Helpers.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 #import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
+#import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 
 namespace {
 using CalculatorOptionsProto = mediapipe::CalculatorOptions;
+using GestureClassifierGraphOptionsProto =
+    ::mediapipe::tasks::vision::gesture_recognizer::proto::GestureClassifierGraphOptions;
 using GestureRecognizerGraphOptionsProto =
     ::mediapipe::tasks::vision::gesture_recognizer::proto::GestureRecognizerGraphOptions;
+using HandGestureRecognizerGraphOptionsProto =
+    ::mediapipe::tasks::vision::gesture_recognizer::proto::HandGestureRecognizerGraphOptions;
 using HandLandmarkerGraphOptionsProto =
     ::mediapipe::tasks::vision::hand_landmarker::proto::HandLandmarkerGraphOptions;
 using HandDetectorGraphOptionsProto =
@@ -45,28 +45,38 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 
   [self.baseOptions copyToProto:gestureRecognizerGraphOptionsProto->mutable_base_options()
               withUseStreamMode:self.runningMode != MPPRunningModeImage];
-  
 
-  HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto = HandLandmarkerGraphOptionsProto();
+  HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
+      gestureRecognizerGraphOptionsProto->mutable_hand_landmarker_graph_options();
   handLandmarkerGraphOptionsProto->set_min_tracking_confidence(self.minTrackingConfidence);
 
-  HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto = handLandmarkerGraphOptionsProto()->mutable_hand_detector_graph_options();
+  HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
+      handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
   handDetectorGraphOptionsProto->Clear();
   handDetectorGraphOptionsProto->set_num_hands(self.numberOfHands);
-  handDetectorGraphOptionsProto->set_min_hand_detection_confidence(self.minHandDetectionConfidence);
+  handDetectorGraphOptionsProto->set_min_detection_confidence(self.minHandDetectionConfidence);
 
-  HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto = handLandmarkerGraphOptionsProto()->mutable_hand_landmarks_detector_graph_options();
+  HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =
+      handLandmarkerGraphOptionsProto->mutable_hand_landmarks_detector_graph_options();
   handLandmarksDetectorGraphOptionsProto->Clear();
-  handLandmarksDetectorGraphOptionsProto->set_min_hand_presence_confidence(self.minHandPresenceConfidence);
+  handLandmarksDetectorGraphOptionsProto->set_min_detection_confidence(
+      self.minHandPresenceConfidence);
 
-  if (cannedGesturesClassifierOptions) {
-    ClassifierOptionsProto *cannedGesturesClassifierOptionsProto = gestureRecognizerGraphOptionsProto->mutable_canned_gestures_classifier_options();
-    cannedGesturesClassifierOptions.copyToProto(cannedGesturesClassifierOptionsProto);
+  HandGestureRecognizerGraphOptionsProto *handGestureRecognizerGraphOptionsProto =
+      gestureRecognizerGraphOptionsProto->mutable_hand_gesture_recognizer_graph_options();
+
+  if (self.cannedGesturesClassifierOptions) {
+    GestureClassifierGraphOptionsProto *cannedGesturesClassifierOptionsProto =
+        handGestureRecognizerGraphOptionsProto->mutable_canned_gesture_classifier_graph_options();
+    [self.cannedGesturesClassifierOptions
+        copyToProto:cannedGesturesClassifierOptionsProto->mutable_classifier_options()];
   }
 
-  if (customGesturesClassifierOptions) {
-    ClassifierOptionsProto *customGesturesClassifierOptionsProto = gestureRecognizerGraphOptionsProto->mutable_canned_gestures_classifier_options();
-    cannedGesturesClassifierOptions.copyToProto(customGesturesClassifierOptionsProto);
+  if (self.customGesturesClassifierOptions) {
+    GestureClassifierGraphOptionsProto *customGesturesClassifierOptionsProto =
+        handGestureRecognizerGraphOptionsProto->mutable_custom_gesture_classifier_graph_options();
+    [self.customGesturesClassifierOptions
+        copyToProto:customGesturesClassifierOptionsProto->mutable_classifier_options()];
   }
 }
 

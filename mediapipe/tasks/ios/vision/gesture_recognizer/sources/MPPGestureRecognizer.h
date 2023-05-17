@@ -24,8 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * @brief Performs gesture recognition on images.
  *
- * This API expects a pre-trained TFLite hand gesture recognizer model or a custom one created using MediaPipe Solutions Model Maker. 
- * See https://developers.google.com/mediapipe/solutions/model_maker.
+ * This API expects a pre-trained TFLite hand gesture recognizer model or a custom one created using
+ * MediaPipe Solutions Model Maker. See
+ * https://developers.google.com/mediapipe/solutions/model_maker.
  */
 NS_SWIFT_NAME(GestureRecognizer)
 @interface MPPGestureRecognizer : NSObject
@@ -51,8 +52,8 @@ NS_SWIFT_NAME(GestureRecognizer)
  * @param error An optional error parameter populated when there is an error in initializing the
  * gesture recognizer.
  *
- * @return A new instance of `MPPGestureRecognizer` with the given options. `nil` if there is an error
- * in initializing the gesture recognizer.
+ * @return A new instance of `MPPGestureRecognizer` with the given options. `nil` if there is an
+ * error in initializing the gesture recognizer.
  */
 - (nullable instancetype)initWithOptions:(MPPGestureRecognizerOptions *)options
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
@@ -62,14 +63,24 @@ NS_SWIFT_NAME(GestureRecognizer)
  * interest. Rotation will be applied according to the `orientation` property of the provided
  * `MPPImage`. Only use this method when the `MPPGestureRecognizer` is created with
  * `MPPRunningModeImage`.
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
  *
  * @param image The `MPPImage` on which gesture recognition is to be performed.
- * @param error An optional error parameter populated when there is an error in performing gesture recognition on the input image.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input image.
  *
- * @return A `MPPGestureRecognizerResult` object that contains the hand gesture recognition results.
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
  */
 - (nullable MPPGestureRecognizerResult *)recognizeImage:(MPPImage *)image
-                                               error:(NSError **)error
+                                                  error:(NSError **)error
     NS_SWIFT_NAME(recognize(image:));
 
 /**
@@ -78,16 +89,27 @@ NS_SWIFT_NAME(GestureRecognizer)
  * of the provided `MPPImage`. Only use this method when the `MPPGestureRecognizer` is created with
  * `MPPRunningModeImage`.
  *
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
+ *
  * @param image The `MPPImage` on which gesture recognition is to be performed.
  * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
  * gesture recognition should be performed.
- * @param error An optional error parameter populated when there is an error in performing gesture recognition on the input image.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input image.
  *
- * @return A `MPPGestureRecognizerResult` object that contains the hand gesture recognition results.
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
  */
 - (nullable MPPGestureRecognizerResult *)recognizeImage:(MPPImage *)image
-                                    regionOfInterest:(CGRect)roi
-                                               error:(NSError **)error
+                                       regionOfInterest:(CGRect)roi
+                                                  error:(NSError **)error
     NS_SWIFT_NAME(recognize(image:regionOfInterest:));
 
 /**
@@ -96,16 +118,30 @@ NS_SWIFT_NAME(GestureRecognizer)
  * the provided `MPPImage`. Only use this method when the `MPPGestureRecognizer` is created with
  * `MPPRunningModeVideo`.
  *
+ * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
+ * be monotonically increasing.
+ *
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
+ *
  * @param image The `MPPImage` on which gesture recognition is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing gesture recognition on the input video frame.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input video frame.
  *
- * @return A `MPPGestureRecognizerResult` object that contains the hand gesture recognition results.
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
  */
 - (nullable MPPGestureRecognizerResult *)recognizeVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                    error:(NSError **)error
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                       error:(NSError **)error
     NS_SWIFT_NAME(recognize(videoFrame:timestampInMilliseconds:));
 
 /**
@@ -117,37 +153,66 @@ NS_SWIFT_NAME(GestureRecognizer)
  * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
  * be monotonically increasing.
  *
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
+ *
  * @param image A live stream image data of type `MPPImage` on which gesture recognition is to be
  * performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the video frame of type
  * `MPPImage`, on which gesture recognition should be performed.
- * @param error An optional error parameter populated when there is an error in performing gesture recognition on the input video frame.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input video frame.
  *
- * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition results.
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
  */
 - (nullable MPPGestureRecognizerResult *)recognizeVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                         regionOfInterest:(CGRect)roi
-                                                    error:(NSError **)error
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                            regionOfInterest:(CGRect)roi
+                                                       error:(NSError **)error
     NS_SWIFT_NAME(recognize(videoFrame:timestampInMilliseconds:regionOfInterest:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform gesture recognition using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPGestureRecognizer` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPGestureRecognizerOptions`.
+ * `MPPRunningModeLiveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of gesture
+ * recognition must confirm to `MPPGestureRecognizerLiveStreamDelegate` protocol and implement the
+ * `gestureRecognizer:didFinishRecognitionWithResult:timestampInMilliseconds:error:`
+ * delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the gesture recognizer. The input timestamps must be monotonically increasing.
+ *
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * space is RGB with an Alpha channel.
+ *
+ * If this method is used for performing gesture recognition on live camera frames using
+ * `AVFoundation`, ensure that you request `AVCaptureVideoDataOutput` to output frames in
+ * `kCMPixelFormat_32RGBA` using its `videoSettings` property.
  *
  * @param image A live stream image data of type `MPPImage` on which gesture recognition is to be
  * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image is sent to the gesture recognizer. The input timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing gesture recognition on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input live stream image data.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
@@ -160,11 +225,28 @@ NS_SWIFT_NAME(GestureRecognizer)
  * Sends live stream image data of type `MPPImage` to perform gesture recognition, cropped to the
  * specified region of interest.. Rotation will be applied according to the `orientation` property
  * of the provided `MPPImage`. Only use this method when the `MPPGestureRecognizer` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPGestureRecognizerOptions`.
+ * `MPPRunningModeLiveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of gesture
+ * recognition must confirm to `MPPGestureRecognizerLiveStreamDelegate` protocol and implement the
+ * `gestureRecognizer:didFinishRecognitionWithResult:timestampInMilliseconds:error:` delegate
+ * method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the gesture recognizer. The input timestamps must be monotonically increasing.
+ *
+ * This method supports gesture recognition of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * space is RGB with an Alpha channel.
+ *
+ * If this method is used for preforming gesture recognition on live camera frames using
+ * `AVFoundation`, ensure that you request `AVCaptureVideoDataOutput` to output frames in
+ * `kCMPixelFormat_32RGBA` using its `videoSettings` property.
  *
  * @param image A live stream image data of type `MPPImage` on which gesture recognition is to be
  * performed.
@@ -172,8 +254,8 @@ NS_SWIFT_NAME(GestureRecognizer)
  * image is sent to the gesture recognizer. The input timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the given live stream image data
  * of type `MPPImage`, on which gesture recognition should be performed.
- * @param error An optional error parameter populated when there is an error in performing image
- * classification on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input live stream image data.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */

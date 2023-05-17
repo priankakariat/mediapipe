@@ -55,10 +55,25 @@ static NSString *const kTaskGraphName =
 @interface MPPGestureRecognizer () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
+  @property(nonatomic, weak) id<MPPGestureRecognizerLiveStreamDelegate>
+      gestureRecognizerLiveStreamDelegate;
 }
 @end
 
 @implementation MPPGestureRecognizer
+
+- (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOutputPacketMap:
+    (PacketMap &)outputPacketMap {
+  return [MPPGestureRecognizerResult
+      gestureRecognizerResultWithHandGesturesPacket:outputPacketMap.value()
+                                                        [kHandGesturesOutStreamName.cppString]
+                                   handednessPacket:outputPacketMap
+                                                        .value()[kHandednessOutStreamName.cppString]
+                                handLandmarksPacket:outputPacketMap
+                                                        .value()[kLandmarksOutStreamName.cppString]
+                               worldLandmarksPacket:outputPacketMap.value()
+                                                        [kWorldLandmarksOutStreamName.cppString]];
+}
 
 - (instancetype)initWithOptions:(MPPGestureRecognizer *)options error:(NSError **)error {
   self = [super init];
@@ -70,14 +85,11 @@ static NSString *const kTaskGraphName =
                    [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
                  ]
                 outputStreams:@[
-                  [NSString
-                      stringWithFormat:@"%@:%@", kLandmarksTag, kLandmarksOutStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kLandmarksTag, kLandmarksOutStreamName],
                   [NSString
                       stringWithFormat:@"%@:%@", kWorldLandmarksTag, kWorldLandmarksOutStreamName],
-                  [NSString
-                      stringWithFormat:@"%@:%@", kHandednessTag, kHandednessOutStreamName],
-                  [NSString
-                      stringWithFormat:@"%@:%@", kHandGesturesTag, kHandednessOutStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kHandednessTag, kHandednessOutStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kHandGesturesTag, kHandednessOutStreamName],
                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
                 ]
                   taskOptions:options
@@ -90,16 +102,58 @@ static NSString *const kTaskGraphName =
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
+    if (options.gestureRecognizerLiveStreamDelegate) {
+      _gestureRecognizerLiveStreamDelegate = options.gestureRecognizerLiveStreamDelegate;
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPGestureRecognizer *__weak weakSelf = self;
+
+      // Create a private serial dispatch queue in which the deleagte method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
+      const char *queueName = [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName];
+      dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        NSError *callbackError = nil;
-        MPPImageClassifierResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPImageClassifierResult
-              imageClassifierResultWithClassificationsPacket:
-                  status_or_packets.value()[kClassificationsStreamName.cppString]];
+        if (!weakSelf) {
+          return;
         }
-        options.completion(result, callbackError);
+        if (![weakSelf.gestureRecognizerLiveStreamDelegate
+                respondsToSelector:@selector
+                (gestureRecognizer:
+                    didFinishRecognitionWithResult:timestampInMilliseconds:error:)]) {
+          return;
+        }
+
+        NSError *callbackError = nil;
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          dispatch_async(callbackQueue, ^{
+            [weakSelf.gestureRecognizerLiveStreamDelegate
+                             gestureRecognizer:weakSelf
+                didFinishRecognitionWithResult:nil
+                       timestampInMilliseconds:Timestamp::Unset().Value()
+                                         error:callbackError];
+          });
+          return;
+        }
+
+        PacketMap &outputPacketMap = status_or_packets.value();
+        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+          return;
+        }
+
+        MPPGestureRecognizerResult *result =
+            [weakSelf gestureRecognizerResultWithOutputPacketMap:outputPacketMap];
+
+        NSInteger timeStampInMilliseconds =
+            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+            kMicroSecondsPerMilliSecond;
+        dispatch_async(callbackQueue, ^{
+          [weakSelf.gestureRecognizerLiveStreamDelegate gestureRecognizer:weakSelf
+                                           didFinishRecognitionWithResult:result
+                                                  timestampInMilliseconds:timeStampInMilliseconds
+                                                                    error:callbackError];
+        });
       };
     }
 
@@ -124,9 +178,18 @@ static NSString *const kTaskGraphName =
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPImageClassifierResult *)recognizeImage:(MPPImage *)image
-                                    regionOfInterest:(CGRect)roi
-                                               error:(NSError **)error {
+- (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOptionalOutputPacketMap:
+    (std::optional<PacketMap> &)outputPacketMap {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return [self gestureRecognizerResultWithOutputPacketMap:outputPacketMap.value()];
+}
+
+- (nullable MPPGestureRecognizerResult *)recognizeImage:(MPPImage *)image
+                                       regionOfInterest:(CGRect)roi
+                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
                                                   imageSize:CGSizeMake(image.width, image.height)
@@ -149,13 +212,7 @@ static NSString *const kTaskGraphName =
 
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
                                                                                 error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return
-      [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                    outputPacketMap.value()[kClassificationsStreamName.cppString]];
+  [self gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
@@ -187,14 +244,14 @@ static NSString *const kTaskGraphName =
   return inputPacketMap;
 }
 
-- (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image error:(NSError **)error {
-  return [self classifyImage:image regionOfInterest:CGRectZero error:error];
+- (nullable MPPGestureRecognizerResult *)recognizeImage:(MPPImage *)image error:(NSError **)error {
+  return [self recognizeImage:image regionOfInterest:CGRectZero error:error];
 }
 
-- (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                         regionOfInterest:(CGRect)roi
-                                                    error:(NSError **)error {
+- (nullable MPPImageClassifierResult *)recognizeVideoFrame:(MPPImage *)image
+                                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                          regionOfInterest:(CGRect)roi
+                                                     error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
                                                      timestampInMilliseconds:timestampInMilliseconds
                                                             regionOfInterest:roi
@@ -206,25 +263,19 @@ static NSString *const kTaskGraphName =
   std::optional<PacketMap> outputPacketMap =
       [_visionTaskRunner processVideoFramePacketMap:inputPacketMap.value() error:error];
 
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return
-      [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                    outputPacketMap.value()[kClassificationsStreamName.cppString]];
+  [self gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                    error:(NSError **)error {
-  return [self classifyVideoFrame:image
-          timestampInMilliseconds:timestampInMilliseconds
-                 regionOfInterest:CGRectZero
-                            error:error];
+- (nullable MPPGestureRecognizerResult *)classifyVideoFrame:(MPPImage *)image
+                                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                      error:(NSError **)error {
+  return [self recognizeVideoFrame:image
+           timestampInMilliseconds:timestampInMilliseconds
+                  regionOfInterest:CGRectZero
+                             error:error];
 }
 
-- (BOOL)classifyAsyncImage:(MPPImage *)image
+- (BOOL)recognizeAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
            regionOfInterest:(CGRect)roi
                       error:(NSError **)error {
@@ -239,13 +290,13 @@ static NSString *const kTaskGraphName =
   return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
 }
 
-- (BOOL)classifyAsyncImage:(MPPImage *)image
+- (BOOL)recognizeAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  return [self classifyAsyncImage:image
-          timestampInMilliseconds:timestampInMilliseconds
-                 regionOfInterest:CGRectZero
-                            error:error];
+  return [self recognizeAsyncImage:image
+           timestampInMilliseconds:timestampInMilliseconds
+                  regionOfInterest:CGRectZero
+                             error:error];
 }
 
 @end

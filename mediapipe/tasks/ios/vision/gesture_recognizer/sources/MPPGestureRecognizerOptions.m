@@ -32,7 +32,7 @@
 
   gestureRecognizerOptions.runningMode = self.runningMode;
   gestureRecognizerOptions.gestureRecognizerLiveStreamDelegate = self.gestureRecognizerLiveStreamDelegate;
-  gestureRecognizerOptions.numHands = self.numHands;
+  gestureRecognizerOptions.numberOfHands = self.numberOfHands;
   gestureRecognizerOptions.minHandDetectionConfidence = self.minHandDetectionConfidence;
   gestureRecognizerOptions.minHandPresenceConfidence = self.minHandPresenceConfidence;
   gestureRecognizerOptions.minTrackingConfidence = self.minTrackingConfidence;
