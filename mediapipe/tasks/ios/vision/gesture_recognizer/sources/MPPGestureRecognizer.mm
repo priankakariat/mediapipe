@@ -25,6 +25,7 @@
 namespace {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
@@ -44,20 +45,21 @@ static NSString *const kHandGesturesTag = @"HAND_GESTURES";
 static NSString *const kHandGesturesOutStreamName = @"hand_gestures";
 static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph";
+static NSString *const kTaskName = @"gestureRecognizer";
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
     {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
+      kNormRectInStreamName.cppString, normalizedRectPacket \
     }                                                     \
   }
 
 @interface MPPGestureRecognizer () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
-  @property(nonatomic, weak) id<MPPGestureRecognizerLiveStreamDelegate>
-      gestureRecognizerLiveStreamDelegate;
 }
+@property(nonatomic, weak) id<MPPGestureRecognizerLiveStreamDelegate>
+      gestureRecognizerLiveStreamDelegate;
 @end
 
 @implementation MPPGestureRecognizer
@@ -65,31 +67,31 @@ static NSString *const kTaskGraphName =
 - (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOutputPacketMap:
     (PacketMap &)outputPacketMap {
   return [MPPGestureRecognizerResult
-      gestureRecognizerResultWithHandGesturesPacket:outputPacketMap.value()
+      gestureRecognizerResultWithHandGesturesPacket:outputPacketMap
                                                         [kHandGesturesOutStreamName.cppString]
                                    handednessPacket:outputPacketMap
-                                                        .value()[kHandednessOutStreamName.cppString]
+                                                [kHandednessOutStreamName.cppString]
                                 handLandmarksPacket:outputPacketMap
-                                                        .value()[kLandmarksOutStreamName.cppString]
-                               worldLandmarksPacket:outputPacketMap.value()
+                                                        [kLandmarksOutStreamName.cppString]
+                               worldLandmarksPacket:outputPacketMap
                                                         [kWorldLandmarksOutStreamName.cppString]];
 }
 
-- (instancetype)initWithOptions:(MPPGestureRecognizer *)options error:(NSError **)error {
+- (instancetype)initWithOptions:(MPPGestureRecognizerOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[
                    [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
+                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectInStreamName]
                  ]
                 outputStreams:@[
                   [NSString stringWithFormat:@"%@:%@", kLandmarksTag, kLandmarksOutStreamName],
                   [NSString
                       stringWithFormat:@"%@:%@", kWorldLandmarksTag, kWorldLandmarksOutStreamName],
                   [NSString stringWithFormat:@"%@:%@", kHandednessTag, kHandednessOutStreamName],
-                  [NSString stringWithFormat:@"%@:%@", kHandGesturesTag, kHandednessOutStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kHandGesturesTag, kHandGesturesOutStreamName],
                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
                 ]
                   taskOptions:options
@@ -171,7 +173,7 @@ static NSString *const kTaskGraphName =
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
-  MPPImageClassifierOptions *options = [[MPPImageClassifierOptions alloc] init];
+  MPPGestureRecognizerOptions *options = [[MPPGestureRecognizerOptions alloc] init];
 
   options.baseOptions.modelAssetPath = modelPath;
 
@@ -248,7 +250,7 @@ static NSString *const kTaskGraphName =
   return [self recognizeImage:image regionOfInterest:CGRectZero error:error];
 }
 
-- (nullable MPPImageClassifierResult *)recognizeVideoFrame:(MPPImage *)image
+- (nullable MPPGestureRecognizerResult *)recognizeVideoFrame:(MPPImage *)image
                                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                           regionOfInterest:(CGRect)roi
                                                      error:(NSError **)error {
