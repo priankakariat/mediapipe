@@ -18,7 +18,12 @@
 #import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 
 namespace {
 using CalculatorOptionsProto = mediapipe::CalculatorOptions;
@@ -42,12 +47,14 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
   GestureRecognizerGraphOptionsProto *gestureRecognizerGraphOptionsProto =
       optionsProto->MutableExtension(GestureRecognizerGraphOptionsProto::ext);
+  gestureRecognizerGraphOptionsProto->Clear();
 
   [self.baseOptions copyToProto:gestureRecognizerGraphOptionsProto->mutable_base_options()
               withUseStreamMode:self.runningMode != MPPRunningModeImage];
 
   HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
       gestureRecognizerGraphOptionsProto->mutable_hand_landmarker_graph_options();
+  handLandmarkerGraphOptionsProto->Clear();
   handLandmarkerGraphOptionsProto->set_min_tracking_confidence(self.minTrackingConfidence);
 
   HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
@@ -68,6 +75,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   if (self.cannedGesturesClassifierOptions) {
     GestureClassifierGraphOptionsProto *cannedGesturesClassifierOptionsProto =
         handGestureRecognizerGraphOptionsProto->mutable_canned_gesture_classifier_graph_options();
+    cannedGesturesClassifierOptionsProto->Clear();
     [self.cannedGesturesClassifierOptions
         copyToProto:cannedGesturesClassifierOptionsProto->mutable_classifier_options()];
   }
@@ -75,6 +83,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   if (self.customGesturesClassifierOptions) {
     GestureClassifierGraphOptionsProto *customGesturesClassifierOptionsProto =
         handGestureRecognizerGraphOptionsProto->mutable_custom_gesture_classifier_graph_options();
+    customGesturesClassifierOptionsProto->Clear();
     [self.customGesturesClassifierOptions
         copyToProto:customGesturesClassifierOptionsProto->mutable_classifier_options()];
   }

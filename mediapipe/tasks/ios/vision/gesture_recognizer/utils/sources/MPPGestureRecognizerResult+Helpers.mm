@@ -37,13 +37,13 @@ using ::mediapipe::Packet;
                              worldLandmarksPacket:(const Packet &)worldLandmarksPacket {
   NSInteger timestampInMilliseconds =
       (NSInteger)(handGesturesPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
-  
+
   if (handGesturesPacket.IsEmpty()) {
     return [[MPPGestureRecognizerResult alloc] initWithGestures:@[]
-                                                  handedness:@[] 
-                                                  landmarks:@[] 
-                                                    worldLandmarks:@[]
-                                         timestampInMilliseconds:timestampInMilliseconds];
+                                                     handedness:@[]
+                                                      landmarks:@[]
+                                                 worldLandmarks:@[]
+                                        timestampInMilliseconds:timestampInMilliseconds];
   }
 
   if (!handGesturesPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok() ||
@@ -65,7 +65,7 @@ using ::mediapipe::Packet;
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto];
       [gestures addObject:category];
     }
-    [multiHandGestures addObject:[gestures copy]];
+    [multiHandGestures addObject:gestures];
   }
 
   const std::vector<ClassificationListProto> &handednessClassificationListProtos =
@@ -80,7 +80,7 @@ using ::mediapipe::Packet;
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto];
       [handedness addObject:category];
     }
-    [multiHandHandedness addObject:[handedness copy]];
+    [multiHandHandedness addObject:handedness];
   }
 
   const std::vector<NormalizedLandmarkListProto> &handLandmarkListProtos =
@@ -93,10 +93,10 @@ using ::mediapipe::Packet;
         [NSMutableArray arrayWithCapacity:(NSUInteger)handLandmarkListProto.landmark().size()];
     for (const auto &normalizedLandmarkProto : handLandmarkListProto.landmark()) {
       MPPNormalizedLandmark *normalizedLandmark =
-          [MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmarkProto];   
+          [MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmarkProto];
       [handLandmarks addObject:normalizedLandmark];
     }
-    [multiHandLandmarks addObject:[handLandmarks copy]];
+    [multiHandLandmarks addObject:handLandmarks];
   }
 
   const std::vector<LandmarkListProto> &worldLandmarkListProtos =
@@ -108,18 +108,17 @@ using ::mediapipe::Packet;
     NSMutableArray<MPPLandmark *> *worldLandmarks =
         [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarkListProto.landmark().size()];
     for (const auto &landmarkProto : worldLandmarkListProto.landmark()) {
-      MPPLandmark *landmark =
-          [MPPLandmark landmarkWithProto:landmarkProto];
+      MPPLandmark *landmark = [MPPLandmark landmarkWithProto:landmarkProto];
       [worldLandmarks addObject:landmark];
     }
-   [multiHandWorldLandmarks addObject:[worldLandmarks copy]];
+    [multiHandWorldLandmarks addObject:worldLandmarks];
   }
 
   MPPGestureRecognizerResult *gestureRecognizerResult =
-      [[MPPGestureRecognizerResult alloc] initWithGestures:[multiHandGestures copy]
-                                                handedness:[multiHandHandedness copy]
-                                                 landmarks:[multiHandLandmarks copy]
-                                            worldLandmarks:[multiHandWorldLandmarks copy]
+      [[MPPGestureRecognizerResult alloc] initWithGestures:multiHandGestures
+                                                handedness:multiHandHandedness
+                                                 landmarks:multiHandLandmarks
+                                            worldLandmarks:multiHandWorldLandmarks
                                    timestampInMilliseconds:timestampInMilliseconds];
 
   return gestureRecognizerResult;
