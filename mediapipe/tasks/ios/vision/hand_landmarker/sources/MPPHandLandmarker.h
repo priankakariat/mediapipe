@@ -15,7 +15,6 @@
 #import <Foundation/Foundation.h>
 
 #import "mediapipe/tasks/ios/components/containers/sources/MPPConnection.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/hand_landmarker/sources/MPPHandLandmarkerOptions.h"
 #import "mediapipe/tasks/ios/vision/hand_landmarker/sources/MPPHandLandmarkerResult.h"
