@@ -19,7 +19,7 @@
 - (instancetype)initWithStart:(NSInteger)start end:(NSInteger)end {
   self = [super init];
   if (self) {
-    _start = star;
+    _start = start;
     _end = end;
   }
   return self;

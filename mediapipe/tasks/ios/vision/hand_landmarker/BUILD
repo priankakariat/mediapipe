@@ -40,7 +40,6 @@ objc_library(
 
 objc_library(
     name = "MPPHandLandmarker",
-    srcs = ["sources/MPPHandLandmarker.mm"],
     hdrs = ["sources/MPPHandLandmarker.h"],
     copts = [
         "-ObjC++",
