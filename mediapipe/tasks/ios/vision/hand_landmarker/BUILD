@@ -54,3 +54,9 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPImage",
     ],
 )
+
+objc_library(
+    name = "MPPHandLandmark",
+    hdrs = ["sources/MPPHandLandmark.h"],
+    module_name = "MPPHandLandmark",
+)
