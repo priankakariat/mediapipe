@@ -18,13 +18,12 @@ load(
 )
 load(
     "//mediapipe/examples/ios:bundle_id.bzl",
-    "BUNDLE_ID_PREFIX",
     "example_provisioning",
 )
 
 licenses(["notice"])
 
-MIN_IOS_VERSION = "11.0"
+MIN_IOS_VERSION = "12.0"
 
 alias(
     name = "facedetectiongpu",
@@ -34,7 +33,7 @@ alias(
 ios_application(
     name = "FaceDetectionGpuApp",
     app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
-    bundle_id = BUNDLE_ID_PREFIX + ".FaceDetectionGpu",
+    bundle_id =  "com.tutorial.ImageClassification",
     families = [
         "iphone",
         "ipad",

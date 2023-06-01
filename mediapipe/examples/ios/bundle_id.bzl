@@ -20,7 +20,7 @@ BUNDLE_ID_PREFIX = "*SEE_IOS_INSTRUCTIONS*.mediapipe.examples"
 # Look for a provisioning profile in the example's directory first,
 # otherwise look for a common one.
 def example_provisioning():
-    local_profile = native.glob(["provisioning_profile.mobileprovision"])
+    local_profile = native.glob(["bd18aabc-89b5-42f6-9e82-ea8186a50a1b.mobileprovision"])
     if local_profile:
         return local_profile[0]
     return "//mediapipe/examples/ios:provisioning_profile"
