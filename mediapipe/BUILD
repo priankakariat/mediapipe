@@ -151,6 +151,6 @@ config_setting(
 )
 
 exports_files(
-    ["provisioning_profile.mobileprovision"],
+    ["bd18aabc-89b5-42f6-9e82-ea8186a50a1b.mobileprovision"],
     visibility = ["//visibility:public"],
 )

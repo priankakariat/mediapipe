@@ -18,5 +18,5 @@ package(default_visibility = ["//visibility:public"])
 
 alias(
     name = "provisioning_profile",
-    actual = "//mediapipe:provisioning_profile.mobileprovision",
+    actual = "//mediapipe:bd18aabc-89b5-42f6-9e82-ea8186a50a1b.mobileprovision",
 )
