@@ -57,6 +57,14 @@ NS_ASSUME_NONNULL_BEGIN
                                            (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                                  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
+- (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                                          imageInputStreamName:(NSString *)imageInputStreamName
+                                          normRectInputStreamName:(NSString *)normRectInputStreamName
+                                          runningMode:(MPPRunningMode)runningMode
+                                          roiAllowed:(BOOL)roiAllowed
+                                       packetsCallback:(PacketsCallback)packetsCallback
+                                          error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+
 /**
  * Creates a `NormalizedRect` from image orientation for a task which does not support roi,
  * performing sanity checks on-the-fly. Mirrored orientations
@@ -137,6 +145,10 @@ NS_ASSUME_NONNULL_BEGIN
     processVideoFramePacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
                          error:(NSError **)error;
 
+- (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   error:(NSError **)error;                       
+
 /**
  * An asynchronous method to send live stream data to the C++ task runner. The call blocks the
  * current thread until a failure status or a successful result is returned. The results will be
@@ -155,11 +167,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)processLiveStreamPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
                              error:(NSError **)error;
 
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error NS_UNAVAILABLE;
-
+- (BOOL)processLiveStreamImage:(MPPImage *)image
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   error:(NSError **)error;
 /**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
