@@ -17,6 +17,8 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 
 #include "absl/status/statusor.h"
 
@@ -42,6 +44,9 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
+  std::string _imageInStreamName;
+  std::string _normRectInStreamName;
+  BOOL _roiAllowed;
 }
 @end
 
@@ -90,6 +95,23 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                         error:error];
   return self;
 }
+
+- (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                                          imageInputStreamName:(NSString *)imageInputStreamName
+                                          normRectInputStreamName:(NSString *)normRectInputStreamName
+                                          runningMode:(MPPRunningMode)runningMode
+                                          roiAllowed:(BOOL)roiAllowed
+                                       packetsCallback:(PacketsCallback)packetsCallback
+                                                 error:(NSError **)error {
+  _imageInStreamName = imageInputStreamName.cppString;
+  _normRectInStreamName = normRectInputStreamName.cppString;
+  _roiAllowed = roiAllowed;
+ 
+  return [self initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
+                              packetsCallback:packetsCallback
+                                        error:error];
+}
+
 
 - (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
                                                    imageOrientation:
@@ -182,6 +204,54 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return normalizedRect;
 }
 
+- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
+                                                 error:(NSError **)error {
+  std::optional<NormalizedRect> rect =
+      [self normalizedRectWithImageOrientation:image.orientation
+                                                  imageSize:CGSizeMake(image.width, image.height)
+                                                      error:error];
+  if (!rect.has_value()) {
+    return nil;
+  }
+
+  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
+  if (imagePacket.IsEmpty()) {
+    return nil;
+  }
+
+  Packet normalizedRectPacket =
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
+
+  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
+  return inputPacketMap;
+}                                                                                
+
+- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                 error:(NSError **)error {
+  std::optional<NormalizedRect> rect =
+      [self normalizedRectWithImageOrientation:image.orientation
+                                                  imageSize:CGSizeMake(image.width, image.height)
+                                                      error:error];
+  if (!rect.has_value()) {
+    return std::nullopt;
+  }
+
+  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
+                                                timestampInMilliseconds:timestampInMilliseconds
+                                                                  error:error];
+  if (imagePacket.IsEmpty()) {
+    return std::nullopt;
+  }
+
+  Packet normalizedRectPacket =
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
+                                     timestampInMilliseconds:timestampInMilliseconds];
+
+  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
+  return inputPacketMap;
+}
+
 - (std::optional<PacketMap>)processImagePacketMap:(const PacketMap &)packetMap
                                             error:(NSError **)error {
   if (_runningMode != MPPRunningModeImage) {
@@ -195,6 +265,17 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   }
 
   return [self processPacketMap:packetMap error:error];
+}
+
+- (std::optional<PacketMap>)processImage:(MPPImage *)image
+                                   error:(NSError **)error {
+
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image error:error];
+  if (!inputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return [self processPacketMap:inputPacketMap.value() error:error];
 }
 
 - (std::optional<PacketMap>)processVideoFramePacketMap:(const PacketMap &)packetMap
