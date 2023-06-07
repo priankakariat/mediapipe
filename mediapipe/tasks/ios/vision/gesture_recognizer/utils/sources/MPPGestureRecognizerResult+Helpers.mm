@@ -42,7 +42,7 @@ static const NSInteger kDefaultGestureIndex = -1;
         (const std::vector<ClassificationListProto> &)handGesturesProto
                                  handednessProto:
                                      (const std::vector<ClassificationListProto> &)handednessProto
-                               handLandmarksProto:(const std::vector<NormalizedLandmarkListProto> &)
+                              handLandmarksProto:(const std::vector<NormalizedLandmarkListProto> &)
                                                      handLandmarksProto
                              worldLandmarksProto:
                                  (const std::vector<LandmarkListProto> &)worldLandmarksProto
