@@ -56,10 +56,10 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 
   return [MPPGestureRecognizerResult
       gestureRecognizerResultWithHandGesturesProto:{gesturesProto}
-                                    handednessroto:{landmarkDetectionResultProto.classifications()}
-                               handLandmarksPacket:{landmarkDetectionResultProto.landmarks()}
-                              worldLandmarksPacket:{landmarkDetectionResultProto.world_landmarks()}
-                           timestampInMilliSeconds:0];
+                                   handednessProto:{landmarkDetectionResultProto.classifications()}
+                                handLandmarksProto:{landmarkDetectionResultProto.landmarks()}
+                               worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
+                           timestampInMilliseconds:0];
 }
 
 @end

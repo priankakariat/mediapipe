@@ -42,11 +42,11 @@ static const NSInteger kDefaultGestureIndex = -1;
         (const std::vector<ClassificationListProto> &)handGesturesProto
                                  handednessProto:
                                      (const std::vector<ClassificationListProto> &)handednessProto
-                               handLandmarksroto:(const std::vector<NormalizedLandmarkListProto> &)
+                               handLandmarksProto:(const std::vector<NormalizedLandmarkListProto> &)
                                                      handLandmarksProto
                              worldLandmarksProto:
                                  (const std::vector<LandmarkListProto> &)worldLandmarksProto
-                         timestampInMilliSeconds:(NSInteger)timestampInMilliseconds {
+                         timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   NSMutableArray<NSMutableArray<MPPCategory *> *> *multiHandGestures =
       [NSMutableArray arrayWithCapacity:(NSUInteger)handGesturesProto.size()];
 
@@ -141,7 +141,7 @@ static const NSInteger kDefaultGestureIndex = -1;
                                                        std::vector<NormalizedLandmarkListProto>>()
                                worldLandmarksProto:worldLandmarksPacket
                                                        .Get<std::vector<LandmarkListProto>>()
-                           timestampInMilliSeconds:timestampInMilliseconds];
+                           timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end
