@@ -232,8 +232,20 @@ static const float kLandmarksErrorTolerance = 0.03f;
        approximatelyEqualsHandLandmarkerResult:[MPPHandLandmarkerTests
                                                       thumbUpHandLandmarkerResult]];
   NSLog(@"%@", [MPPHandLandmarker handPalmConnections]);    
+}
+
+- (void)testDetectWithDuplicateModelPathSucceeds {
+  NSString *modelPath =
+      [MPPHandLandmarkerTests filePathWithFileInfo:kHandLandmarkerBundleAssetFile];
+  MPPHandLandmarker *handLandmarker =
+      [[MPPHandLandmarker alloc] initWithModelPath:modelPath error:nil];
+  XCTAssertNotNil(handLandmarker);
+
+  [self assertResultsOfDetectInImageWithFileInfo:kThumbUpImage
+                           usingHandLandmarker:handLandmarker
+       approximatelyEqualsHandLandmarkerResult:[MPPHandLandmarkerTests
+                                                      thumbUpHandLandmarkerResult]];
   NSLog(@"%@", [MPPHandLandmarker handPalmConnections]);    
-  NSLog(@"%@", [MPPHandLandmarker handPalmConnections]);                                                                                                                                              
 }
 
 @end

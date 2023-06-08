@@ -58,8 +58,7 @@ static NSString *const kTaskName = @"handLandmarker";
   MPPVisionTaskRunner *_visionTaskRunner;
   dispatch_queue_t _callbackQueue;
 }
-@property(nonatomic, weak) id<MPPHandLandmarkerLiveStreamDelegate>
-    handLandmarkerLiveStreamDelegate;
+@property(nonatomic, weak) id<MPPHandLandmarkerLiveStreamDelegate> handLandmarkerLiveStreamDelegate;
 @end
 
 @implementation MPPHandLandmarker
@@ -67,12 +66,10 @@ static NSString *const kTaskName = @"handLandmarker";
 - (nullable MPPHandLandmarkerResult *)handLandmarkerResultWithOutputPacketMap:
     (PacketMap &)outputPacketMap {
   return [MPPHandLandmarkerResult
-      handLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName
-                                                                        .cppString]
-                               worldLandmarksPacket:outputPacketMap[kWorldLandmarksOutStreamName
-                                                                        .cppString]
-                                                                        handednessPacket:outputPacketMap[kHandednessOutStreamName
-                                                                        .cppString]];
+      handLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName.cppString]
+                         worldLandmarksPacket:outputPacketMap[kWorldLandmarksOutStreamName
+                                                                  .cppString]
+                             handednessPacket:outputPacketMap[kHandednessOutStreamName.cppString]];
 }
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
@@ -86,9 +83,9 @@ static NSString *const kTaskName = @"handLandmarker";
   if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
     dispatch_async(_callbackQueue, ^{
       [self.handLandmarkerLiveStreamDelegate handLandmarker:self
-                                   didFinishDetectionWithResult:nil
-                                          timestampInMilliseconds:Timestamp::Unset().Value()
-                                                            error:callbackError];
+                               didFinishDetectionWithResult:nil
+                                    timestampInMilliseconds:Timestamp::Unset().Value()
+                                                      error:callbackError];
     });
     return;
   }
@@ -98,17 +95,16 @@ static NSString *const kTaskName = @"handLandmarker";
     return;
   }
 
-  MPPHandLandmarkerResult *result =
-      [self handLandmarkerResultWithOutputPacketMap:outputPacketMap];
+  MPPHandLandmarkerResult *result = [self handLandmarkerResultWithOutputPacketMap:outputPacketMap];
 
   NSInteger timeStampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicroSecondsPerMilliSecond;
   dispatch_async(_callbackQueue, ^{
     [self.handLandmarkerLiveStreamDelegate handLandmarker:self
-                                 didFinishDetectionWithResult:result
-                                        timestampInMilliseconds:timeStampInMilliseconds
-                                                          error:callbackError];
+                             didFinishDetectionWithResult:result
+                                  timestampInMilliseconds:timeStampInMilliseconds
+                                                    error:callbackError];
   });
 }
 
@@ -237,8 +233,8 @@ static NSString *const kTaskName = @"handLandmarker";
 }
 
 - (nullable MPPHandLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
-                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                       error:(NSError **)error {
+                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                   error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
                                                      timestampInMilliseconds:timestampInMilliseconds
                                                                        error:error];
@@ -267,6 +263,26 @@ static NSString *const kTaskName = @"handLandmarker";
 
 + (NSArray<MPPConnection *> *)handPalmConnections {
   return kHandPalmConnections;
+}
+
++ (NSArray<MPPConnection *> *)handIndexFingerConnections {
+  return kHandIndexFingerConnections;
+}
+
++ (NSArray<MPPConnection *> *)handMiddleFingerConnections {
+  return kHandMiddleFingerConnections;
+}
+
++ (NSArray<MPPConnection *> *)handRingFingerConnections {
+  return kHandRingFingerConnections;
+}
+
++ (NSArray<MPPConnection *> *)handPinkyConnections {
+  return kHandPinkyConnections;
+}
+
++ (NSArray<MPPConnection *> *)handConnections {
+  return kHandConnections;
 }
 
 @end
