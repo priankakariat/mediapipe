@@ -39,7 +39,7 @@ using ::mediapipe::ImageFrame;
 
 @end
 
-@interface MPPCVPixelBufferUtils : NSObject
+@interface MPPCVPixelBufferImageFrameUtils : NSObject
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
@@ -123,7 +123,7 @@ using ::mediapipe::ImageFrame;
 
 @end
 
-@implementation MPPCVPixelBufferUtils
+@implementation MPPCVPixelBufferImageFrameUtils
 
 + (std::unique_ptr<ImageFrame>)rgbImageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                         error:(NSError **)error {
@@ -164,7 +164,7 @@ using ::mediapipe::ImageFrame;
   switch (pixelBufferFormat) {
     case kCVPixelFormatType_32RGBA:
     case kCVPixelFormatType_32BGRA: {
-      return [MPPCVPixelBufferUtils rgbImageFrameFromCVPixelBuffer:pixelBuffer error:error];
+      return [MPPCVPixelBufferImageFrameUtils rgbImageFrameFromCVPixelBuffer:pixelBuffer error:error];
     }
     default: {
       [MPPCommonUtils createCustomError:error
@@ -245,7 +245,7 @@ using ::mediapipe::ImageFrame;
 
 - (std::unique_ptr<ImageFrame>)imageFrameFromCIImageWithError:(NSError **)error {
   if (self.CIImage.pixelBuffer) {
-    return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:self.CIImage.pixelBuffer error:error];
+    return [MPPCVPixelBufferImageFrameUtils imageFrameFromCVPixelBuffer:self.CIImage.pixelBuffer error:error];
 
   } else if (self.CIImage.CGImage) {
     return [MPPCGImageUtils imageFrameFromCGImage:self.CIImage.CGImage error:error];
@@ -281,10 +281,10 @@ using ::mediapipe::ImageFrame;
   switch (self.imageSourceType) {
     case MPPImageSourceTypeSampleBuffer: {
       CVPixelBufferRef sampleImagePixelBuffer = CMSampleBufferGetImageBuffer(self.sampleBuffer);
-      return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:sampleImagePixelBuffer error:error];
+      return [MPPCVPixelBufferImageFrameUtils imageFrameFromCVPixelBuffer:sampleImagePixelBuffer error:error];
     }
     case MPPImageSourceTypePixelBuffer: {
-      return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:self.pixelBuffer error:error];
+      return [MPPCVPixelBufferImageFrameUtils imageFrameFromCVPixelBuffer:self.pixelBuffer error:error];
     }
     case MPPImageSourceTypeImage: {
       return [self.image imageFrameWithError:error];
