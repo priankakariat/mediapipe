@@ -28,6 +28,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 @interface MPPTaskRunner () {
   // Cpp Task Runner
   std::unique_ptr<TaskRunnerCpp> _cppTaskRunner;
+  BOOL initializedWithPacketsCallback;
 }
 @end
 
@@ -37,7 +38,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
                               packetsCallback:(PacketsCallback)packetsCallback
                                         error:(NSError **)error {
   self = [super init];
-  if (self) {
+  if (self) {    
     auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig),
                                                   absl::make_unique<MediaPipeBuiltinOpResolver>(),
                                                   std::move(packetsCallback));
@@ -46,6 +47,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
       return nil;
     }
     _cppTaskRunner = std::move(taskRunnerResult.value());
+    _initializedWithPacketsCallback = packetsCallback ? YES : NO;
   }
   return self;
 }
@@ -59,7 +61,16 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }
 
 - (BOOL)sendPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  if (!_initializedWithPacketsCallback) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"This method can only be called if the task is running in a stream mode."]];
+    return NO;
+  }
+  
   absl::Status sendStatus = _cppTaskRunner->Send(packetMap);
+  
   return [MPPCommonUtils checkCppError:sendStatus toError:error];
 }
 

@@ -36,6 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface MPPTaskRunner : NSObject
 
+@property (nonatomic, readonly) packetsCallbackProvided;
+
 /**
  * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an
  * optional C++ packets callback.
