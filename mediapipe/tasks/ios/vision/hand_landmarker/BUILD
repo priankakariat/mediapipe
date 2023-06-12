@@ -42,6 +42,7 @@ objc_library(
     name = "MPPHandLandmarksConnections",
     hdrs = ["sources/MPPHandLandmarksConnections.h"],
     module_name = "MPPHandLandmarksConnections",
+    deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
 )
 
 objc_library(
@@ -58,12 +59,13 @@ objc_library(
         ":MPPHandLandmarksConnections",
         ":MPPHandLandmarkerOptions",
         ":MPPHandLandmarkerResult",
-        "//mediapipe/tasks/ios/components/containers:MPPConnection",
-        "//mediapipe/tasks/ios/vision/core:MPPImage",
+        ":MPPHandLandmarksConnections",
         "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/hand_landmarker/utils:MPPHandLandmarkerOptionsHelpers",
