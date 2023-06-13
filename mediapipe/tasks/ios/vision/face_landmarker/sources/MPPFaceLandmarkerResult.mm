@@ -19,7 +19,7 @@
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerResult.h"
 
 @interface MPPTransformMatrix () {
-  std::vector<float> _data;
+  // std::vector<float> _data;
 }
 @end
 
@@ -30,8 +30,8 @@
   if (self) {
     _rows = rows;
     _columns = columns;
-    _data = std::vector<float>(rows * columns);
-    memcpy(_data.data(), data, rows * columns * sizeof(float));
+    _data = data;
+    // memcpy(_data.data(), data, rows * columns * sizeof(float));
   }
   return self;
 }

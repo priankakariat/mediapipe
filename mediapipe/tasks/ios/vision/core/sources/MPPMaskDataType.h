@@ -16,10 +16,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * MediaPipe vision task running mode. A MediaPipe vision task can be run with three different
- * modes: image, video and live stream.
- */
+/** The underlying type of the image. */
 typedef NS_ENUM(NSUInteger, MPPMaskDataType) {
 
   // Generic error codes.
@@ -31,6 +28,5 @@ typedef NS_ENUM(NSUInteger, MPPMaskDataType) {
   MPPMaskDataTypeFloat32,
 
 } NS_SWIFT_NAME(MaskDataType);
-
 
 NS_ASSUME_NONNULL_END

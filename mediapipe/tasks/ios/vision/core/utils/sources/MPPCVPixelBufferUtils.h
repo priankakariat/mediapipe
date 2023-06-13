@@ -22,8 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface MPPCVPixelBufferUtils : NSObject
 
-+ (CVPixelBufferRef)pixelBufferWithPixelData:(uint8_t *)pixelData
-                                                     error:(NSError **)error;
++ (CVPixelBufferRef)pixelBufferWithPixelData:(void *)pixelData
+                           pixelBufferFormat:(OSType)
+                                       error:(NSError **)error;
 
 @end
 

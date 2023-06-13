@@ -30,7 +30,7 @@
   return self;
 }
 
-- (id)copyWithZone:(NSZone *)zone {
+- (nullable id)copyWithZone:(NSZone *)zone {
   MPPFaceLandmarkerOptions *faceLandmarkerOptions = [super copyWithZone:zone];
 
   faceLandmarkerOptions.numFaces = self.numFaces;

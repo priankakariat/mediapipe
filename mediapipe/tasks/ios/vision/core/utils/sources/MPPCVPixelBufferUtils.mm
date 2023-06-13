@@ -33,10 +33,11 @@ static void ReleaseSharedPtr(void* refcon, const void* base_address) {
 
 @implementation MPPCVPixelBufferUtils
 + (CVPixelBufferRef)pixelBufferWithPixelData:(uint8_t *)pixelData
-                                                     error:(NSError **)error {
+                                       width:()
+                                       error:(NSError **)error {
 
  CVReturn status = CVPixelBufferCreateWithBytes(
-        NULL, frame.Width(), frame.Height(), pixel_format, frame_data,
+        NULL, width, height, kCVPixelFormatType_OneComponent8, pixelData,
         frame.WidthStep(), ReleaseSharedPtr, holder.get(),
         GetCVPixelBufferAttributesForGlCompatibility(), &pixel_buffer_temp);                                                    
 
