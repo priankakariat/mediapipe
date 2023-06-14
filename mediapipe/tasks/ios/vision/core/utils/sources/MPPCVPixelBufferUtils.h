@@ -15,17 +15,22 @@
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
 
+#include "mediapipe/framework/port/status.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * Helper utility for converting `MPPImage` into a `mediapipe::ImageFrame`.
- */
-@interface MPPCVPixelBufferUtils : NSObject
 
-+ (CVPixelBufferRef)pixelBufferWithPixelData:(void *)pixelData
-                           pixelBufferFormat:(OSType)
-                                       error:(NSError **)error;
+absl::Status CreatePixelBufferFromPixelBufferFromPixelData(void* pixel_data, OSType pixelBufferFormat, CVPixelBufferRef& pixelBuffer)
 
-@end
+// /**
+//  * Helper utility for converting `MPPImage` into a `mediapipe::ImageFrame`.
+//  */
+// @interface MPPCVPixelBufferUtils : NSObject
+
+// + (CVPixelBufferRef)pixelBufferWithPixelData:(void *)pixelData
+//                                        pixelBufferFormat:(OSType)pixelBufferFormat
+//                                        error:(NSError **)error;
+
+// @end
 
 NS_ASSUME_NONNULL_END

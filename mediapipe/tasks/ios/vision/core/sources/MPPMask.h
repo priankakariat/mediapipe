@@ -95,6 +95,11 @@ NS_SWIFT_NAME(Mask)
                                       height:(NSInteger)height
                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
+- (nullable instancetype)initWithFloat32Data:(const float *)float32Data
+                                       width:(NSInteger)width
+                                      height:(NSInteger)height
+                                       error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                                                              
 /** Unavailable. */
 - (instancetype)init NS_UNAVAILABLE;
 

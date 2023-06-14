@@ -14,13 +14,38 @@
 
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPCVPixelBufferUtils.h"
 
-#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-#import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+// #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
+// #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 #import <Accelerate/Accelerate.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreImage/CoreImage.h>
 #import <CoreVideo/CoreVideo.h>
+
+absl::Status CreatePixelBufferFromPixelBufferFromPixelData(const void* pixel_data, size_t width, size_t height, OSType pixelBufferFormat, BOOL should_copy, CVPixelBufferRef& pixelBuffer) {
+
+  size_t sizeOfDataType = 0;
+  switch (pixelBufferFormat) {
+    case kCVPixelFormatType_OneComponent8:
+    case kCVPixelFormatType_OneComponent32Float
+        break;
+    default:
+      return return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Only types kCVPixelFormatType_OneComponent8 and kCVPixelFormatType_OneComponent32Float are supported for creation.");
+  }
+
+  void* copied_pixel_data = pixel_data;
+  if (should_copy) {
+    memcpy(copied_pixel_data, pixel_data, length * sizeof(*pixel_data));
+  }
+
+  CVReturn status = CVPixelBufferCreateWithBytes(
+        NULL, width, height, pixelBufferFormat, copied_pixel_data,
+        frame.WidthStep(), NULL, NULL,
+        GetCVPixelBufferAttributesForGlCompatibility(), *pixelBuffer);  
+
+}
+
 
 
 /// When storing a shared_ptr in a CVPixelBuffer's refcon, this can be
@@ -32,6 +57,29 @@ static void ReleaseSharedPtr(void* refcon, const void* base_address) {
 }
 
 @implementation MPPCVPixelBufferUtils
++ (CVPixelBufferRef)pixelBufferWithPixelData:(void *)pixelData
+                                       pixelBufferFormat:(OSType)pixelBufferFormat
+                                       error:(NSError **)error {
+
+  switch (pixelBufferFormat) {
+    case kCVPixelFormatType_OneComponent8:
+    case kCVPixelFormatType_OneComponent32Float: {
+      [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Invalid value for data type."];
+      return nil;
+    }
+    default:
+
+
+
+
+  }                                     
+
+
+}
+
+
 + (CVPixelBufferRef)pixelBufferWithPixelData:(uint8_t *)pixelData
                                        width:()
                                        error:(NSError **)error {
