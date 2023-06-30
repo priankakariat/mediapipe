@@ -28,7 +28,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 @interface MPPTaskRunner () {
   // Cpp Task Runner
   std::unique_ptr<TaskRunnerCpp> _cppTaskRunner;
-  BOOL initializedWithPacketsCallback;
+  BOOL _initializedWithPacketsCallback;
 }
 @end
 
