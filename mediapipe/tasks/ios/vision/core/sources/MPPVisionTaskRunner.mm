@@ -51,8 +51,6 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
-  std::string _imageInStreamName;
-  std::string _normRectInStreamName;
   BOOL _roiAllowed;
 }
 @end
@@ -105,14 +103,10 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 }
 
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
-                                          imageInputStreamName:(NSString *)imageInputStreamName
-                                          normRectInputStreamName:(NSString *)normRectInputStreamName
-                                          runningMode:(MPPRunningMode)runningMode
-                                          roiAllowed:(BOOL)roiAllowed
-                                       packetsCallback:(PacketsCallback)packetsCallback
-                                                 error:(NSError **)error {
-  _imageInStreamName = imageInputStreamName.cppString;
-  _normRectInStreamName = normRectInputStreamName.cppString;
+                                   runningMode:(MPPRunningMode)runningMode
+                                    roiAllowed:(BOOL)roiAllowed
+                               packetsCallback:(PacketsCallback)packetsCallback
+                                         error:(NSError **)error {
   _roiAllowed = roiAllowed;
  
   return [self initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
@@ -120,39 +114,38 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                         error:error];
 }
 
-// TODO: Delete this once all tasks are migrated to use new methods for processing images.
-- (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
-                                                   imageOrientation:
-                                                       (UIImageOrientation)imageOrientation
-                                                          imageSize:(CGSize)imageSize
-                                                              error:(NSError **)error {
-  return [self normalizedRectWithRegionOfInterest:roi
-                                        imageSize:imageSize
-                                 imageOrientation:imageOrientation
-                                       ROIAllowed:YES
-                                            error:error];
-}
+// // TODO: Delete this once all tasks are migrated to use new methods for processing images.
+// - (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
+//                                                    imageOrientation:
+//                                                        (UIImageOrientation)imageOrientation
+//                                                           imageSize:(CGSize)imageSize
+//                                                               error:(NSError **)error {
+//   return [self normalizedRectWithRegionOfInterest:roi
+//                                         imageSize:imageSize
+//                                  imageOrientation:imageOrientation
+//                                        ROIAllowed:YES
+//                                             error:error];
+// }
 
-// TODO: Delete this once all tasks are migrated to use new methods for processing images.
-- (std::optional<NormalizedRect>)normalizedRectWithImageOrientation:
-                                     (UIImageOrientation)imageOrientation
-                                                          imageSize:(CGSize)imageSize
-                                                              error:(NSError **)error {
-  return [self normalizedRectWithRegionOfInterest:CGRectZero
-                                        imageSize:imageSize
-                                 imageOrientation:imageOrientation
-                                       ROIAllowed:NO
-                                            error:error];
-}
+// // TODO: Delete this once all tasks are migrated to use new methods for processing images.
+// - (std::optional<NormalizedRect>)normalizedRectWithImageOrientation:
+//                                      (UIImageOrientation)imageOrientation
+//                                                           imageSize:(CGSize)imageSize
+//                                                               error:(NSError **)error {
+//   return [self normalizedRectWithRegionOfInterest:CGRectZero
+//                                         imageSize:imageSize
+//                                  imageOrientation:imageOrientation
+//                                        ROIAllowed:NO
+//                                             error:error];
+// }
 
 // TODO: Remove ROIAllowed param and use _roiAllowed once all tasks are migrated.
 - (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
                                                           imageSize:(CGSize)imageSize
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
-                                                         ROIAllowed:(BOOL)ROIAllowed
                                                               error:(NSError **)error {
-  if (!CGRectEqualToRect(roi, CGRectZero) && !ROIAllowed) {
+  if (!CGRectEqualToRect(roi, CGRectZero) && !_roiAllowed) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"This task doesn't support region-of-interest."];
@@ -219,9 +212,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [self normalizedRectWithRegionOfInterest:roi
-                                        imageSize:imageSize
+                                     imageSize:image.size
                                  imageOrientation:imageOrientation
-                                       ROIAllowed:_roiAllowed
                                             error:error];
   if (!rect.has_value()) {
     return std::nullopt;
@@ -239,11 +231,11 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return inputPacketMap;
 } 
 
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                                                 error:(NSError **)error {
+// - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
+//                                                  error:(NSError **)error {
 
-  return [self inputPacketMapWithMPPImage:image regionOfInterest:CGRectZero error:nil];                                               
-} 
+//   return [self inputPacketMapWithMPPImage:image regionOfInterest:CGRectZero error:nil];                                               
+// } 
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                regionOfInterest:(CGRect)roi
@@ -253,7 +245,6 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
       [self normalizedRectWithRegionOfInterest:roi
                                         imageSize:imageSize
                                  imageOrientation:imageOrientation
-                                       ROIAllowed:_roiAllowed
                                             error:error];
   if (!rect.has_value()) {
     return std::nullopt;
@@ -274,12 +265,12 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return inputPacketMap;
 }
 
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                 error:(NSError **)error {
+// - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
+//                                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+//                                                  error:(NSError **)error {
 
-  return [self inputPacketMapWithMPPImage:image regionOfInterest:CGRectZero timeStampInMilliseconds:timeStampInMilliseconds error:nil];                                               
-} 
+//   return [self inputPacketMapWithMPPImage:image regionOfInterest:CGRectZero timeStampInMilliseconds:timeStampInMilliseconds error:nil];                                               
+// } 
 
 - (std::optional<PacketMap>)processImagePacketMap:(const PacketMap &)packetMap
                                             error:(NSError **)error {
@@ -297,9 +288,19 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 }
 
 - (std::optional<PacketMap>)processImage:(MPPImage *)image
+                                  regionOfInterest:(CGRect)regionOfInterest
                                    error:(NSError **)error {
+   if (_runningMode != MPPRunningModeImage) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"image mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
+    return std::nullopt;
+  }                                  
 
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image error:error];
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image regionOfInterest:regionOfInterest error:error];
   if (!inputPacketMap.has_value()) {
     return nil;
   }
@@ -307,8 +308,32 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return [self processPacketMap:inputPacketMap.value() error:error];
 }
 
-- (std::optional<PacketMap>)processVideoFramePacketMap:(const PacketMap &)packetMap
-                                                 error:(NSError **)error {
+- (std::optional<PacketMap>)processImage:(MPPImage *)image
+                                   error:(NSError **)error {
+
+   return [self processImage:image regionOfInterest:CGRectZero error:error];                                 
+}
+
+// - (std::optional<PacketMap>)processVideoFramePacketMap:(const PacketMap &)packetMap
+//                                                  error:(NSError **)error {
+//   if (_runningMode != MPPRunningModeVideo) {
+//     [MPPCommonUtils
+//         createCustomError:error
+//                  withCode:MPPTasksErrorCodeInvalidArgumentError
+//               description:[NSString stringWithFormat:@"The vision task is not initialized with "
+//                                                      @"video mode. Current Running Mode: %@",
+//                                                      MPPRunningModeDisplayName(_runningMode)]];
+//     return std::nullopt;
+//   }
+
+//   return [self processPacketMap:packetMap error:error];
+// }
+
+- (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   regionOfInterest:(CGRect)regionOfInterest
+                                   error:(NSError **)error {
+  
   if (_runningMode != MPPRunningModeVideo) {
     [MPPCommonUtils
         createCustomError:error
@@ -317,22 +342,35 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                                      @"video mode. Current Running Mode: %@",
                                                      MPPRunningModeDisplayName(_runningMode)]];
     return std::nullopt;
+  }                                  
+
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:videoFrame timeStampInMilliseconds:timeStampInMilliseconds regionOfInterest:regionOfInterest error:error];
+  if (!inputPacketMap.has_value()) {
+    return nil;
   }
 
-  return [self processPacketMap:packetMap error:error];
+  return [self processPacketMap:inputPacketMap.value() error:error];
 }
 
 - (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
                                    timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
                                    error:(NSError **)error {
 
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:videoFrame timeStampInMilliseconds:timeStampInMilliseconds error:error];
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return [self processVideoFramePacketMap:inputPacketMap.value() error:error];
+  return [self processVideoFrame:videoFrame timeStampInMilliseconds:timeStampInMilliseconds regionOfInterest:regionOfInterest error:error];
 }
+
+// - (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
+//                                    timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+//                                    regionOfInterest:(CGRect)regionOfInterest
+//                                    error:(NSError **)error {
+
+//   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:videoFrame timeStampInMilliseconds:timeStampInMilliseconds error:error];
+//   if (!inputPacketMap.has_value()) {
+//     return nil;
+//   }
+
+//   return [self processVideoFramePacketMap:inputPacketMap.value() error:error];
+// }
 
 - (BOOL)processLiveStreamPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
   if (_runningMode != MPPRunningModeLiveStream) {
@@ -350,14 +388,32 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 - (BOOL)processLiveStreamImage:(MPPImage *)image
                                    timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   regionOfInterest:(CGRect)regionOfInterest
                                    error:(NSError **)error {
 
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image timeStampInMilliseconds:timeStampInMilliseconds error:error];
+  if (_runningMode != MPPRunningModeLiveStream) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"live stream mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
+    return NO;
+  }
+
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image timeStampInMilliseconds:timeStampInMilliseconds regionOfInterest:regionOfInterest error:error];
   if (!inputPacketMap.has_value()) {
     return nil;
   }
 
-  return [self processLiveStreamPacketMap:inputPacketMap.value() error:error];
+  return [self sendPacketMap:inputPacketMap.value() error:error];
+}
+
+- (BOOL)processLiveStreamImage:(MPPImage *)image
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   error:(NSError **)error {
+
+  return [self processLiveStreamImage:image timeStampInMilliseconds:timeStampInMilliseconds regionOfInterest:CGRectZero error:error];
 }
 
 + (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix {

@@ -34,9 +34,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
 static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
-static NSString *const kImageInStreamName = @"image_in";
 static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
 static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
 static NSString *const kTaskGraphName =
@@ -144,9 +142,10 @@ static const int kMicroSecondsPerMilliSecond = 1000;
     }
 
     _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
+        [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
+                                          runningMode:options.runningMode
+                                          roiAllowed:YES
+                                        packetsCallback:std::move(packetsCallback)
                                                              error:error];
 
     if (!_visionTaskRunner) {
@@ -167,26 +166,8 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 - (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image
                                     regionOfInterest:(CGRect)roi
                                                error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithRegionOfInterest:roi
-                                           imageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image
+                                                                regionOfInterest:regionOfInterest
                                                                                 error:error];
   if (!outputPacketMap.has_value()) {
     return nil;

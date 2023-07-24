@@ -20,6 +20,11 @@
 
 #include "mediapipe/framework/formats/rect.pb.h"
 
+NSString *const kImageInStreamName = @"image_in";
+NSString *const kImageTag = @"IMAGE";
+NSString *const kNormRectStreamName = @"norm_rect_in";
+static NSString *const kNormRectTag = @"NORM_RECT";
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -51,72 +56,12 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An instance of `MPPVisionTaskRunner` initialized to the given MediaPipe calculator config
  * proto, running mode and packets callback.
  */
-- (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                                           runningMode:(MPPRunningMode)runningMode
-                                       packetsCallback:
-                                           (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                                 error:(NSError **)error NS_DESIGNATED_INITIALIZER;
-
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
-                                          imageInputStreamName:(NSString *)imageInputStreamName
-                                          normRectInputStreamName:(NSString *)normRectInputStreamName
                                           runningMode:(MPPRunningMode)runningMode
                                           roiAllowed:(BOOL)roiAllowed
                                        packetsCallback:(PacketsCallback)packetsCallback
                                           error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
-/**
- * Creates a `NormalizedRect` from image orientation for a task which does not support roi,
- * performing sanity checks on-the-fly. Mirrored orientations
- * (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
- * `UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`) are not supported. An error
- * will be returned if `imageOrientation` is equal to any one of them.
- *
- * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
- * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
- * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
- * `UIImageOrientationLeftMirrored`, `UIImageOrientationRightMirrored`) are not supported. An error
- * will be returned if `imageOrientation` is equal to any one of them.
- * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
- * calculated.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return An optional `NormalizedRect` from the given region of interest and image orientation.
- */
-- (std::optional<mediapipe::NormalizedRect>)normalizedRectWithImageOrientation:
-                                                (UIImageOrientation)imageOrientation
-                                                                     imageSize:(CGSize)imageSize
-                                                                         error:(NSError **)error;
-
-/**
- * Creates a `NormalizedRect` from roi and image orientation for a task which supports roi,
- * performing sanity checks on-the-fly. If the input region of interest equals `CGRectZero`, returns
- * a default `NormalizedRect` covering the whole image with rotation set according
- * `imageOrientation`. Mirrored orientations
- * (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
- * `UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`) are not supported. An error
- * will be returned if `imageOrientation` is equal to any one of them.
- *
- * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
- * `CGRectZero`, the returned `NormalizedRect` covers the whole image.
- * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
- * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
- * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
- * `UIImageOrientationLeftMirrored`, `UIImageOrientationRightMirrored`) are not supported. An error
- * will be returned if `imageOrientation` is equal to any one of them.
- * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
- * calculated.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return An optional `NormalizedRect` from the given region of interest and image orientation.
- */
-- (std::optional<mediapipe::NormalizedRect>)
-    normalizedRectWithRegionOfInterest:(CGRect)roi
-                      imageOrientation:(UIImageOrientation)imageOrientation
-                             imageSize:(CGSize)imageSize
-                                 error:(NSError **)error;
 /**
  * A synchronous method to invoke the C++ task runner to process single image inputs. The call
  * blocks the current thread until a failure status or a successful result is returned.
@@ -128,8 +73,14 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An optional `PacketMap` containing pairs of output stream name and data packet.
  */
 - (std::optional<mediapipe::tasks::core::PacketMap>)
-    processImagePacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
-                    error:(NSError **)error;
+    processImage:(MPPImage *)image
+                    error:(NSError **)error;     
+
+
+- (std::optional<mediapipe::tasks::core::PacketMap>)
+    processImage:(MPPImage *)image
+    regionOfInterest:(CGRect)regionOfInterest
+                    error:(NSError **)error;                                       
 
 /**
  * A synchronous method to invoke the C++ task runner to process continuous video frames. The call
@@ -141,13 +92,15 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @return An optional `PacketMap` containing pairs of output stream name and data packet.
  */
-- (std::optional<mediapipe::tasks::core::PacketMap>)
-    processVideoFramePacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
-                         error:(NSError **)error;
-
 - (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
                                    timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
-                                   error:(NSError **)error;                       
+                                   error:(NSError **)error;   
+
+ 
+- (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   regionOfInterest:(CGRect)regionOfInterest
+                                   error:(NSError **)error;                                                        
 
 /**
  * An asynchronous method to send live stream data to the C++ task runner. The call blocks the
@@ -164,12 +117,15 @@ NS_ASSUME_NONNULL_BEGIN
  * available in the user-defined `packetsCallback` that was provided during initialization of the
  * `MPPVisionTaskRunner`.
  */
-- (BOOL)processLiveStreamPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
-                             error:(NSError **)error;
-
 - (BOOL)processLiveStreamImage:(MPPImage *)image
                                    timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
                                    error:(NSError **)error;
+
+- (BOOL)processLiveStreamImage:(MPPImage *)image
+                                   timestampInMilliSeconds:(NSInteger)timeStampInMilliseconds
+                                   regionOfInterest:(CGRect)regionOfInterest
+                                   error:(NSError **)error;
+
 /**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
