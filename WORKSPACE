@@ -157,22 +157,22 @@ http_archive(
 # 2020-08-21
 http_archive(
     name = "com_github_glog_glog",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-0.6.0",
+    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/v0.6.0.tar.gz",
     ],
 )
 http_archive(
     name = "com_github_glog_glog_no_gflags",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-0.6.0",
+    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
     build_file = "@//third_party:glog_no_gflags.BUILD",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/v0.6.0.tar.gz",
     ],
     patches = [
-        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff",
+        "@//third_party:com_github_glog_glog.diff",
     ],
     patch_args = [
         "-p1",
@@ -485,9 +485,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-05-26.
-_TENSORFLOW_GIT_COMMIT = "67d5c561981edc45daf3f9d73ddd1a77963733ca"
-_TENSORFLOW_SHA256 = "0c8326285e9cb695313e194b97d388eea70bf8bf5b13e8f0962ca8eed5179ece"
+# TF on 2023-06-13.
+_TENSORFLOW_GIT_COMMIT = "491681a5620e41bf079a582ac39c585cc86878b9"
+# curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "9f76389af7a2835e68413322c1eaabfadc912f02a76d71dc16be507f9ca3d3ac"
 http_archive(
     name = "org_tensorflow",
     urls = [

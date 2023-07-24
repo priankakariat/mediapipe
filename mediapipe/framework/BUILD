@@ -44,6 +44,9 @@ bzl_library(
         "encode_binary_proto.bzl",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_skylib//lib:paths",
+    ],
 )
 
 alias(
@@ -1352,6 +1355,23 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "calculator_graph_summary_packet_test",
+    srcs = ["calculator_graph_summary_packet_test.cc"],
+    deps = [
+        ":calculator_framework",
+        ":packet",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
     ],
 )
 
