@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPImageSegmenterResult *)
     imageSegmenterResultWithConfidenceMasksPacket:(const mediapipe::Packet &)confidenceMasksPacket
                                categoryMaskPacket:(const mediapipe::Packet &)categoryMaskPacket
-                              qualityScoresPacket:(const mediapipe::Packet &)qualityScoresPacket
+                              qualityScoresPacket:(std::optional<const mediapipe::Packet>)qualityScoresPacket
                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                          shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData;
 
