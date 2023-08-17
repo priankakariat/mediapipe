@@ -20,7 +20,7 @@
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 
 namespace {
-using CalculatorOptionsProto = mediapipe::CalculatorOptions;
+using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
 using ImageSegmenterGraphOptionsProto =
     ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterGraphOptions;
 using SegmenterOptionsProto = ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;

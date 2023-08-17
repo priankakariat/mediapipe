@@ -47,8 +47,8 @@ objc_library(
     ],
     module_name = "MPPImageSegmenter",
     deps = [
-        ":MPPImageSegmenterResult",
         ":MPPImageSegmenterOptions",
+        ":MPPImageSegmenterResult",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",

@@ -30,7 +30,7 @@ NS_SWIFT_NAME(ImageSegmenter)
 
 /**
  * Creates a new instance of `MPPImageSegmenter` from an absolute path to a TensorFlow Lite model
- * file stored locally on the device and the default `MPPImageSegmenter`.
+ * file stored locally on the device and the default `MPPImageSegmenterOptions`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
  * @param error An optional error parameter populated when there is an error in initializing the
@@ -169,37 +169,37 @@ NS_SWIFT_NAME(ImageSegmenter)
 
 /**
  * Sends live stream image data of type `MPPImage` to perform segmentation using the whole image as
- *region of interest.
+ * region of interest.
  *
  * Rotation will be applied according to the `orientation` property of the provided `MPPImage`. Only
- *use this method when the `MPPImageSegmenter` is created with`MPPRunningModeLiveStream`.
+ * use this method when the `MPPImageSegmenter` is created with`MPPRunningModeLiveStream`.
  *
  * The object which needs to be continuously notified of the available results of image segmentation
- *must confirm to `MPPImageSegmenterLiveStreamDelegate` protocol and implement the
+ * must confirm to `MPPImageSegmenterLiveStreamDelegate` protocol and implement the
  *`imageSegmenter:didFinishSegmentationWithResult:timestampInMilliseconds:error:` delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
- *to the segmenter. The input timestamps must be monotonically increasing.
+ * to the segmenter. The input timestamps must be monotonically increasing.
  *
  * This method supports RGBA images. If your `MPPImage` has a source type of
  *`MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- *must have one of the following pixel format types:
+ * must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
  * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
- *space is RGB with an Alpha channel.
+ * space is RGB with an Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
  * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
  * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPPImage` on which segmentation is to be
- *performed.
+ * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
- *image is sent to the segmenter. The input timestamps must be monotonically increasing.
+ * image is sent to the segmenter. The input timestamps must be monotonically increasing.
  * @param error An optional error parameter populated when there is an error when sending the input
- *image to the graph.
+ * image to the graph.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
