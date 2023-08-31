@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -21,10 +22,10 @@
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
@@ -63,6 +64,7 @@ constexpr char kImageLabelOtherTag[] = "IMAGE_LABEL_OTHER";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kClipMediaIdTag[] = "CLIP_MEDIA_ID";
 
 class PackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:
@@ -70,10 +72,14 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const tf::Features& features,
                        const bool output_only_if_all_present,
                        const bool replace_instead_of_append,
-                       const bool output_as_zero_timestamp = false) {
+                       const bool output_as_zero_timestamp = false,
+                       const std::vector<std::string>& input_side_packets = {
+                           "SEQUENCE_EXAMPLE:input_sequence"}) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
-    config.add_input_side_packet("SEQUENCE_EXAMPLE:input_sequence");
+    for (const std::string& side_packet : input_side_packets) {
+      config.add_input_side_packet(side_packet);
+    }
     config.add_output_stream("SEQUENCE_EXAMPLE:output_sequence");
     for (const std::string& stream : input_streams) {
       config.add_input_stream(stream);
@@ -323,21 +329,27 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
 
   int num_timesteps = 2;
   for (int i = 0; i < num_timesteps; ++i) {
-    Classification cls;
-    cls.set_label(absl::StrCat("foo", 2 << i));
-    cls.set_score(0.1 * i);
-    auto label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+    Detection detection1;
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    auto label_ptr1 = ::absl::make_unique<Detection>(detection1);
     runner_->MutableInputs()
         ->Tag(kImageLabelTestTag)
-        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
-    cls.set_label(absl::StrCat("bar", 2 << i));
-    cls.set_score(0.2 * i);
-    label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+        .packets.push_back(Adopt(label_ptr1.release()).At(Timestamp(i)));
+    Detection detection2;
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    auto label_ptr2 = ::absl::make_unique<Detection>(detection2);
     runner_->MutableInputs()
         ->Tag(kImageLabelOtherTag)
-        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
+        .packets.push_back(Adopt(label_ptr2.release()).At(Timestamp(i)));
   }
-
   runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
       Adopt(input_sequence.release());
 
@@ -366,6 +378,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
     ASSERT_THAT(mpms::GetImageLabelStringAt("TEST", output_sequence, i),
                 ::testing::ElementsAreArray(
                     std::vector<std::string>(2, absl::StrCat("foo", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelIndexAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<int32_t>(2, i)));
     ASSERT_THAT(mpms::GetImageLabelConfidenceAt("TEST", output_sequence, i),
                 ::testing::ElementsAreArray(std::vector<float>(2, 0.1 * i)));
     ASSERT_EQ(i, mpms::GetImageTimestampAt("OTHER", output_sequence, i));
@@ -831,6 +845,88 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
   }
   ASSERT_THAT(mpms::GetClassSegmentationClassLabelString(output_sequence),
               testing::ElementsAreArray(::std::vector<std::string>({"mask"})));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id);
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string existing_video_id = "existing_video_id";
+  mpms::SetClipMediaId(existing_video_id, input_sequence.get());
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id).At(Timestamp(0));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {

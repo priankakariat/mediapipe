@@ -104,7 +104,7 @@ cc_library(
     srcs = ["deleting_file.cc"],
     hdrs = ["deleting_file.h"],
     deps = [
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -155,11 +155,12 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ] + select({
@@ -206,7 +207,6 @@ cc_library(
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:ret_check",
@@ -214,6 +214,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
@@ -234,6 +235,7 @@ cc_library(
         ":location",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -427,6 +429,17 @@ cc_test(
     ],
 )
 
+# Used by vendor processes that don't have access to libandroid.so, but want to use AHardwareBuffer.
+config_setting(
+    name = "android_link_native_window",
+    define_values = {
+        "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW": "1",
+        "MEDIAPIPE_NO_JNI": "1",
+    },
+    values = {"crosstool_top": "//external:android/crosstool"},
+    visibility = ["//visibility:private"],
+)
+
 cc_library(
     name = "tensor",
     srcs =
@@ -449,7 +462,13 @@ cc_library(
         "//conditions:default": [],
     }),
     defines = select({
+        # Excludes AHardwareBuffer features from vendor processes
         "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
+        # unless they're linked against nativewindow.
+        ":android_link_native_window": [
+            "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW",
+            "MEDIAPIPE_NO_JNI",
+        ],
         "//conditions:default": [],
     }),
     linkopts = select({
@@ -462,11 +481,14 @@ cc_library(
         "//mediapipe:android": [
             "-landroid",
         ],
+        ":android_link_native_window": [
+            "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor processes on Android API >= 26.
+        ],
     }),
     deps = [
         "//mediapipe/framework:port",
-        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ] + select({

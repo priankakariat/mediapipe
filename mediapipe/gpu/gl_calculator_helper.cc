@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
@@ -76,7 +77,7 @@ absl::Status GlCalculatorHelper::SetupInputSidePackets(
   }
 
   // TODO: remove when we can.
-  LOG(WARNING)
+  ABSL_LOG(WARNING)
       << "CalculatorContract not available. If you're calling this "
          "from a GetContract method, call GlCalculatorHelper::UpdateContract "
          "instead.";
@@ -216,6 +217,10 @@ GlTexture GlCalculatorHelper::CreateDestinationTexture(
   // TODO: ensure buffer pool is used when creating textures out of
   // ImageFrame.
   GpuBuffer gpu_buffer = GpuBufferCopyingImageFrame(image_frame);
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
+}
+
+GlTexture GlCalculatorHelper::CreateDestinationTexture(GpuBuffer& gpu_buffer) {
   return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
 }
 

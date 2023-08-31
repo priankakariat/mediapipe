@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder: load py_proto_library
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 licenses(["notice"])
@@ -163,8 +164,8 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/util:time_series_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:resampler",
         "@com_google_audio_tools//audio/dsp:resampler_q",
@@ -294,6 +295,7 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_audio_tools//audio/dsp:number_util",
         "@eigen_archive//:eigen3",
     ],
@@ -345,6 +347,7 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@eigen_archive//:eigen3",
     ],
