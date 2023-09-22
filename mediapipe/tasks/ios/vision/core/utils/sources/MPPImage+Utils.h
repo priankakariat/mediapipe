@@ -36,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (std::unique_ptr<mediapipe::ImageFrame>)imageFrameWithError:(NSError **)error;
 
+- (instancetype)initWithUInt8Buffer:(UInt8 *)buffer sourceType:(MPPImageSourceType)sourceType orientation:(UIImageOrientation)orientation error:(NSError **)error;
+
+
 @end
 
 NS_ASSUME_NONNULL_END

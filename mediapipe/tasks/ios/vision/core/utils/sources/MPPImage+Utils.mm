@@ -26,6 +26,9 @@
 
 namespace {
 using ::mediapipe::ImageFrame;
+
+CFDataRef 
+
 }
 
 @interface MPPPixelDataUtils : NSObject
@@ -276,6 +279,17 @@ using ::mediapipe::ImageFrame;
 @end
 
 @implementation MPPImage (Utils)
+
+- (nullable instancetype)initWithImageFrame:(ImageFrame)imageFrame cloningPropertiesOfSourceImage:(MPPImage *)sourceImage error:(NSError **)error {
+   switch (sourceImage.imageSourceType) {
+    case MPPImageSourceTypeImage:
+      CFDataRef pixelBufferData = CFDataCreateWithBytesNoCopy(NULL, buffer, sourceImage.width * sourceImage.height *)
+    default:
+      return nil;
+
+   }
+}
+
 
 - (std::unique_ptr<ImageFrame>)imageFrameWithError:(NSError **)error {
   switch (self.imageSourceType) {
