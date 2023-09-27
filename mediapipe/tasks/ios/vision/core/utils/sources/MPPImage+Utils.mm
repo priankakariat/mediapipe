@@ -25,10 +25,8 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 
 namespace {
+using ::mediapipe::Image;
 using ::mediapipe::ImageFrame;
-
-CFDataRef 
-
 }
 
 @interface MPPPixelDataUtils : NSObject
@@ -52,6 +50,7 @@ CFDataRef
 @interface MPPCGImageUtils : NSObject
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCGImage:(CGImageRef)cgImage error:(NSError **)error;
++ (CGImageRef)cgImageFromImageFrame:(ImageFrame &)imageFrame error:(NSError **)error;
 
 @end
 
@@ -185,6 +184,12 @@ CFDataRef
 
 @implementation MPPCGImageUtils
 
+namespace {
+  static void FreeDataProviderReleaseCallback(void* info, const void* data, size_t size) {
+  free(data);
+}
+}
+
 + (std::unique_ptr<ImageFrame>)imageFrameFromCGImage:(CGImageRef)cgImage error:(NSError **)error {
   size_t width = CGImageGetWidth(cgImage);
   size_t height = CGImageGetHeight(cgImage);
@@ -242,6 +247,52 @@ CFDataRef
   return imageFrame;
 }
 
++ (CGImageRef)cgImageFromImageFrame:(ImageFrame &)imageFrame shouldCopyPixelData:(BOOL)shouldCopyPixelData error:(NSError **)error {
+
+  CGBitmapInfo bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
+
+  switch (imageFrame.Format()) {
+    case FrameBuffer::Format::kRGBA: {
+      bitmapInfo = kCGImageAlphaLast | kCGBitmapByteOrder32Big;
+      break;
+    }
+
+    case FrameBuffer::Format::kRGB: {
+      bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrder32Big;
+      break;
+    }
+    default:
+      return nil;
+  }
+
+  UInt8 *pixelBufferAddress = NULL;
+
+  if (shouldCopyPixelData) {
+    pixelBufferAddress =
+      (UInt8 *)[MPPCommonUtils mallocWithSize:sizeof(UInt8) * imageFrame.Height() * imageFrame.Width() * componentCount
+                                          error:error];
+      memcpy(pixelBufferAddress, imageFrame.PixelData(), sizeof(UInt8) * imageFrame.Height() * imageFrame.Width() * componentCount);                                   
+  }
+  else {
+    pixelBufferAddress = imageFrame.PixelData();
+  }
+
+  size_t componentCount = 4;
+  size_t bitsPerComponent = 8;
+
+  CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, pixelBufferAddress, imageFrame.Width() *  imageFrame.Height() * componentCount, FreeDataProviderReleaseCallback);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGImageRef cgImageRef = CGImageCreate(imageFrame.Width(), imageFrame.Height(), bitsPerComponent, bitsPerComponent * componentCount, width * componentCount, colorSpace, bitmapInfo, provider, NULL, YES, kCGRenderingIntentDefault);
+  
+  CGDataProviderRelease(provider);
+  CGColorSpaceRelease(colorSpace)
+  
+  UIImage *image = [UIImage imageWithCGImage:imageRef];
+  CGImageRelease(cgImageRef);
+
+  return [self initWithUIImage:image orientation: sourceImage.orientation];
+}
+
 @end
 
 @implementation UIImage (ImageFrameUtils)
@@ -280,16 +331,23 @@ CFDataRef
 
 @implementation MPPImage (Utils)
 
-- (nullable instancetype)initWithImageFrame:(ImageFrame)imageFrame cloningPropertiesOfSourceImage:(MPPImage *)sourceImage error:(NSError **)error {
+- (nullable instancetype)initWithImage(Image &)image cloningPropertiesOfSourceImage:(MPPImage *)sourceImage shouldCopyPixelData:(BOOL)shouldCopyPixelData error:(NSError **)error {
+
    switch (sourceImage.imageSourceType) {
-    case MPPImageSourceTypeImage:
-      CFDataRef pixelBufferData = CFDataCreateWithBytesNoCopy(NULL, buffer, sourceImage.width * sourceImage.height *)
+    case MPPImageSourceTypeImage: {
+       CGImageRef cgImageRef = [MPPCGImageUtils cgImageFromImageFrame:image.GetImageFrameSharedPtr().get() shouldCopyPixelData:shouldCopyPixelData error:error];
+       UIImage *image = [UIImage imageWithCGImage:cgImageRef];
+       CGImageRelease(cgImageRef);
+
+       return [self initWithUIImage:image orientation: sourceImage.orientation];
+    }
+    case MPPImageSourceTypePixelBuffer: {
+      return nil;
+    }
     default:
       return nil;
-
    }
 }
-
 
 - (std::unique_ptr<ImageFrame>)imageFrameWithError:(NSError **)error {
   switch (self.imageSourceType) {
@@ -310,6 +368,15 @@ CFDataRef
   }
 
   return nullptr;
+}
+
+- (void)releaseCGDataProvider {
+  if (self.image.CGImage == nil) {
+    return
+  }
+  
+  CGDataProviderRef dataProvider = CGImageGetDataProvider(elf.image.CGImage);
+  CGDataProviderRelease(dataProvider);
 }
 
 @end
