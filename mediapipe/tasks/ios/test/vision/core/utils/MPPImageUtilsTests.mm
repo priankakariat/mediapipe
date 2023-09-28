@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 
@@ -46,8 +47,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 namespace {
   using ::mediapipe::Image;
+  using ::mediapipe::ImageFrame;
   using ::mediapipe::file::JoinPath;
-  using ::mediapipe::file::DecodeImageFromFile;
+  using ::mediapipe::tasks::vision::DecodeImageFromFile;
 
 }
 
@@ -66,24 +68,137 @@ namespace {
 
 - (void)testInitWithCppImageAndMPPImageSucceeds {
 
-  Image cppImage = DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kBurgerImageFile));
-
+  // absl::StatusOr<Image> cppImage = DecodeImageFromFile(kBurgerImageFileInfo.path.cppString);
+  // XCTAssertTrue(cppImage.status().code() == absl::StatusCode::kOk);
+  
+  NSLog(@"Continue after");
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
-  MPPImage *image = [[MPPImage alloc] initWithImage:cppImage cloningPropertiesOfSourceImage:sourceImage shouldCopyPixelData:YES error:nil];
+  std::unique_ptr<ImageFrame> imageFrame = [sourceImage imageFrameWithError:nil];
 
-  XCTAssertNotNil(image.CGImage);
+  Image sourceCppImage = Image(std::move(imageFrame));
+  
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage cloningPropertiesOfSourceImage:sourceImage shouldCopyPixelData:YES error:nil];
+  NSLog(@"After image creatuin");
+
+  XCTAssertTrue(image.image.CGImage != nil);
+  NSLog(@"After CGImage");
   XCTAssertEqual(image.width, sourceImage.width);
   XCTAssertEqual(image.height, sourceImage.height);
   XCTAssertEqual(image.orientation, sourceImage.orientation);
+  NSLog(@"After All Tests");
 
-  CFDataRef resultImageData = CGDataProviderCopyData(CGImageGetDataProvider(image.CGImage));
+  CFDataRef resultImageData = CGDataProviderCopyData(CGImageGetDataProvider(image.image.CGImage));
   const UInt8 *resultImagePixels = CFDataGetBytePtr(resultImageData);
 
-  const UInt8 *cppImagePixels = image.GetImageFrameSharedPtr().get();
+    NSLog(@"After result image pix");
 
-  for (int i = 0; i < image.width * image.height * 4) {
-    XCTAssertEqual(resultImagePixels[i], cppImagePixels[i]);
+
+  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
+  
+      NSLog(@"After rimage frame get");
+
+
+  XCTAssertEqual(cppImageFrame->Width(), image.width);
+ NSLog(@"After width");
+
+  XCTAssertEqual(cppImageFrame->Height(), image.height);
+          NSLog(@"After height");
+
+  // XCTAssertEqual(cppImageFrame->WidthStep(), CGImageGetBytesPerRow(image.image.CGImage));
+  XCTAssertEqual(cppImageFrame->ByteDepth() * 8, CGImageGetBitsPerComponent(image.image.CGImage));
+            NSLog(@"After byte depth");
+
+
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+              NSLog(@"After cpp image pixels");
+
+  
+  NSInteger consistentPixels = 0;
+
+  int j = 0;
+  NSLog(@"Enter For");
+  for (int i = 0; i < image.height * CGImageGetBytesPerRow(image.image.CGImage); ++i) {
+
+    // if ((i % 4) == 0) {
+    //   continue;
+    // }
+     consistentPixels +=
+        resultImagePixels[i] == cppImagePixels[i] ? 1 : 0;
   }
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
+}
+
+- (void)testInitWithCppImageNoCopySucceeds {
+
+  // absl::StatusOr<Image> cppImage = DecodeImageFromFile(kBurgerImageFileInfo.path.cppString);
+  // XCTAssertTrue(cppImage.status().code() == absl::StatusCode::kOk);
+  
+  NSLog(@"Continue after");
+  CGImageGetWidth(nil);
+
+  void *data = malloc(0);
+  if (!data) {
+      NSLog(@"Data %@", data);
+  }
+
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+  std::unique_ptr<ImageFrame> imageFrame = [sourceImage imageFrameWithError:nil];
+
+  Image sourceCppImage = Image(std::move(imageFrame));
+  
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage cloningPropertiesOfSourceImage:sourceImage shouldCopyPixelData:NO error:nil];
+  NSLog(@"After image creatuin");
+
+  XCTAssertTrue(image.image.CGImage != nil);
+  NSLog(@"After CGImage");
+  XCTAssertEqual(image.width, sourceImage.width);
+  XCTAssertEqual(image.height, sourceImage.height);
+  XCTAssertEqual(image.orientation, sourceImage.orientation);
+  NSLog(@"After All Tests");
+
+  CFDataRef resultImageData = CGDataProviderCopyData(CGImageGetDataProvider(image.image.CGImage));
+  const UInt8 *resultImagePixels = CFDataGetBytePtr(resultImageData);
+
+    NSLog(@"After result image pix");
+
+
+  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
+  
+      NSLog(@"After rimage frame get");
+
+
+  XCTAssertEqual(cppImageFrame->Width(), image.width);
+ NSLog(@"After width");
+
+  XCTAssertEqual(cppImageFrame->Height(), image.height);
+          NSLog(@"After height");
+
+  // XCTAssertEqual(cppImageFrame->WidthStep(), CGImageGetBytesPerRow(image.image.CGImage));
+  XCTAssertEqual(cppImageFrame->ByteDepth() * 8, CGImageGetBitsPerComponent(image.image.CGImage));
+            NSLog(@"After byte depth");
+
+
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+              NSLog(@"After cpp image pixels");
+
+  
+  NSInteger consistentPixels = 0;
+
+  int j = 0;
+  NSLog(@"Enter For");
+  for (int i = 0; i < image.height * CGImageGetBytesPerRow(image.image.CGImage); ++i) {
+
+    // if ((i % 4) == 0) {
+    //   continue;
+    // }
+     consistentPixels +=
+        resultImagePixels[i] == cppImagePixels[i] ? 1 : 0;
+  }
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
 }
 
 

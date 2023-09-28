@@ -42,7 +42,7 @@ objc_library(
     deps = [
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//third_party/apple_frameworks:Accelerate",
