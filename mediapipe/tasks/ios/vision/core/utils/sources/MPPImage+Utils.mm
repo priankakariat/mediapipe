@@ -22,18 +22,22 @@
 #import <CoreImage/CoreImage.h>
 #import <CoreVideo/CoreVideo.h>
 
+#include <memory>
+
 #include "mediapipe/framework/formats/image_format.pb.h"
 
 namespace {
-using ::mediapipe::Image;
 using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
 
 vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount height,
                                     size_t rowBytes) {
   UInt8 *data = new UInt8[height * rowBytes];
+  return {.data = data, .height = height, .width = width, .rowBytes = rowBytes};
+}
 
-  return {.data = data, .width = width, .height = height, .rowBytes = rowBytes};
+static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size_t size) {
+  delete (vImage_Buffer *)buffer;
 }
 
 }  // namespace
@@ -59,7 +63,9 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
 @interface MPPCGImageUtils : NSObject
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCGImage:(CGImageRef)cgImage error:(NSError **)error;
-+ (CGImageRef)cgImageFromImageFrame:(ImageFrame &)imageFrame error:(NSError **)error;
++ (CGImageRef)cgImageFromImageFrame:(std::shared_ptr<ImageFrame>)imageFrame
+                shouldCopyPixelData:(BOOL)shouldCopyPixelData
+                              error:(NSError **)error;
 
 @end
 
@@ -91,6 +97,8 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
 
   vImage_Error convertError = kvImageNoError;
 
+  // Convert the raw pixel data to RGBA format and un-premultiply the alpha from the R, G, B values
+  // since MediaPipe C++ APIs only accept un pre-multiplied channels.
   switch (pixelBufferFormatType) {
     case kCVPixelFormatType_32RGBA: {
       destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
@@ -121,12 +129,13 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
   if (convertError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"Image format conversion failed."];
+                          description:@"Some error occured while preprocessing the input image. "
+                                      @"Please verify that the image is not corrupted."];
     return nullptr;
   }
 
   // Uses default deleter
-  return absl::make_unique<ImageFrame>(imageFormat, width, height, destinationBytesPerRow,
+  return std::make_unique<ImageFrame>(imageFormat, width, height, destinationBytesPerRow,
                                        static_cast<uint8 *>(destBuffer.data));
 }
 
@@ -151,6 +160,7 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
                 pixelBufferFormat:pixelBufferFormat
                             error:error];
       CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+      break;
     }
     default: {
       [MPPCommonUtils createCustomError:error
@@ -182,10 +192,7 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
   NSInteger channelCount = 4;
   size_t bytesPerRow = channelCount * width;
 
-  NSInteger destinationChannelCount = 3;
-  size_t destinationBytesPerRow = destinationChannelCount * width;
-
-  UInt8 *pixelDataToReturn = NULL;
+  std::unique_ptr<ImageFrame> imageFrame = nullptr;
 
   std::unique_ptr<ImageFrame> imageFrame = nullptr;
 
@@ -194,9 +201,10 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
   // See https://developer.apple.com/documentation/coregraphics/1455939-cgbitmapcontextcreate
   // But for segmentation test image, this was not the case.
   // Hence setting it to the value of channelCount*width.
-  // kCGImageAlphaPremultipliedLast specifies that Alpha will always be next to B and the R, G, B values will be pre multiplied with alpha.
-  // Images with alpha != 255 are stored with the R, G, B values premultiplied with alpha by iOS.
-  // Hence `kCGImageAlphaPremultipliedLast` ensures all kinds of images (alpha from 0 to 255) are correctly accounted for by iOS.
+  // kCGImageAlphaPremultipliedLast specifies that Alpha will always be next to B and the R, G, B
+  // values will be pre multiplied with alpha. Images with alpha != 255 are stored with the R, G, B
+  // values premultiplied with alpha by iOS. Hence `kCGImageAlphaPremultipliedLast` ensures all
+  // kinds of images (alpha from 0 to 255) are correctly accounted for by iOS.
   // kCGBitmapByteOrder32Big specifies that R will be stored before B.
   // In combination they signify a pixelFormat of kCVPixelFormatType32RGBA.
   CGBitmapInfo bitMapinfoFor32RGBA = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big;
@@ -242,23 +250,21 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
     default:
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"Unsupported Image Format Conversion."];
-      return NULL;
+                            description:@"An internal error occured."];
+      return nullptr;
   }
 
   size_t bitsPerComponent = 8;
 
-  UInt8 *pixelBufferAddress = NULL;
-
   vImage_Buffer sourceBuffer = {
       .data = (void *)internalImageFrame->MutablePixelData(),
-      .width = static_cast<vImagePixelCount>(internalImageFrame->Width()),
       .height = static_cast<vImagePixelCount>(internalImageFrame->Height()),
+      .width = static_cast<vImagePixelCount>(internalImageFrame->Width()),
       .rowBytes = static_cast<size_t>(internalImageFrame->WidthStep())};
 
   vImage_Buffer destBuffer;
 
-  CGDataProviderReleaseDataCallback callback = NULL;
+  CGDataProviderReleaseDataCallback callback = nullptr;
 
   if (shouldCopyPixelData) {
     destBuffer = allocatedVImageBuffer(static_cast<vImagePixelCount>(internalImageFrame->Width()),
@@ -269,15 +275,17 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
     destBuffer = sourceBuffer;
   }
 
-  vImage_Error convertError =
+  // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
+  // that pixels are displayed correctly irrespective of their alpha values.
+  vImage_Error premultiplyError =
       vImagePremultiplyData_RGBA8888(&sourceBuffer, &destBuffer, kvImageNoFlags);
 
-  if (convertError != kvImageNoError) {
+  if (premultiplyError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"Image format conversion failed."];
+                          description:@"An internal error occured."];
 
-    return NULL;
+    return nullptr;
   }
 
   CGDataProviderRef provider = CGDataProviderCreateWithData(
@@ -287,7 +295,7 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
   CGImageRef cgImageRef =
       CGImageCreate(internalImageFrame->Width(), internalImageFrame->Height(), bitsPerComponent,
                     bitsPerComponent * channelCount, internalImageFrame->WidthStep(), colorSpace,
-                    bitmapInfo, provider, NULL, YES, kCGRenderingIntentDefault);
+                    bitmapInfo, provider, nullptr, YES, kCGRenderingIntentDefault);
 
   CGDataProviderRelease(provider);
   CGColorSpaceRelease(colorSpace);
@@ -345,7 +353,7 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
       UIImage *image = [UIImage imageWithCGImage:cgImageRef];
       CGImageRelease(cgImageRef);
 
-      return [[MPPImage alloc] initWithUIImage:image orientation:sourceImage.orientation error:nil];
+      return [self initWithUIImage:image orientation:sourceImage.orientation error:nil];
     }
     default:
       // TODO Implement Other Source Types.
