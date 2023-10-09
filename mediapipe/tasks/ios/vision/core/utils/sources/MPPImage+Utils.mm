@@ -51,12 +51,22 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
                                      pixelBufferFormat:(OSType)pixelBufferFormatType
                                                  error:(NSError **)error;
 
++ (uint8_t *)pixelDataFromImageFrame:(uint8_t *)pixelData
+                                             withWidth:(size_t)width
+                                                height:(size_t)height
+                                                stride:(size_t)stride
+                                     pixelBufferFormat:(OSType)pixelBufferFormatType
+                                                 error:(NSError **)error;                                                 
+
 @end
 
 @interface MPPCVPixelBufferUtils : NSObject
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
+
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)pixelBuffer
+                                          error:(NSError **)error;                                                     
 
 @end
 
@@ -173,6 +183,32 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
 
   return imageFrame;
 }
+
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame
+                                          error:(NSError **)error {
+
+  ImageFrame *internalImageFrame = imageFrame.get();
+  size_t channelCount = 4;
+
+  // Random choice for default value.
+  OSType pixelBufferFormatType = kCVPixelFormatType32RGBA;
+
+  switch (internalImageFrame->Format()) {
+    case ImageFormat::SRGBA: {
+      pixelBufferFormatType = kCVPixelFormatType32RGBA;
+      break;
+    }
+    default:
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+      return NULL;
+  }  
+
+
+                                        
+
+}                                                   
 
 @end
 
@@ -355,6 +391,9 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
 
       return [self initWithUIImage:image orientation:sourceImage.orientation error:nil];
     }
+    case MPPImageSourceTypePixelBuffer: {
+
+    }
     default:
       // TODO Implement Other Source Types.
       return nil;
@@ -381,5 +420,7 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
 
   return nullptr;
 }
+
+// CVReturn CVPixelBufferCreateWithBytes(CFAllocatorRef allocator, size_t width, size_t height, OSType pixelFormatType, void *baseAddress, size_t bytesPerRow, CVPixelBufferReleaseBytesCallback releaseCallback, void *releaseRefCon, CFDictionaryRef pixelBufferAttributes, CVPixelBufferRef  _Nullable *pixelBufferOut);
 
 @end
