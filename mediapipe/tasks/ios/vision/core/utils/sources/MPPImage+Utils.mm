@@ -127,15 +127,20 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   switch (pixelBufferFormatType) {
     case kCVPixelFormatType_32RGBA: {
       destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
-                                         destinationBytesPerRow);
+                                         destinationBytesPerRow);                                  
       convertError = vImageUnpremultiplyData_RGBA8888(&srcBuffer, &destBuffer, kvImageNoFlags);
       break;
     }
     case kCVPixelFormatType_32BGRA: {
-      imageFormat = ImageFormat::SBGRA;
       destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
                                          destinationBytesPerRow);
-      convertError = vImageUnpremultiplyData_BGRA8888(&srcBuffer, &destBuffer, kvImageNoFlags);
+      
+      const uint8_t permute_map[4] = {2, 1, 0, 3};
+      convertError = vImagePermuteChannels_ARGB8888(
+          &v_image, &v_dest, permute_map, kvImageNoFlags);  
+      if (convertError == kvImageNoError) {
+        convertError = vImageUnpremultiplyData_RGBA8888(&srcBuffer, &destBuffer, kvImageNoFlags);
+      }
       break;
     }
     default: {
@@ -162,27 +167,27 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 
 + (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
                         shouldCopy:(BOOL)shouldCopy
-                             error:(NSError **)error {
+                             error:(NSError **)error {                           
   vImage_Buffer sourceBuffer = VImageBufferFromImageFrame(imageFrame);
 
   // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
   // that pixels are displayed correctly irrespective of their alpha values.
   vImage_Error premultiplyError;
-  vImage_Buffer destBuffer;
+  vImage_Buffer destinationBuffer;
 
   switch (imageFrame.Format()) {
     case ImageFormat::SRGBA: {
-      vImage_Buffer destBuffer =
+      destinationBuffer =
           shouldCopy ? EmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
-      premultiplyError = vImagePremultiplyData_RGBA8888(&sourceBuffer, &destBuffer, kvImageNoFlags);
+      premultiplyError = vImagePremultiplyData_RGBA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
       break;
     }
-    case ImageFormat::SBGRA: {
-      vImage_Buffer destBuffer =
-          shouldCopy ? EmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
-      premultiplyError = vImagePremultiplyData_BGRA8888(&sourceBuffer, &destBuffer, kvImageNoFlags);
-      break;
-    }
+    // case ImageFormat::SBGRA: {
+    //   destinationBuffer =
+    //       shouldCopy ? EmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
+    //   premultiplyError = vImagePremultiplyData_BGRA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
+    //   break;
+    // }
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
@@ -199,7 +204,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     return NULL;
   }
 
-  return (UInt8 *)destBuffer.data;
+  return (UInt8 *)destinationBuffer.data;
 }
 
 @end
@@ -212,7 +217,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   std::unique_ptr<ImageFrame> imageFrame = nullptr;
 
   switch (pixelBufferFormat) {
-    case kCVPixelFormatType_32RGBA:
+    // Core Video only supports the RGBA pixel format types kCVPixelFormatType_32BGRA and kCVPixelFormatType32ARGB.
+    // In future support for kCVPixelFormatType32ARGB can be added.
     case kCVPixelFormatType_32BGRA: {
       CVPixelBufferLockBaseAddress(pixelBuffer, 0);
       imageFrame = [MPPPixelDataUtils
@@ -229,8 +235,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unsupported pixel format for CVPixelBuffer. Supported "
-                                        @"pixel format types are kCVPixelFormatType_32BGRA and "
-                                        @"kCVPixelFormatType_32RGBA"];
+                                        @"pixel format type is kCVPixelFormatType_32BGRA"];
     }
   }
 
@@ -240,21 +245,14 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 + (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame
                             shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                           error:(NSError **)error {
-  // ImageFrame *internalImageFrame = imageFrame.get();
-  size_t channelCount = 4;
-
   // Random choice for default value.
-  OSType pixelBufferFormatType = kCVPixelFormatType_32RGBA;
+  OSType pixelBufferFormatType = kCVPixelFormatType_32BGRA;
 
   // Supporting only RGBA and BGRA since creation of CVPixelBuffers with RGB format
   // is restrictred in iOS. Thus, the APIs will never receive an input pixel buffer in RGB format
   // and in turn the resulting image frame will never be of the RGB format. Moreover, writing unit
   // tests for RGB images will also be not possible.
   switch (imageFrame.Format()) {
-    case ImageFormat::SRGBA: {
-      pixelBufferFormatType = kCVPixelFormatType_32RGBA;
-      break;
-    }
     case ImageFormat::SBGRA: {
       pixelBufferFormatType = kCVPixelFormatType_32BGRA;
       break;
@@ -265,23 +263,30 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
                             description:@"An internal error occured."];
       return NULL;
     }
+  }
 
-      UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:imageFrame
+    UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:imageFrame
                                                          shouldCopy:shouldCopyPixelData
                                                               error:error];
+    if (!pixelData) {
+      return NULL;
+    }
 
       CVPixelBufferRef outputBuffer;
 
       // If pixel data is copied, then pass in a release callback that will be invoked when the
       // pixel buffer is destroyed. If data is not copied, the responsibility of deletion is on the
       // owner of the data (a.k.a C++ Image Frame).
-      CVPixelBufferCreateWithBytes(kCFAllocatorDefault, imageFrame.Width(), imageFrame.Height(),
+      if(CVPixelBufferCreateWithBytes(kCFAllocatorDefault, imageFrame.Width(), imageFrame.Height(),
                                    pixelBufferFormatType, pixelData, imageFrame.WidthStep(),
                                    shouldCopyPixelData ? FreeRefConReleaseCallback : NULL,
-                                   pixelData, NULL, &outputBuffer);
-
-      return outputBuffer;
-  }
+                                   pixelData, NULL, &outputBuffer) == kCVReturnSuccess) {
+        return outputBuffer;                          
+      }
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+      return NULL;
 }
 
 @end
@@ -309,7 +314,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   // kinds of images (alpha from 0 to 255) are correctly accounted for by iOS.
   // kCGBitmapByteOrder32Big specifies that R will be stored before B.
   // In combination they signify a pixelFormat of kCVPixelFormatType32RGBA.
-  CGBitmapInfo bitMapinfoFor32RGBA = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big;
+  CGBitmapInfo bitMapinfoFor32RGBA = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
   CGContextRef context = CGBitmapContextCreate(nil, width, height, bitsPerComponent, bytesPerRow,
                                                colorSpace, bitMapinfoFor32RGBA);
 
@@ -324,7 +329,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
                                                     withWidth:width
                                                        height:height
                                                        stride:bytesPerRow
-                                            pixelBufferFormat:kCVPixelFormatType_32RGBA
+                                            pixelBufferFormat:kCVPixelFormatType_32BGRA
                                                         error:error];
     }
 
@@ -362,7 +367,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
       break;
     }
     case ImageFormat::SBGRA: {
-      bitmapInfo = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Small;
+      bitmapInfo = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Little;
       break;
     }
     default:
@@ -373,7 +378,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   }
 
   CGDataProviderRef provider = CGDataProviderCreateWithData(
-      destBuffer.data, destBuffer.data,
+      pixelData, pixelData,
       internalImageFrame->WidthStep() * internalImageFrame->Height(), callback);
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
   CGImageRef cgImageRef =
