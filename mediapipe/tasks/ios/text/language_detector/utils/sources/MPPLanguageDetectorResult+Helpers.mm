@@ -33,7 +33,7 @@ using ::mediapipe::Packet;
     (const mediapipe::Packet &)packet {
   MPPClassificationResult *classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
-
+  
   return [MPPLanguageDetectorResult
       languageDetectorResultWithClassificationResult:classificationResult
                              timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
@@ -43,7 +43,7 @@ using ::mediapipe::Packet;
 + (MPPLanguageDetectorResult *)
     languageDetectorResultWithClassificationResult:(MPPClassificationResult *)classificationResult
                            timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
-  NSArray<MPPLanguagePrediction *> *languagePredictions =
+  NSMutableArray<MPPLanguagePrediction *> *languagePredictions =
       [NSMutableArray arrayWithCapacity:classificationResult.classifications.count];
 
   if (classificationResult.classifications.count > 0) {
@@ -51,9 +51,10 @@ using ::mediapipe::Packet;
       MPPLanguagePrediction *languagePrediction =
           [[MPPLanguagePrediction alloc] initWithLanguageCode:category.categoryName
                                                   probability:category.score];
+      [languagePredictions addObject:languagePrediction];                                         
     }
   }
-
+  
   return [[MPPLanguageDetectorResult alloc] initWithLanguagePredictions:languagePredictions
                                                 timestampInMilliseconds:timestampInMilliseconds];
 }

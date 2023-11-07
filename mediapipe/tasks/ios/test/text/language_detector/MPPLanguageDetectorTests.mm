@@ -15,118 +15,31 @@
 #import <XCTest/XCTest.h>
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetector.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
+#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetector.h"
 
 static MPPFileInfo *const kLanguageDetectorModelFileInfo =
     [[MPPFileInfo alloc] initWithName:@"language_detector" type:@"tflite"];
 
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
-#define AssertEqualErrors(error, expectedError)                                               \
-  XCTAssertNotNil(error);                                                                     \
-  XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
-  XCTAssertEqual(error.code, expectedError.code);                                             \
+#define AssertEqualErrors(error, expectedError)              \
+  XCTAssertNotNil(error);                                    \
+  XCTAssertEqualObjects(error.domain, expectedError.domain); \
+  XCTAssertEqual(error.code, expectedError.code);            \
   XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
-
-#define AssertEqualCategoryArrays(categories, expectedCategories)                         \
-  XCTAssertEqual(categories.count, expectedCategories.count);                             \
-  for (int i = 0; i < categories.count; i++) {                                            \
-    XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"index i = %d", i); \
-    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-3,    \
-                               @"index i = %d", i);                                       \
-    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName, \
-                          @"index i = %d", i);                                            \
-    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName,   \
-                          @"index i = %d", i);                                            \
-  }
-
-#define AssertTextClassifierResultHasOneHead(textClassifierResult)                    \
-  XCTAssertNotNil(textClassifierResult);                                              \
-  XCTAssertNotNil(textClassifierResult.classificationResult);                         \
-  XCTAssertEqual(textClassifierResult.classificationResult.classifications.count, 1); \
-  XCTAssertEqual(textClassifierResult.classificationResult.classifications[0].headIndex, 0);
 
 @interface MPPLanguageDetectorTests : XCTestCase
 @end
 
 @implementation MPPLanguageDetectorTests
 
-// + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForNegativeText {
-//   return @[
-//     [[MPPCategory alloc] initWithIndex:0 score:0.956187f categoryName:@"negative" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:1 score:0.043812f categoryName:@"positive" displayName:nil]
-//   ];
-// }
+- (void)testCreateLanguageDetectorFailsWithMissingModelPath {
+  MPPFileInfo *fileInfo = [[MPPFileInfo alloc] initWithName:@"" type:@""];
 
-// + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForPositiveText {
-//   return @[
-//     [[MPPCategory alloc] initWithIndex:1 score:0.999945f categoryName:@"positive" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:0 score:0.000055f categoryName:@"negative" displayName:nil]
-//   ];
-// }
-
-// + (NSArray<MPPCategory *> *)expectedRegexResultCategoriesForNegativeText {
-//   return @[
-//     [[MPPCategory alloc] initWithIndex:0 score:0.6647746f categoryName:@"Negative" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:1 score:0.33522537 categoryName:@"Positive" displayName:nil]
-//   ];
-// }
-
-// + (NSArray<MPPCategory *> *)expectedRegexResultCategoriesForPositiveText {
-//   return @[
-//     [[MPPCategory alloc] initWithIndex:0 score:0.5120041f categoryName:@"Negative" displayName:nil],
-//     [[MPPCategory alloc] initWithIndex:1 score:0.48799595 categoryName:@"Positive" displayName:nil]
-//   ];
-// }
-
-// + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForEdgeCaseTests {
-//   return @[ [[MPPCategory alloc] initWithIndex:0
-//                                          score:0.956187f
-//                                   categoryName:@"negative"
-//                                    displayName:nil] ];
-// }
-
-- (MPPLanguageDetectorOptions *)languageDetectorOptionsWithModelFileInfo:(MPPFileInfo *)fileInfo {
-  MPPLanguageDetectorOptions *options = [[MPPLanguageDetectorOptions alloc] init];
-  options.baseOptions.modelAssetPath = fileInfo.path;
-  return options;
-}
-
-- (MPPLanguageDetectorOptions *)createLanguageDetectorWithOptionsSucceeds:(MPPLanguageDetectorOptions *)options {
-  NSError *error;
-  MPPLanguageDetectorOptions *languageDetector = [[MPPLanguageDetector alloc] initWithOptions:options
-                                                                           error:&error];
-  XCTAssertNotNil(languageDetector);
-  XCTAssertNil(error);
-
-  return languageDetector;
-}
-
-- (void)assertCreateLanguageDetectorWithOptions:(MPPLanguageDetectorOptions *)options
-                       failsWithExpectedError:(NSError *)expectedError {
   NSError *error = nil;
   MPPLanguageDetector *languageDetector =
-      [[MPPLanguageDetector alloc] initWithOptions:options error:&error];
-  XCTAssertNil(languageDetector);
-  AssertEqualErrors(error, expectedError);
-}
-
-// - (void)assertResultsOfClassifyText:(NSString *)text
-//                 usingTextClassifier:(MPPTextClassifier *)textClassifier
-//                    equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
-//   MPPTextClassifierResult *negativeResult = [textClassifier classifyText:text error:nil];
-//   AssertTextClassifierResultHasOneHead(negativeResult);
-//   AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-//                             expectedCategories);
-// }
-
-- (void)testCreateLanguageDetectorFailsWithMissingModelPath {
-  NSString *modelPath = [self filePathWithName:@"" extension:@""];
-
-  NSError *error = nil;
-  MPPLanguageDetector *languageDetector = [[MPPLanguageDetector alloc] initWithModelPath:modelPath
-                                                                             error:&error];
+      [[MPPLanguageDetector alloc] initWithModelPath:fileInfo.path error:&error];
   XCTAssertNil(languageDetector);
 
   NSError *expectedError = [NSError
@@ -141,21 +54,21 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 }
 
 - (void)testCreateLanguageDetectorFailsWithBothAllowlistAndDenylist {
-  MPPLanguageDetector *options =
+  MPPLanguageDetectorOptions *options =
       [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
   options.categoryAllowlist = @[ @"en" ];
   options.categoryDenylist = @[ @"en" ];
 
   [self assertCreateLanguageDetectorWithOptions:options
-                       failsWithExpectedError:
-                           [NSError
-                               errorWithDomain:kExpectedErrorDomain
-                                          code:MPPTasksErrorCodeInvalidArgumentError
-                                      userInfo:@{
-                                        NSLocalizedDescriptionKey :
-                                            @"INVALID_ARGUMENT: `category_allowlist` and "
-                                            @"`category_denylist` are mutually exclusive options."
-                                      }]];
+                         failsWithExpectedError:
+                             [NSError
+                                 errorWithDomain:kExpectedErrorDomain
+                                            code:MPPTasksErrorCodeInvalidArgumentError
+                                        userInfo:@{
+                                          NSLocalizedDescriptionKey :
+                                              @"INVALID_ARGUMENT: `category_allowlist` and "
+                                              @"`category_denylist` are mutually exclusive options."
+                                        }]];
 }
 
 - (void)testCreateLanguageDetectorFailsWithInvalidMaxResults {
@@ -163,7 +76,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
   options.maxResults = 0;
 
-  [self assertCreateLanguageDetectorWithOptions:options
+  [self
+      assertCreateLanguageDetectorWithOptions:options
                        failsWithExpectedError:
                            [NSError errorWithDomain:kExpectedErrorDomain
                                                code:MPPTasksErrorCodeInvalidArgumentError
@@ -174,92 +88,75 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                            }]];
 }
 
-// - (void)testClassifyWithBertSucceeds {
-//   MPPTextClassifier *textClassifier =
-//       [self textClassifierFromModelFileWithName:kBertTextClassifierModelName];
+- (void)testClassifyWithL2CModelSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
 
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForNegativeText]];
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+  NSString *enText = @"To be, or not to be, that is the question";
+  NSArray<MPPLanguagePrediction *> *expectedEnLanguagePredictions =
+      @[ [[MPPLanguagePrediction alloc] initWithLanguageCode:@"en" probability:0.9998559f] ];
 
-//   [self assertResultsOfClassifyText:kPositiveText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForPositiveText]];
-// }
+  [self assertResultsOfDetectLanguageOfText:enText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedEnLanguagePredictions];
 
-// - (void)testClassifyWithRegexSucceeds {
-//   MPPTextClassifier *textClassifier =
-//       [self textClassifierFromModelFileWithName:kRegexTextClassifierModelName];
+  NSString *frText = @"Il y a beaucoup de bouches qui parlent et fort peu de têtes qui pensent.";
+  NSArray<MPPLanguagePrediction *> *expectedFrLanguagePredictions =
+      @[ [[MPPLanguagePrediction alloc] initWithLanguageCode:@"fr" probability:0.9997813f] ];
 
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedRegexResultCategoriesForNegativeText]];
-//   [self assertResultsOfClassifyText:kPositiveText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedRegexResultCategoriesForPositiveText]];
-// }
+  [self assertResultsOfDetectLanguageOfText:frText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedFrLanguagePredictions];
 
-// - (void)testClassifyWithMaxResultsSucceeds {
-//   MPPTextClassifierOptions *options =
-//       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
-//   options.maxResults = 1;
+  NSString *ruText = @"это какой-то английский язык";
+  NSArray<MPPLanguagePrediction *> *expectedRuLanguagePredictions =
+      @[ [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ru" probability:0.9933616f] ];
 
-//   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(textClassifier);
+  [self assertResultsOfDetectLanguageOfText:ruText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedRuLanguagePredictions];
+}
 
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForEdgeCaseTests]];
-// }
+#pragma mark Assert Segmenter Results
+- (void)assertResultsOfDetectLanguageOfText:(NSString *)text
+                             usingLanguageDetector:(MPPLanguageDetector *)languageDetector
+    approximatelyEqualsExpectedLanguagePredictions:
+        (NSArray<MPPLanguagePrediction *> *)expectedLanguagePredictions {
+  MPPLanguageDetectorResult *result = [languageDetector detectText:text error:nil];
+  XCTAssertNotNil(result);
+  XCTAssertEqualWithAccuracy(result.languagePredictions[0].probability,
+                             expectedLanguagePredictions[0].probability, 1e-3);
+  XCTAssertEqualObjects(result.languagePredictions[0].languageCode,
+                        expectedLanguagePredictions[0].languageCode);
+}
 
-// - (void)testClassifyWithCategoryAllowlistSucceeds {
-//   MPPTextClassifierOptions *options =
-//       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
-//   options.categoryAllowlist = @[ @"negative" ];
+#pragma mark Language Detector Initializers
 
-//   NSError *error = nil;
-//   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options
-//                                                                            error:&error];
-//   XCTAssertNotNil(textClassifier);
-//   XCTAssertNil(error);
+- (MPPLanguageDetectorOptions *)languageDetectorOptionsWithModelFileInfo:(MPPFileInfo *)fileInfo {
+  MPPLanguageDetectorOptions *options = [[MPPLanguageDetectorOptions alloc] init];
+  options.baseOptions.modelAssetPath = fileInfo.path;
+  return options;
+}
 
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForEdgeCaseTests]];
-// }
+- (MPPLanguageDetector *)createLanguageDetectorWithOptionsSucceeds:
+    (MPPLanguageDetectorOptions *)options {
+  NSError *error;
+  MPPLanguageDetector *languageDetector = [[MPPLanguageDetector alloc] initWithOptions:options
+                                                                                 error:&error];
+  XCTAssertNotNil(languageDetector);
+  XCTAssertNil(error);
 
-// - (void)testClassifyWithCategoryDenylistSucceeds {
-//   MPPTextClassifierOptions *options =
-//       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
-//   options.categoryDenylist = @[ @"positive" ];
+  return languageDetector;
+}
 
-//   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(textClassifier);
-
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForEdgeCaseTests]];
-// }
-
-// - (void)testClassifyWithScoreThresholdSucceeds {
-//   MPPTextClassifierOptions *options =
-//       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
-//   options.scoreThreshold = 0.5f;
-
-//   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
-//   XCTAssertNotNil(textClassifier);
-
-//   [self assertResultsOfClassifyText:kNegativeText
-//                 usingTextClassifier:textClassifier
-//                    equalsCategories:[MPPTextClassifierTests
-//                                         expectedBertResultCategoriesForEdgeCaseTests]];
-// }
+- (void)assertCreateLanguageDetectorWithOptions:(MPPLanguageDetectorOptions *)options
+                         failsWithExpectedError:(NSError *)expectedError {
+  NSError *error = nil;
+  MPPLanguageDetector *languageDetector = [[MPPLanguageDetector alloc] initWithOptions:options
+                                                                                 error:&error];
+  XCTAssertNil(languageDetector);
+  AssertEqualErrors(error, expectedError);
+}
 
 @end
