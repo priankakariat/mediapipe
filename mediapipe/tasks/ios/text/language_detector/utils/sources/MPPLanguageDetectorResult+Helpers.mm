@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
+#import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 #import "mediapipe/tasks/ios/text/language_detector/utils/sources/MPPLanguageDetectorResult+Helpers.h"
+
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
@@ -29,21 +32,28 @@ using ClassificationResultProto =
 @implementation MPPLanguageDetectorResult (Helpers)
 
 + (MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet {
+    (const mediapipe::Packet &)packet error:(NSError **)error {
   MPPClassificationResult *classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
   return [MPPLanguageDetectorResult
       languageDetectorResultWithClassificationResult:classificationResult
                              timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                                                 kMicrosecondsPerMillisecond)];
+                                                                 kMicrosecondsPerMillisecond) error:error];
 }
 
 + (MPPLanguageDetectorResult *)
     languageDetectorResultWithClassificationResult:(MPPClassificationResult *)classificationResult
-                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds error:(NSError **)error {
+
+  if (classificationResult.classifications.count != 1) {
+    [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"The language detector model should have exactly one classification head."];
+    return nil;                         
+  }                         
   NSMutableArray<MPPLanguagePrediction *> *languagePredictions =
-      [NSMutableArray arrayWithCapacity:classificationResult.classifications.count];
+      [NSMutableArray arrayWithCapacity:classificationResult.classifications[0].categories.count];
 
   if (classificationResult.classifications.count > 0) {
     for (MPPCategory *category in classificationResult.classifications[0].categories) {

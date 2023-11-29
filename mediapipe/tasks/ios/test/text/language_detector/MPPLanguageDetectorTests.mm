@@ -125,6 +125,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
         (NSArray<MPPLanguagePrediction *> *)expectedLanguagePredictions {
   MPPLanguageDetectorResult *result = [languageDetector detectText:text error:nil];
   XCTAssertNotNil(result);
+  NSLog(@"Count %d pred %f", result.languagePredictions.count, result.languagePredictions[0].probability);
   XCTAssertEqualWithAccuracy(result.languagePredictions[0].probability,
                              expectedLanguagePredictions[0].probability, 1e-3);
   XCTAssertEqualObjects(result.languagePredictions[0].languageCode,

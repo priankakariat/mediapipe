@@ -89,7 +89,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 
   return
       [MPPLanguageDetectorResult languageDetectorResultWithClassificationsPacket:
-                                     outputPacketMap.value()[kClassificationsStreamName.cppString]];
+                                     outputPacketMap.value()[kClassificationsStreamName.cppString] error:error];
 }
 
 @end

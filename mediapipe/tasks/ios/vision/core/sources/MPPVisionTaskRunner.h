@@ -20,6 +20,8 @@
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
 
+#include "mediapipe/framework/packet.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -190,6 +192,24 @@ NS_ASSUME_NONNULL_BEGIN
        timestampInMilliseconds:(NSInteger)timeStampInMilliseconds
                          error:(NSError **)error;
 
+
+/**
+ * This method creates an input packet map to the C++ task runner with the image and normalized rect calculated from the region of interest specified within the  bounds of an image.
+ * Tasks which need to add more entries to the input packet map and build their own custom logic for processing images can use this method.
+ *
+ * @param image An `MPPImage` input to the task.
+ * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
+ * of type `MPPImage`, on which inference should be performed.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return A `BOOL` indicating if the creation of the input packet map with the image and the normalized rect calculated from the region of interest was successful.
+ */
+- (std::optional<std::map<std::string, mediapipe::Packet>>)inputPacketMapWithMPPImage:(MPPImage *)image
+                                      regionOfInterest:(CGRect)roi
+                                                 error:(NSError **)error;
+                    
+
 /**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
@@ -208,6 +228,8 @@ NS_ASSUME_NONNULL_BEGIN
                               packetsCallback:
                                   (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                         error:(NSError **)error NS_UNAVAILABLE;
+
+
 
 - (instancetype)init NS_UNAVAILABLE;
 

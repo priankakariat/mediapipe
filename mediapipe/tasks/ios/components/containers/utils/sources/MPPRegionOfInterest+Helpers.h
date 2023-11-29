@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorResult.h"
+#include "mediapipe/util/render_data.pb.h"
 
-#include "mediapipe/framework/packet.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPLanguageDetectorResult (Helpers)
+@interface MPPRegionOfInterest (Helpers)
 
-+ (nullable MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet error:(NSError **)error;
+- (std::optional<mediapipe::RenderData>) getRenderDataWithError:(NSError **)error;
 
 @end
 

@@ -38,6 +38,7 @@ objc_library(
     deps = [
         "//mediapipe/framework:packet",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
         "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetectorResult",
     ],

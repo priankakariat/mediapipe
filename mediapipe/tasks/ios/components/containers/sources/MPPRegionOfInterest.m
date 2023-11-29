@@ -12,17 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorResult.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 
-#include "mediapipe/framework/packet.h"
+@implementation MPPRegionOfInterest
 
-NS_ASSUME_NONNULL_BEGIN
+- (instancetype)initWithNormalizedKeyPoint:(MPPNormalizedKeypoint *)normalizedKeypoint {
+  self = [super init];
+  if (self) {
+    _keypoint = normalizedKeypoint;
+  }
+  return self;
+}
 
-@interface MPPLanguageDetectorResult (Helpers)
-
-+ (nullable MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet error:(NSError **)error;
+- (instancetype)initWitScribbles:(NSArray <MPPNormalizedKeypoint *> *)scribbles {
+  self = [super init];
+  if (self) {
+    _scribbles = scribbles;
+  }
+  return self;
+}
 
 @end
-
-NS_ASSUME_NONNULL_END

@@ -12,16 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorResult.h"
-
-#include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/vision/interactive_segmenter/sources/MPPInteractiveSegmenterOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPLanguageDetectorResult (Helpers)
+@interface MPPInteractiveSegmenterOptions (Helpers) <MPPTaskOptionsProtocol>
 
-+ (nullable MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet error:(NSError **)error;
+/**
+ * Populates the provided `CalculatorOptions` proto container with the current settings.
+ *
+ * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
+ */
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
 
