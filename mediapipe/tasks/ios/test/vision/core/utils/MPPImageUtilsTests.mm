@@ -112,33 +112,49 @@ Image CppImageWithMPImage(MPPImage *image) {
   CFDataRelease(resultImageData);
 }
 
-- (void)testInitWithCppImageAndMPPImageSucceeds {
+- (void)testInitWithCppImageCloningMPImageSucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+
+  // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
 
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
   MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
                         cloningPropertiesOfSourceImage:sourceImage
                                    shouldCopyPixelData:YES
                                                  error:nil];
 
+  // Check if newly created image has the same properties as the source image.
   AssertEqualMPImages(image, sourceImage);
 
+  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
+  // it was created are equal.
   XCTAssertTrue(image.image.CGImage != NULL);
   [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
                                       equalToCppImage:sourceCppImage];
 }
 
 - (void)testInitWithCppImageNoCopySucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+
+  // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
 
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
   MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
                         cloningPropertiesOfSourceImage:sourceImage
                                    shouldCopyPixelData:NO
                                                  error:nil];
 
+  // Check if newly created image has the same properties as the source image.
   AssertEqualMPImages(image, sourceImage);
 
+  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
+  // it was created are equal.
   XCTAssertTrue(image.image.CGImage != NULL);
   [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
                                       equalToCppImage:sourceCppImage];
