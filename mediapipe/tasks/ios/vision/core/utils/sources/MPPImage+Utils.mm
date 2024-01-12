@@ -475,7 +475,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
             createCustomError:error
                      withCode:MPPTasksErrorCodeInvalidArgumentError
                   description:
-                      @"When the source type is pixel buffer, you cannot request uncopied data"];
+                      @"When the source type is pixel buffer, you cannot request uncopied data."];
         return nil;
       }
 

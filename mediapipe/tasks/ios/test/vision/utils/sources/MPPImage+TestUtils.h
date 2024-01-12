@@ -48,6 +48,9 @@ NS_ASSUME_NONNULL_BEGIN
                     orientation:(UIImageOrientation)orientation
     NS_SWIFT_NAME(image(withFileInfo:orientation:));
 
++ (MPPImage *)imageOfPixelBufferSourceTypeWithFileInfo:(MPPFileInfo *)fileInfo pixelBufferFormatType:(OSType)pixelBufferFormatType
+    NS_SWIFT_NAME(imageOfPixelBufferSourceType(withFileInfo:pixelBufferFormatType:));
+
 // TODO: Remove after all tests are migrated
 /**
  * Loads an image from a file in an app bundle into a `MPPImage` object.
