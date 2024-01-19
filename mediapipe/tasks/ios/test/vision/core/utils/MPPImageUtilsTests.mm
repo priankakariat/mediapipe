@@ -32,9 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 static MPPFileInfo *const kBurgerImageFileInfo = [[MPPFileInfo alloc] initWithName:@"burger"
                                                                               type:@"jpg"];
 
-constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kBurgerImageFile[] = "burger.jpg";
-
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #define AssertEqualErrors(error, expectedError)              \
@@ -52,8 +49,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 namespace {
 using ::mediapipe::Image;
 using ::mediapipe::ImageFrame;
-using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
 
 Image CppImageWithMPImage(MPPImage *image) {
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:nil];
@@ -69,13 +64,147 @@ Image CppImageWithMPImage(MPPImage *image) {
 
 @implementation MPPImageUtilsTests
 
-#pragma mark - Tests
-
 - (void)setUp {
   [super setUp];
 }
 
-+ (void)assertUnderlyingBufferOfCGImage:(const CGImageRef &)cgImage
+#pragma mark - Tests for Initializig `MPPImage`s with MediaPipe C++ Images
+
+- (void)testInitMPImageOfSourceTypeUIImageWithCppImageSucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:YES
+                                                 error:nil];
+
+  // Check if newly created image has the same properties as the source image.
+  AssertEqualMPImages(image, sourceImage);
+
+  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
+  // it was created are equal.
+  XCTAssertTrue(image.image.CGImage != nullptr);
+  [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
+                                      equalToCppImage:sourceCppImage];
+}
+
+- (void)testInitMPImageOfSourceTypeUIImageWithCppImageNoCopySucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:NO
+                                                 error:nil];
+
+  // Check if newly created image has the same properties as the source image.
+  AssertEqualMPImages(image, sourceImage);
+
+  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
+  // it was created are equal.
+  XCTAssertTrue(image.image.CGImage != nullptr);
+  [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
+                                      equalToCppImage:sourceCppImage];
+}
+
+- (void)testInitMPImageOfSourceTypePixelBufferWithCPPImageSucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypePixelBuffer];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:YES
+                                                 error:nil];
+
+  XCTAssertTrue(image.pixelBuffer != nullptr);
+  AssertEqualMPImages(image, sourceImage);
+
+  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
+  XCTAssertEqual(cppImageFrame->Width(), CVPixelBufferGetWidth(image.pixelBuffer));
+  XCTAssertEqual(cppImageFrame->Height(), CVPixelBufferGetHeight(image.pixelBuffer));
+  XCTAssertEqual(cppImageFrame->WidthStep(), CVPixelBufferGetBytesPerRow(image.pixelBuffer));
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+
+  CVPixelBufferLockBaseAddress(image.pixelBuffer, 0);
+  UInt8 *resultImagePixels = (UInt8 *)CVPixelBufferGetBaseAddress(image.pixelBuffer);
+
+  // Ensure that the underlying buffer of the created `MPPImage` is copied. In case of
+  // `CVPixelBuffer`s this is straightforward to test.
+  XCTAssertNotEqual(resultImagePixels, cppImagePixels);
+
+  NSInteger consistentPixels = 0;
+
+  // MediaPipe images only support inference of RGBA images. Thus `[MPPImage imageFrameWithError:]`
+  // returns RGBA image frames irrespective of the order of the channels in the `MPPImage`. The
+  // `MPPImage` being tested here has pixel ordering of BGRA since it is created using a
+  // `CVPixelBuffer` that supports only BGRA images. The pixel equality testing code below takes
+  // into account the differenc in the channel ordering.
+  const int kRIndexInRGBA = 0, kBIndexInRGBA = 2;
+  const int kRIndexInBGRA = 2, kBIndexInBGRA = 0;
+  const int kGIndex = 1, kAlphaIndex = 3;
+
+  for (int i = 0; i < image.height * image.width; ++i) {
+    consistentPixels +=
+        resultImagePixels[i * 4 + kBIndexInBGRA] == cppImagePixels[i * 4 + kBIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kGIndex] == cppImagePixels[i * 4 + kGIndex] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kRIndexInBGRA] == cppImagePixels[i * 4 + kRIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kAlphaIndex] == cppImagePixels[i * 4 + kAlphaIndex] ? 1 : 0;
+  }
+  CVPixelBufferUnlockBaseAddress(image.pixelBuffer, 0);
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
+}
+
+- (void)testInitMPImageOfSourceTypePixelBufferWithCPPImageNoCopyFails {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypePixelBuffer];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  NSError *error;
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:NO
+                                                 error:&error];
+
+  XCTAssertNil(image);
+  AssertEqualErrors(
+      error,
+      [NSError
+          errorWithDomain:kExpectedErrorDomain
+                     code:MPPTasksErrorCodeInvalidArgumentError
+                 userInfo:@{
+                   NSLocalizedDescriptionKey :
+                       @"When the source type is pixel buffer, you cannot request uncopied data."
+                 }]);
+}
+
+#pragma mark - Helper Methods
++ (void)assertUnderlyingBufferOfCGImage:(_Nonnull CGImageRef)cgImage
                         equalToCppImage:(const Image &)cppImage {
   // Using common method for both copy and no Copy scenario without testing equality of the base
   // addresses of the pixel buffers of the `CGImage` and the C++ Image. `CGDataProviderCopyData` is
@@ -109,123 +238,7 @@ Image CppImageWithMPImage(MPPImage *image) {
 
   XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
 
-  CFDataRelease(resultImageData);
-}
-
-- (void)testInitWithCppImageCloningMPImageSucceeds {
-  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
-  // C++ `Image`.
-  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
-
-  // Create C++ `Image` from the source image.
-  Image sourceCppImage = CppImageWithMPImage(sourceImage);
-
-  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
-  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
-                        cloningPropertiesOfSourceImage:sourceImage
-                                   shouldCopyPixelData:YES
-                                                 error:nil];
-
-  // Check if newly created image has the same properties as the source image.
-  AssertEqualMPImages(image, sourceImage);
-
-  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
-  // it was created are equal.
-  XCTAssertTrue(image.image.CGImage != NULL);
-  [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
-                                      equalToCppImage:sourceCppImage];
-}
-
-- (void)testInitWithCppImageNoCopySucceeds {
-  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
-  // C++ `Image`.
-  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
-
-  // Create C++ `Image` from the source image.
-  Image sourceCppImage = CppImageWithMPImage(sourceImage);
-
-  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
-  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
-                        cloningPropertiesOfSourceImage:sourceImage
-                                   shouldCopyPixelData:NO
-                                                 error:nil];
-
-  // Check if newly created image has the same properties as the source image.
-  AssertEqualMPImages(image, sourceImage);
-
-  // Check if contents of the pixel buffers of the created `MPPImage` and the C++ image from which
-  // it was created are equal.
-  XCTAssertTrue(image.image.CGImage != NULL);
-  [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
-                                      equalToCppImage:sourceCppImage];
-}
-
-- (void)testInitWithCPPImageCloningPropertiesOfMPImageWithPixelBuffer {
-  MPPImage *sourceImage =
-      [MPPImage imageOfPixelBufferSourceTypeWithFileInfo:kBurgerImageFileInfo
-                                   pixelBufferFormatType:kCVPixelFormatType_32RGBA];
-
-  std::unique_ptr<ImageFrame> imageFrame = [sourceImage imageFrameWithError:nil];
-
-  Image sourceCppImage = Image(std::move(imageFrame));
-
-  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
-                        cloningPropertiesOfSourceImage:sourceImage
-                                   shouldCopyPixelData:YES
-                                                 error:nil];
-
-  XCTAssertTrue(image.pixelBuffer != NULL);
-  XCTAssertEqual(image.width, sourceImage.width);
-  XCTAssertEqual(image.height, sourceImage.height);
-  XCTAssertEqual(image.orientation, sourceImage.orientation);
-
-  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
-  XCTAssertEqual(cppImageFrame->Width(), image.width);
-  XCTAssertEqual(cppImageFrame->Height(), image.height);
-  XCTAssertEqual(cppImageFrame->WidthStep(), CVPixelBufferGetBytesPerRow(image.pixelBuffer));
-
-  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
-  CVPixelBufferLockBaseAddress(image.pixelBuffer, 0);
-  UInt8 *resultImagePixels = (UInt8 *)CVPixelBufferGetBaseAddress(image.pixelBuffer);
-  XCTAssertNotEqual(resultImagePixels, cppImagePixels);
-
-  NSInteger consistentPixels = 0;
-
-  for (int i = 0; i < image.height * image.width; ++i) {
-    consistentPixels += resultImagePixels[i * 4] == cppImagePixels[i * 4 + 2] ? 1 : 0;
-    consistentPixels += resultImagePixels[i * 4 + 1] == cppImagePixels[i * 4 + 1] ? 1 : 0;
-    consistentPixels += resultImagePixels[i * 4 + 2] == cppImagePixels[i * 4] ? 1 : 0;
-    consistentPixels += resultImagePixels[i * 4 + 3] == cppImagePixels[i * 4 + 3] ? 1 : 0;
-  }
-  CVPixelBufferUnlockBaseAddress(image.pixelBuffer, 0);
-
-  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
-}
-
-- (void)testInitWithCPPImageCloningPropertiesOfMPImageWithPixelBufferNoCopy {
-  MPPImage *sourceImage =
-      [MPPImage imageOfPixelBufferSourceTypeWithFileInfo:kBurgerImageFileInfo
-                                   pixelBufferFormatType:kCVPixelFormatType_32RGBA];
-  std::unique_ptr<ImageFrame> imageFrame = [sourceImage imageFrameWithError:nil];
-
-  Image sourceCppImage = Image(std::move(imageFrame));
-
-  NSError *error;
-  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
-                        cloningPropertiesOfSourceImage:sourceImage
-                                   shouldCopyPixelData:NO
-                                                 error:&error];
-
-  XCTAssertNil(image);
-  AssertEqualErrors(
-      error,
-      [NSError
-          errorWithDomain:kExpectedErrorDomain
-                     code:MPPTasksErrorCodeInvalidArgumentError
-                 userInfo:@{
-                   NSLocalizedDescriptionKey :
-                       @"When the source type is pixel buffer, you cannot request uncopied data."
-                 }]);
+  CFRelease(resultImageData);
 }
 
 @end

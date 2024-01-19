@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 
 namespace {
-  static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { delete[] refCon; }
-}
+static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { free(refCon); }
+}  // namespace
 
-// TODO: Remove this category after all tests are migrated to the new methods.
 @interface UIImage (FileUtils)
 
+@property(readonly, nonatomic) CVPixelBufferRef pixelBuffer;
+
+// TODO: Remove this method after all tests are migrated to the new methods.
 + (nullable UIImage *)imageFromBundleWithClass:(Class)classObject
                                       fileName:(NSString *)name
                                         ofType:(NSString *)type;
@@ -38,9 +41,9 @@ namespace {
   return [[UIImage alloc] initWithContentsOfFile:imagePath];
 }
 
-- (CVPixelBufferRef)pixelBufferWithFormat:(OSType)pixelBufferFormat {
+- (CVPixelBufferRef)pixelBuffer {
   if (!self.CGImage) {
-    return NULL;
+    return nullptr;
   }
 
   size_t width = CGImageGetWidth(self.CGImage);
@@ -49,81 +52,57 @@ namespace {
   NSInteger bitsPerComponent = 8;
   NSInteger channelCount = 4;
   size_t bytesPerRow = channelCount * width;
-  
-  NSLog(@"Width %d Height %d", width, height);
+
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-  // iOS infers bytesPerRow if it is set to 0.
-  // See https://developer.apple.com/documentation/coregraphics/1455939-cgbitmapcontextcreate
-  // But for segmentation test image, this was not the case.
-  // Hence setting it to the value of channelCount*width.
-  // kCGImageAlphaPremultipliedLast specifies that Alpha will always be next to B and the R, G, B
-  // values will be pre multiplied with alpha. Images with alpha != 255 are stored with the R, G, B
-  // values premultiplied with alpha by iOS. Hence `kCGImageAlphaPremultipliedLast` ensures all
-  // kinds of images (alpha from 0 to 255) are correctly accounted for by iOS.
-  // kCGBitmapByteOrder32Big specifies that R will be stored before B.
-  // In combination they signify a pixelFormat of kCVPixelFormatType32RGBA.
-  
-  CGBitmapInfo bitMapinfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
-  switch (pixelBufferFormat) {
-    case kCVPixelFormatType_32BGRA: {
-      bitMapinfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
-      break;
-    }
-    case kCVPixelFormatType_32RGBA:
-      break;
-    default:
-      return NULL;
+
+  if (!colorSpace) {
+    return nullptr;
   }
+
+  // To create a `CVPixelBuffer` from `CGImage`, the underlying buffer of the `CGImage` is extracted
+  // in the format `kCVPixelFormatType32BGRA`. since `CVPixelBuffer`s only suport the pixel format
+  // `kCVPixelFormatType32BGRA` for 32 bit RGBA images (All RGB images are stored with an alpha
+  // value of 255.0 by iOS).
+  //
+  // `kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little` specifies a pixel format of
+  // `kCVPixelFormatType32BGRA`. `kCGImageAlphaPremultipliedFirst` specifies that Alpha will be next
+  // to R and the R, G, B values will be pre multiplied with alpha. Images with alpha != 255 are
+  // stored with the R, G, B values premultiplied with alpha by iOS. `kCGBitmapByteOrder32Little`
+  // specifies that B will be stored before R.
+
+  CGBitmapInfo bitMapinfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
 
   CGContextRef context = CGBitmapContextCreate(nil, width, height, bitsPerComponent, bytesPerRow,
                                                colorSpace, bitMapinfo);
 
-  void *copiedData = NULL; 
+  void *copiedData = nullptr;
+
   if (context) {
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), self.CGImage);
     void *srcData = CGBitmapContextGetData(context);
-      
     if (srcData) {
-       copiedData = malloc(height * bytesPerRow);
-       NSLog(@"zbefpre copy %s", copiedData);
-       memcpy(copiedData, srcData, sizeof(UInt8) * height * bytesPerRow);
-        // memcpy(copiedData, srcData, sizeof(uint8_t) * height * bytesPerRow);
-      //  NSLog(@"after copy src %d", UInt8*(srcData)[0]);
-      //  NSLog(@"after copy %d", UInt8*(copiedData)[0]);
+      // The pixel data of the `CGImage` extracted using the `context` is only retained in memory
+      // until the context is released. Hence the data is copied to a new buffer and this buffer is
+      // used to create the `CVPixelBuffer` to ensure it outlives the created `context`.
+      copiedData = malloc(height * bytesPerRow * sizeof(UInt8));
+      memcpy(copiedData, srcData, sizeof(UInt8) * height * bytesPerRow);
     }
-
     CGContextRelease(context);
   }
 
   CGColorSpaceRelease(colorSpace);
 
-  CVPixelBufferRef outputBuffer = nil;
-
-  NSLog(@"abefore create");
+  CVPixelBufferRef outputBuffer = nullptr;
 
   if (copiedData) {
-    NSLog(@"Copied data present");
-  }
-    NSLog(@"abefore create width %d", width);
-
-  CVReturn returnVal = CVPixelBufferCreateWithBytes(NULL, width, height,
-                                   kCVPixelFormatType_32BGRA, copiedData, bytesPerRow,
-                                   NULL,
-                                   NULL, NULL, &outputBuffer);
-  
-  CVPixelBufferLockBaseAddress(outputBuffer, 0);
-  if(returnVal == kCVReturnSuccess) {
-    NSLog(@"after create"); 
-    NSLog(@"After Width %d", CVPixelBufferGetWidth(outputBuffer));     
-    NSLog(@"Copied data %p Pixel Base %p", copiedData, CVPixelBufferGetBaseAddress(outputBuffer));                             
-    return outputBuffer;                               
+    // A callback frunction to cleanup the memory of the copied buffer is provided when creating the
+    // `CVPixelBuffer`.
+    (void)CVPixelBufferCreateWithBytes(nullptr, width, height, kCVPixelFormatType_32BGRA,
+                                       copiedData, bytesPerRow, FreeRefConReleaseCallback,
+                                       copiedData, nullptr, &outputBuffer);
   }
 
-  CVPixelBufferUnlockBaseAddress(outputBuffer, 0);
-
-  
-  // NSLog(@"after create fail %d", returnVal);                               
-  return NULL;
+  return outputBuffer;
 }
 
 @end
@@ -151,45 +130,40 @@ namespace {
   return [[MPPImage alloc] initWithUIImage:image orientation:orientation error:nil];
 }
 
-+ (MPPImage *)imageOfPixelBufferSourceTypeWithFileInfo:(MPPFileInfo *)fileInfo pixelBufferFormatType:(OSType)pixelBufferFormatType {
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo sourceType:(MPPImageSourceType)sourceType {
+  switch (sourceType) {
+    case MPPImageSourceTypeImage:
+      return [MPPImage imageWithFileInfo:fileInfo];
+    case MPPImageSourceTypePixelBuffer:
+      return [MPPImage imageOfPixelBufferSourceTypeWithFileInfo:fileInfo];
+    case MPPImageSourceTypeSampleBuffer:
+      // TODO: Add support when API development is complete.
+      return nil;
+  }
+}
+
++ (MPPImage *)imageOfPixelBufferSourceTypeWithFileInfo:(MPPFileInfo *)fileInfo {
   if (!fileInfo.path) return nil;
 
+  // To create an `MPPImage` of source type `MPPImageSourceTypePixelBuffer`, a `UIImage` is first
+  // created from the provided file path. A `CVPixelBuffer` can then be easily extracted from the
+  // `UIImage` which in turn will be used to create the `MPPImage`. In real world use cases,
+  // `MPPImage`s from files are intended to be initialized using `UIImage`s with a source type of
+  // `MPPImageSourceTypeImage`. `MPPImageSourceTypePixelBuffer` is expected to be used when the
+  // application receives a `CVPixelBuffer` after some processing or from the camera.
+
+  // Since image files are the only sources used in tests, the aforementioned approach is followed
+  // to enable testing `MPPImage`s of source type `MPPImageSourceTypePixelBuffer`.
   UIImage *image = [[UIImage alloc] initWithContentsOfFile:fileInfo.path];
 
   if (!image) return nil;
-  
-  CVPixelBufferRef pixelBuffer;
 
-  switch (pixelBufferFormatType) {
-    case kCVPixelFormatType_32BGRA: {
-      pixelBuffer = [image pixelBufferWithFormat:pixelBufferFormatType];
-      break;
-    }
-    case kCVPixelFormatType_32RGBA: {
-      NSLog(@"Enter whole 1");
-      pixelBuffer = [image pixelBufferWithFormat:pixelBufferFormatType];
-      break;
-    }
-    default:
-      return NULL;
-  }
-
-  NSLog(@"After pixel buffer %p", CVPixelBufferGetBaseAddress(pixelBuffer));
-  // if (!pixelBuffer) {
-  //   return NULL;
-  // }
-
-  NSLog(@"Before mpimage");
+  CVPixelBufferRef pixelBuffer = image.pixelBuffer;
 
   MPPImage *mpImage = [[MPPImage alloc] initWithPixelBuffer:pixelBuffer error:nil];
-  NSLog(@"Done mpimage");
   CVPixelBufferRelease(pixelBuffer);
 
-  CVPixelBufferLockBaseAddress(mpImage.pixelBuffer, 0);
-    NSLog(@"Final Base %p", CVPixelBufferGetBaseAddress(mpImage.pixelBuffer));
-  CVPixelBufferUnlockBaseAddress(mpImage.pixelBuffer, 0);
   return mpImage;
-
 }
 
 // TODO: Remove after all tests are migrated

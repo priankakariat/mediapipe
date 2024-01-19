@@ -76,6 +76,7 @@ android_library(
     ],
     manifest = "AndroidManifest.xml",
     deps = [
+        ":core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
         "//third_party/java/protobuf:protobuf_lite",
@@ -98,7 +99,10 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 
 mediapipe_tasks_core_aar(
     name = "tasks_core",
-    srcs = glob(["**/*.java"]) + [
+    srcs = glob(
+        ["**/*.java"],
+        exclude = ["LlmTaskRunner.java"],
+    ) + [
         "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",

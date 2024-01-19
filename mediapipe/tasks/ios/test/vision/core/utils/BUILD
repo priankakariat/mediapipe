@@ -1,10 +1,10 @@
 load(
-    "@build_bazel_rules_apple//apple:ios.bzl",
-    "ios_unit_test",
-)
-load(
     "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
+)
+load(
+    "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_unit_test",
 )
 load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
@@ -44,8 +44,8 @@ objc_library(
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//third_party/apple_frameworks:Accelerate",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreMedia",

@@ -55,7 +55,11 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
   delete[] (vImage_Buffer *)buffer;
 }
 
-static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { free(refCon); }
+static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { 
+  std::cout << "Freeing" <<std::endl;
+  free(refCon); 
+  std::cout << "Done Freeing" <<std::endl;
+  }
 
 }  // namespace
 
