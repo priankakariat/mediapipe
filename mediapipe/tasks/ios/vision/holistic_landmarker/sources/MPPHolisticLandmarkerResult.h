@@ -78,7 +78,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
             faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
               poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
          poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
-      poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
+      poseSegmentationMasks:(nullable NSArray<MPPMask *> *)poseSegmentationMasks
           leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
      leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
          rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
