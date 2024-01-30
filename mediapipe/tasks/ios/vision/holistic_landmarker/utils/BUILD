@@ -34,3 +34,26 @@ objc_library(
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerOptions",
     ],
 )
+
+objc_library(
+    name = "MPPHolisticLandmarkerResultHelpers",
+    srcs = ["sources/MPPHolisticLandmarkerResult+Helpers.mm"],
+    hdrs = ["sources/MPPHolisticLandmarkerResult+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerResult",
+    ],
+)
+

@@ -21,64 +21,50 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPHolisticLandmarkerResult (Helpers)
-
+@interface MPPHolisticLandmarkerResult (Helpers)
 
 /**
- * Creates an `MPPHolisticLandmarkerResult` from landmarks, world landmarks and segmentation mask
- * packets.
+ * Creates an `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
+ * pose world landmarks, pose segmentation masks, left hand landmarks, left hand world landmarks,
+ * right hand landmarks and right hand world landmarks packets.
  *
- * @param landmarksPacket A MediaPipe packet wrapping a `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A MediaPipe packet wrapping a `std::vector<LandmarkListProto>`.
- * @param segmentationMasksPacket a MediaPipe packet wrapping a `std::vector<Image>`.
+ * @param faceLandmarksPacket A MediaPipe packet wrapping a
+ * `std::vector<mediapipe::NormalizedLandmarkList>`.
+ * @param faceBlendShapesPacket A MediaPipe packet wrapping a
+ * `std::vector<mediapipe::ClassificationList>`.
+ * @param poseLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::NormalizedlandmarkList>`.
+ * @param poseWorldLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::LandmarkList>`.
+ * @param poseSegmentationMasksPacket a MediaPipe packet wrapping a `std::vector<mediapipe::Image>`.
+ * @param leftHandLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::NormalizedlandmarkList>`.
+ * @param leftHandWorldLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::LandmarkList>`.
+ * @param rightHandLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::NormalizedlandmarkList>`.
+ * @param rightHandWorldLandmarksPacket a MediaPipe packet wrapping a
+ * `std::vector<mediapipe::LandmarkList>`.
  *
- * @return  An `MPPHolisticLandmarkerResult` object that contains the hand landmark detection
+ * @return  An `MPPHolisticLandmarkerResult` object that contains the holistic landmark detection
  * results.
  */
 + (MPPHolisticLandmarkerResult *)
     holisticLandmarkerResultWithFaceLandmarksPacket:(const mediapipe::Packet &)faceLandmarksPacket
-                       faceWorldLandmarksPacket:(const mediapipe::Packet &)faceWorldLandmarksPacket
-                       faceBlendshapesPacket:(const mediapipe::Packet &)faceBlendShapesPacket
-                       poseLandmarksPacket:(const mediapipe::Packet &)poseLandmarksPacket
-                       poseWorldLandmarksPacket:(const mediapipe::Packet &)poseWorldLandmarksPacket
-                       poseSegmentationMasksPacket:(const mediapipe::Packet *)poseSegmentationMasksPacket
-                       leftHandLandmarksPacket:(const mediapipe::Packet &)leftHandLandmarksPacket
-                       leftHandWorldLandmarksPacket:(const mediapipe::Packet &)leftHandWorldLandmarksPacket
-                       rightHandLandmarksPacket:(const mediapipe::Packet &)rightHandLandmarksPacket
-                       rightHandWorldLandmarksPacket:(const mediapipe::Packet &)rightHandWorldLandmarksPacket;
-
-
-// /**
-//  * Creates an `MPPHolisticLandmarkerResult` from landmarks, world landmarks and segmentation mask
-//  * images.
-//  *
-//  * @param landmarksProto A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
-//  * @param worldLandmarksProto A vector of protos of type `std::vector<LandmarkListProto>`.
-//  * @param segmentationMasks A vector of type `std::vector<Image>`.
-//  * @param timestampInMilliSeconds The timestamp of the Packet that contained the result.
-//  *
-//  * @return  An `MPPHolisticLandmarkerResult` object that contains the pose landmark detection
-//  * results.
-//  */
-// + (MPPHolisticLandmarkerResult *)
-//     holisticLandmarkerResultWithFaceLandmarksProto:(const std::vector<::mediapipe::NormalizedLandmarkList> &)faceLandmarksProto
-//                        faceWorldLandmarksPacket:(const std::vector<::mediapipe::LandmarkList> &)faceWorldLandmarksProto
-//                        faceBlendshapesPacket:(const mediapipe::Packet &)faceBlendShapesPacket
-//                        poseLandmarksPacket:(const mediapipe::Packet &)poseLandmarksPacket
-//                        poseWorldLandmarksPacket:(const mediapipe::Packet &)poseWorldLandmarksPacket
-//                        poseSegmentationMasksPacket:(const mediapipe::Packet *)poseSegmentationMasksPacket
-//                        leftHandLandmarksPacket:(const mediapipe::Packet &)leftHandLandmarksPacket
-//                        leftHandWorldLandmarksPacket:(const mediapipe::Packet &)leftHandWorldLandmarksPacket
-//                        rightHandLandmarksPacket:(const mediapipe::Packet &)rightHandLandmarksPacket
-//                        rightHandWorldLandmarksPacket:(const mediapipe::Packet &)rightHandWorldLandmarksPacket;
-// + (MPPPoseLandmarkerResult *)
-//     poseLandmarkerResultWithLandmarksProto:
-//         (const std::vector<::mediapipe::NormalizedLandmarkList> &)landmarksProto
-//                        worldLandmarksProto:
-//                            (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-//                          segmentationMasks:
-//                              (nullable const std::vector<mediapipe::Image> *)segmentationMasks
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+                              faceBlendshapesPacket:(const mediapipe::Packet &)faceBlendShapesPacket
+                                poseLandmarksPacket:(const mediapipe::Packet &)poseLandmarksPacket
+                           poseWorldLandmarksPacket:
+                               (const mediapipe::Packet &)poseWorldLandmarksPacket
+                        poseSegmentationMasksPacket:
+                            (const mediapipe::Packet *)poseSegmentationMasksPacket
+                            leftHandLandmarksPacket:
+                                (const mediapipe::Packet &)leftHandLandmarksPacket
+                       leftHandWorldLandmarksPacket:
+                           (const mediapipe::Packet &)leftHandWorldLandmarksPacket
+                           rightHandLandmarksPacket:
+                               (const mediapipe::Packet &)rightHandLandmarksPacket
+                      rightHandWorldLandmarksPacket:
+                          (const mediapipe::Packet &)rightHandWorldLandmarksPacket;
 
 @end
 NS_ASSUME_NONNULL_END
