@@ -46,7 +46,8 @@ using PoseLandmarksDetectorGraphOptionsProto =
 
   holisticLandmarkerGraphOptions->Clear();
 
-  [self.baseOptions copyToProto:holisticLandmarkerGraphOptions->mutable_base_options() withUseStreamMode:self.runningMode != MPPRunningModeImage];
+  [self.baseOptions copyToProto:holisticLandmarkerGraphOptions->mutable_base_options()
+              withUseStreamMode:self.runningMode != MPPRunningModeImage];
   poseLandmarkerGraphOptions->set_min_tracking_confidence(self.minTrackingConfidence);
 
   FaceLandmarksDetectorGraphOptionsProto *faceLandmarksDetectorGraphOptions =
