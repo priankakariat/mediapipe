@@ -574,12 +574,32 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:common",
     ] + select({
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "inference_calculator_utils_test",
+    srcs = ["inference_calculator_utils_test.cc"],
+    deps = [
+        ":inference_calculator_utils",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:common",
+    ],
 )
 
 cc_library(
@@ -1781,5 +1801,40 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
+    name = "vector_to_tensor_calculator",
+    srcs = ["vector_to_tensor_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "vector_to_tensor_calculator_test",
+    srcs = ["vector_to_tensor_calculator_test.cc"],
+    deps = [
+        ":vector_to_tensor_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:status_handler",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
