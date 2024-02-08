@@ -21,7 +21,6 @@ objc_library(
     srcs = ["sources/MPPHolisticLandmarkerOptions+Helpers.mm"],
     hdrs = ["sources/MPPHolisticLandmarkerOptions+Helpers.h"],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
@@ -32,6 +31,7 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerOptions",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -45,12 +45,11 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
+        
         "//mediapipe/framework:packet",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
-        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
         "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerResult",

@@ -16,7 +16,8 @@
 #error "This file requires Objective-C++."
 #endif  // __cplusplus
 
-#include "mediapipe/framework/calculator_options.pb.h"
+#include "google/protobuf/any.pb.h"
+
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerOptions.h"
 
@@ -25,11 +26,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPHolisticLandmarkerOptions (Helpers) <MPPTaskOptionsProtocol>
 
 /**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
+ * Populates the provided `google::protobuf::Any` proto  with the current settings.
  *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
+ * @param optionsProto The `::google::protobuf::Any` proto object to copy the settings to.
  */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToAnyProto:(::google::protobuf::Any *)optionsProto;
 
 @end
 
