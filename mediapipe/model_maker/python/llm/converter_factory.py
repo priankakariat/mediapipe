@@ -16,6 +16,7 @@
 
 from mediapipe.model_maker.python.llm import converter_base
 from mediapipe.model_maker.python.llm import pytorch_converter
+from mediapipe.model_maker.python.llm import roc_converter
 from mediapipe.model_maker.python.llm import safetensors_converter
 from mediapipe.model_maker.python.llm import weight_bins_writer
 
@@ -42,6 +43,7 @@ def create_ckpt_loader(
         feedforward_quant_bits=kwargs["feedforward_quant_bits"],
         embedding_quant_bits=kwargs["embedding_quant_bits"],
         special_model=kwargs["special_model"],
+        backend=kwargs["backend"],
     )
   elif ckpt_format == "safetensors":
     return safetensors_converter.SafetensorsCkptLoader(
@@ -51,6 +53,7 @@ def create_ckpt_loader(
         feedforward_quant_bits=kwargs["feedforward_quant_bits"],
         embedding_quant_bits=kwargs["embedding_quant_bits"],
         special_model=kwargs["special_model"],
+        backend=kwargs["backend"],
     )
   else:
     raise ValueError(f"Unknown checkpoint format: {ckpt_format}")
