@@ -36,6 +36,7 @@ objc_library(
     deps = [
         "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//mediapipe/tasks/ios/vision/face_stylizer:MPPFaceStylizerResult",
     ],
 )

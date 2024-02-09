@@ -452,7 +452,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
 @implementation MPPImage (Utils)
 
-- (nullable instancetype)initWithCppImage:(mediapipe::Image &)image
+- (nullable instancetype)initWithCppImage:(const mediapipe::Image &)image
            cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
                       shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                     error:(NSError **)error {

@@ -14,8 +14,6 @@
 
 #import "mediapipe/tasks/ios/vision/face_stylizer/sources/MPPFaceStylizerResult.h"
 
-#include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/packet.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -27,13 +25,23 @@ static const int kMicrosecondsPerMillisecond = 1000;
 /**
  * Creates an `MPPFaceStylizerResult` from the given stylized image packet.
  *
+ * If `shouldCopyPixelData` is set to `YES`, the pixel data of the stylized image contained in the
+ * `stylizedImagePacket` is deep copied to create the stylized image of the returned
+ * `MPPFaceStylizerResult`.
+ *
  * @param stylizedImagePacket A MediaPipe packet wrapping a `mediapipe::Image`.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no error will be saved.
+ * @param shouldCopyPixelData A `BOOL` which indicates if the pixel data of the stylized image
+ * contained in the `stylizedImagePacket` is deep copied to create the stylized image of the
+ * returned `MPPFaceStylizerResult`.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
  *
  * @return  An `MPPFaceStylizerResult` object from the given stylized image packet.
  */
-+ (MPPFaceStylizerResult *)
-    faceStylizerResultWithStylizedImagePacket:(const mediapipe::Packet &)stylizedImagePacket error:(NSError **)error;
++ (MPPFaceStylizerResult *)faceStylizerResultWithStylizedImagePacket:
+                               (const mediapipe::Packet &)stylizedImagePacket
+                                                 shouldCopyPixelData:(BOOL)shouldCopyPixelData
+                                                               error:(NSError **)error;
 
 @end
 

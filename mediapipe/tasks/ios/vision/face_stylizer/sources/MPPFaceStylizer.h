@@ -102,6 +102,33 @@ NS_SWIFT_NAME(FaceStylizer)
                                     NSError *_Nullable error))completionHandler
     NS_SWIFT_NAME(stylize(image:completion:));
 
+
+/**
+ * Performs face stylization on the provided `MPImage` and returns a `MPPFaceStylizerResult`
+ * containing a copy of the stylized image. This method should not be used in high-throughput
+ * applications since the returned image is copied. Rotation will be applied according to the
+ * `orientation` property of the provided `MPImage`.
+ *
+ * This method supports RGBA images. If your `MPPImage` has a source type of `.pixelBuffer` or
+ * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an
+ * Alpha channel.
+ *
+ * @param image The `MPImage` on which face stylization is to be performed.
+ *
+ * @return A `FaceStylizerResult` that contains the stylized image of the most visible face. The
+ * returned image is copied. The stylized output image size is the same as the model output
+ * size. The `stylizedImage` of the `FaceStylizerResult` is `nil` if there is no face detected in
+ * the input image. `FaceStylizerResult` is `nil` if there is an error in initializing the face
+ * stylizer.
+ */
+- (nullable MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
+regionOfInterest:(CGRect)regionOfInterest
+                                           error:(NSError **)error  NS_SWIFT_NAME(stylize(image:regionOfInterest:));    
+
 - (instancetype)init NS_UNAVAILABLE;
 
 + (instancetype)new NS_UNAVAILABLE;

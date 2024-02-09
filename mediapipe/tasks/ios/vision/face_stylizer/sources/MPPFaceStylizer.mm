@@ -17,33 +17,24 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
-#import "mediapipe/tasks/ios/vision/face_tylizer/utils/sources/MPPFaceStylizerOptions+Helpers.h"
-#import "mediapipe/tasks/ios/vision/face_tylizer/utils/sources/MPPFaceStylizerResult+Helpers.h"
+#import "mediapipe/tasks/ios/vision/face_stylizer/utils/sources/MPPFaceStylizerOptions+Helpers.h"
+#import "mediapipe/tasks/ios/vision/face_stylizer/utils/sources/MPPFaceStylizerResult+Helpers.h"
 
 namespace {
-using ::mediapipe::NormalizedRect;
-using ::mediapipe::Packet;
-using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
 static NSString *const kImageTag = @"IMAGE";
-static NSString *const kStylizedImageTag = @"STYLIZED_IMAGE";
 static NSString *const kImageInStreamName = @"image_in";
+static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kNormRectTag = @"NORM_RECT";
 static NSString *const kNormRectInStreamName = @"norm_rect_in";
-static NSString *const kImageOutStreamName = @"image_out";
+static NSString *const kStylizedImageTag = @"STYLIZED_IMAGE";
+static NSString *const kStylizedImageOutStreamName = @"stylized_image";
 static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph";
 static NSString *const kTaskName = @"faceStylizer";
-
-#define InputPacketMap(imagePacket, normalizedRectPacket)   \
-  {                                                         \
-    {kImageInStreamName.cppString, imagePacket}, {          \
-      kNormRectInStreamName.cppString, normalizedRectPacket \
-    }                                                       \
-  }
 
 @interface MPPFaceStylizer () {
   /** iOS Vision Task Runner */
@@ -66,7 +57,8 @@ static NSString *const kTaskName = @"faceStylizer";
                    [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectInStreamName]
                  ]
                 outputStreams:@[
-                  [NSString stringWithFormat:@"%@:%@", kStylizedImageTag, kImageOutStreamName]
+                  [NSString stringWithFormat:@"%@:%@", kStylizedImageTag, kStylizedImageOutStreamName],
+                  // [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName],
                 ]
                   taskOptions:options
            enableFlowLimiting:NO
@@ -80,12 +72,11 @@ static NSString *const kTaskName = @"faceStylizer";
 
     _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
                                                           runningMode:MPPRunningModeImage
-                                                           roiAllowed:NO
+                                                           roiAllowed:YES
                                                       packetsCallback:std::move(packetsCallback)
                                                  imageInputStreamName:kImageInStreamName
                                               normRectInputStreamName:kNormRectInStreamName
                                                                 error:error];
-
     if (!_visionTaskRunner) {
       return nil;
     }
@@ -103,7 +94,7 @@ static NSString *const kTaskName = @"faceStylizer";
 
 - (nullable MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
                                            error:(NSError **)error {
-  return [self stylizeImage:image shouldCopyOutputPixelData:YES error:&error];
+  return [self stylizeImage:image shouldCopyOutputPixelData:YES error:error];
 }
 
 - (void)stylizeImage:(MPPImage *)image
@@ -115,19 +106,55 @@ static NSString *const kTaskName = @"faceStylizer";
   completionHandler(result, error);
   }
 
-#pragma mark - Private
 
 - (nullable MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
+regionOfInterest:(CGRect)regionOfInterest 
+                                         error:(NSError **)error{
+                                            
+return [self stylizeImage:image regionOfInterest:regionOfInterest shouldCopyOutputPixelData:YES error:error];
+}
+
+- (void)stylizeImage:(MPPImage *)image
+    regionOfInterest:(CGRect)regionOfInterest
+    withCompletionHandler:(void (^)(MPPFaceStylizerResult *_Nullable result,
+                                    NSError *_Nullable error))completionHandler {
+  NSError *error = nil;
+  
+  MPPFaceStylizerResult *result = [self stylizeImage:image regionOfInterest:regionOfInterest shouldCopyOutputPixelData:NO error:&error];
+  completionHandler(result, error);
+
+}
+
+#pragma mark - Private
+
+- (MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
                                            shouldCopyOutputPixelData:(BOOL)shouldCopyOutputPixelData
                                            error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
+  return [self stylizeImage:image regionOfInterest:CGRectZero shouldCopyOutputPixelData:shouldCopyOutputPixelData error:error]; 
+}
 
-  if (!outputPacketMap.has_value()) {
+- (MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
+regionOfInterest:(CGRect)regionOfInterest
+                                           shouldCopyOutputPixelData:(BOOL)shouldCopyOutputPixelData
+                                           error:(NSError **)error {
+    NSLog(@"before inf");
+                                          
+  std::optional<PacketMap> outputPacketMap =
+      [_visionTaskRunner processImage:image
+                          regionOfInterest:regionOfInterest
+                                     error:error];
+
+       NSLog(@"after inf");
+                                  
+
+ if (!outputPacketMap.has_value()) {
     return nil;
   }
 
+  NSLog(@"Done before");
+
   return [MPPFaceStylizerResult                                                                       
-      faceStylizerResultWithStylizedImagePacket:outputPacketMap[kImageOutStreamName.cppString]
+      faceStylizerResultWithStylizedImagePacket:outputPacketMap.value()[kImageOutStreamName.cppString]
       shouldCopyPixelData:shouldCopyOutputPixelData
                          error:error];
 }

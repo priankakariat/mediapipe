@@ -27,26 +27,34 @@ using ::mediapipe::Packet;
 
 @implementation MPPFaceStylizerResult (Helpers)
 
-+ (MPPFaceStylizerResult *)
-    faceStylizerResultWithStylizedImagePacket:(const mediapipe::Packet &)stylizedImagePacket sourceImage:(MPPImage *)sourceImage shouldCopyPixelData:(BOOL)shouldCopyPixelData error:(NSError **)error {
++ (MPPFaceStylizerResult *)faceStylizerResultWithStylizedImagePacket:
+                               (const mediapipe::Packet &)stylizedImagePacket
+                                                         sourceImage:(MPPImage *)sourceImage
+                                                 shouldCopyPixelData:(BOOL)shouldCopyPixelData
+                                                               error:(NSError **)error {
+  if (!stylizedImagePacket.ValidateAsType<Image>().ok()) {
+    return nil;
+  }
 
-    if (!stylizedImagePacket.ValidateAsType<Image>().ok()) {
-       return nil; 
-    }
+  const Image &cppStylizedImage = stylizedImagePacket.Get<Image>();
 
-    const Image &cppStylizedImage = stylizedImagePacket.Get<Image>();
 
-    MPPImage *stylizedImage = [[MPPImage alloc] initWithCppImage:Image cloningPropertiesOfSourceImage:sourceImage shouldCopyPixelData:shouldCopyPixelData error:error]; 
+  MPPImage *stylizedImage = [[MPPImage alloc] initWithCppImage:cppStylizedImage
+                                cloningPropertiesOfSourceImage:sourceImage
+                                           shouldCopyPixelData:shouldCopyPixelData
+                                                         error:error];
 
-    if (!stylizedImage) {
-      return nil;
-    }
 
-    NSInteger timestampInMilliseconds =
+
+  if (!stylizedImage) {
+    return nil;
+  }
+
+  NSInteger timestampInMilliseconds =
       (NSInteger)(stylizedImagePacket.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
   return [[MPPFaceStylizerResult alloc] initWithImage:stylizedImage
-                                    timestampInMilliseconds:timestampInMilliseconds];
+                              timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

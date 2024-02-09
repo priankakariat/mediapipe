@@ -27,10 +27,9 @@ using FaceStylizerGraphOptionsProto =
 @implementation MPPFaceStylizerOptions (Helpers)
 
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  HandLandmarkerGraphOptionsProto *faceStylizerGraphOptionsProto =
-      optionsProto
-          ->MutableExtension(FaceStylizerGraphOptionsProto::ext);
-              faceStylizerGraphOptionsProto->Clear();
+  FaceStylizerGraphOptionsProto *faceStylizerGraphOptionsProto =
+      optionsProto->MutableExtension(FaceStylizerGraphOptionsProto::ext);
+  faceStylizerGraphOptionsProto->Clear();
 
   [self.baseOptions copyToProto:faceStylizerGraphOptionsProto->mutable_base_options()];
 }
