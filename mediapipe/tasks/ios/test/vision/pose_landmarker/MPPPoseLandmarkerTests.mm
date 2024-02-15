@@ -28,6 +28,8 @@ static MPPFileInfo *const kPoseLandmarkerBundleAssetFileInfo =
 
 static MPPFileInfo *const kPoseImageFileInfo = [[MPPFileInfo alloc] initWithName:@"pose"
                                                                             type:@"jpg"];
+                                                                            static MPPFileInfo *const kPortraitImageFileInfo = [[MPPFileInfo alloc] initWithName:@"portrait"
+                                                                            type:@"jpg"];
 static MPPFileInfo *const kNoPoseImageFileInfo = [[MPPFileInfo alloc] initWithName:@"burger"
                                                                               type:@"jpg"];
 
@@ -70,7 +72,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                              error:nil];
   XCTAssertNotNil(poseLandmarker);
 
-  [self assertResultsOfDetectInImageWithFileInfo:kPoseImageFileInfo
+  [self assertResultsOfDetectInImageWithFileInfo:kPortraitImageFileInfo
                              usingPoseLandmarker:poseLandmarker
          approximatelyEqualsPoseLandmarkerResult:[MPPPoseLandmarkerTests
                                                      expectedPoseLandmarkerResult]];

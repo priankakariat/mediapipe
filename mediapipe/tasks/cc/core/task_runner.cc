@@ -41,6 +41,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
+#define GTEST_COUT std::cerr << "[          ] [ INFO ]"
+
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -272,19 +274,23 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
   for (auto& [stream_name, packet] : inputs) {
+    GTEST_COUT << "Before add to input stream" << std::endl;
     MP_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
                                       std::move(packet).At(input_timestamp)),
         absl::StrCat("Failed to add packet to the graph input stream: ",
                      stream_name),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError));
+    GTEST_COUT << "After add to input stream" << std::endl;
   }
   last_seen_ = input_timestamp;
   if (!graph_.WaitUntilIdle().ok()) {
+    GTEST_COUT << "Wait until fail" << std::endl;
     absl::Status graph_status;
     graph_.GetCombinedErrors(&graph_status);
     return graph_status;
   }
+  GTEST_COUT << "After wait until" << std::endl;
   // When a synthetic timestamp is used, uses the timestamp of the first
   // output packet as the last seen timestamp if there is any output packet.
   if (use_synthetic_timestamp && status_or_output_packets_.ok()) {

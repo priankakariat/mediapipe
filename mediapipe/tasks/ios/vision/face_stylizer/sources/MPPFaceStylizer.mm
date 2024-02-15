@@ -73,7 +73,7 @@ static NSString *const kTaskName = @"faceStylizer";
     _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
                                                           runningMode:MPPRunningModeImage
                                                            roiAllowed:YES
-                                                      packetsCallback:std::move(packetsCallback)
+                                                      packetsCallback:nullptr
                                                  imageInputStreamName:kImageInStreamName
                                               normRectInputStreamName:kNormRectInStreamName
                                                                 error:error];
