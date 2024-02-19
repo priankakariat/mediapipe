@@ -43,11 +43,6 @@ static const NSInteger kMPPOrientationDegreesLeft = -90;
 
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket)                              \
-  {                                                                                    \
-    {_imageInStreamName, imagePacket}, { _normRectInStreamName, normalizedRectPacket } \
-  }
-
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
   BOOL _roiAllowed;
@@ -65,6 +60,20 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                      imageInputStreamName:(NSString *)imageInputStreamName
                   normRectInputStreamName:(NSString *)normRectInputStreamName
                                     error:(NSError **)error {
+  if (!taskInfo) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`taskInfo` cannot be `nil`"];
+    return nil;
+  }
+
+  if (!imageInputStreamName) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`imageInputStreamName` cannot be `nil`"];
+    return nil;
+  }
+
   _roiAllowed = roiAllowed;
   _imageInStreamName = imageInputStreamName.cppString;
   _normRectInStreamName = normRectInputStreamName.cppString;
@@ -114,13 +123,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
                                                               error:(NSError **)error {
-  if (!CGRectEqualToRect(roi, CGRectZero) && !_roiAllowed) {
-    [MPPCommonUtils createCustomError:error
-                             withCode:MPPTasksErrorCodeInvalidArgumentError
-                          description:@"This task doesn't support region-of-interest."];
-    return std::nullopt;
-  }
-
+  // Redundant `roiAllowed` check is not needed here since it is already accounted for
+  // before this method is called.
   CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? CGRectMake(0.0, 0.0, 1.0, 1.0) : roi;
 
   NormalizedRect normalizedRect;
@@ -176,16 +180,57 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return normalizedRect;
 }
 
+// This method checks if an error must be returned by the task based on the values of `roiAllowed`,
+// `normRectInStreamName`, imagOrientation and `roi`. With roi = `CGRectZero` and  no
+// `_normRectInStreamName` task is allowed to continue. The caller of this method is responsible to
+// check if `_normRectInStreamName` is present before adding the norm rect packet to the input
+// packet map. This is enable the `[MPPVisionTaskRunner process*:regionOfInterest:error]` methods
+// can still pass `CGRectZero` to reduce the lines of code. Note: Mirrored orientations are not
+// checked here to avoid redundant switch cases with `[MPPVisionTaskRunner
+// normalizedRectWithRegionOfInterest:imageSize:imageOrientation:error:]`.
+- (BOOL)shouldTaskContinueWithRegionOfInterest:(CGRect)roi
+                           andImageOrientation:(UIImageOrientation)imageOrientation
+                                         error:(NSError **)error {
+  if (!_normRectInStreamName && imageOrientation != UIImageOrientationUp) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Unsupported UIImageOrientation. This task only supports "
+                                      @"images with `imageOrientation = UIImageOrientationUp`"];
+    return NO;
+  }
+  if (!_normRectInStreamName || !_roiAllowed && !CGRectEqualToRect(roi, CGRectZero)) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"This task doesn't support region-of-interest."];
+    return NO;
+  }
+
+  return YES;
+}
+
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                       regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [self normalizedRectWithRegionOfInterest:roi
-                                     imageSize:CGSizeMake(image.width, image.height)
-                              imageOrientation:image.orientation
-                                         error:error];
-  if (!rect.has_value()) {
+  if (![self shouldTaskContinueWithRegionOfInterest:roi image:image error:error]) {
     return std::nullopt;
+  }
+
+  PacketMap inputPacketMap;
+
+  if (_normRectInputStreamName) {
+    std::optional<NormalizedRect> rect =
+        [self normalizedRectWithRegionOfInterest:roi
+                                       imageSize:CGSizeMake(image.width, image.height)
+                                imageOrientation:image.orientation
+                                           error:error];
+    if (!rect.has_value()) {
+      return NO;
+    }
+
+    Packet normalizedRectPacket =
+        [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
+
+    packetMap[_normRectInStreamName] = normalizedRectPacket;
   }
 
   Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
@@ -193,10 +238,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
     return std::nullopt;
   }
 
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
+  inputPacketMap[_imageInStreamName] = imagePacket;
 
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
   return inputPacketMap;
 }
 
@@ -204,13 +247,25 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                       regionOfInterest:(CGRect)roi
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [self normalizedRectWithRegionOfInterest:roi
-                                     imageSize:CGSizeMake(image.width, image.height)
-                              imageOrientation:image.orientation
-                                         error:error];
-  if (!rect.has_value()) {
+  if (![self shouldTaskContinueWithRegionOfInterest:roi image:image error:error]) {
     return std::nullopt;
+  }
+
+  if (_normRectInputStreamName) {
+    std::optional<NormalizedRect> rect =
+        [self normalizedRectWithRegionOfInterest:roi
+                                       imageSize:CGSizeMake(image.width, image.height)
+                                imageOrientation:image.orientation
+                                           error:error];
+    if (!rect.has_value()) {
+      return std::nullopt;
+    }
+
+    Packet normalizedRectPacket =
+        [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
+                                       timestampInMilliseconds:timestampInMilliseconds];
+
+    packetMap[_normRectInStreamName] = normalizedRectPacket;
   }
 
   Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
@@ -220,11 +275,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
     return std::nullopt;
   }
 
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                     timestampInMilliseconds:timestampInMilliseconds];
+  inputPacketMap[_imageInStreamName] = imagePacket;
 
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
   return inputPacketMap;
 }
 

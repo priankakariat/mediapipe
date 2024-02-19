@@ -40,6 +40,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
  */
 + (MPPFaceStylizerResult *)faceStylizerResultWithStylizedImagePacket:
                                (const mediapipe::Packet &)stylizedImagePacket
+                               sourceImage:(MPPImage *)sourceImage
                                                  shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                                                error:(NSError **)error;
 

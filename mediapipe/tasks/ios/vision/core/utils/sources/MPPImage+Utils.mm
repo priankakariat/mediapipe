@@ -32,15 +32,19 @@ using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
 
 vImage_Buffer CreateEmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shouldAllocate) {
-  UInt8 *data = shouldAllocate ? new UInt8[imageFrame.Height() * imageFrame.WidthStep()] : nullptr;
+  int channelCount = 4;
+  int bytesPerRow = imageFrame.Width() * channelCount;
+
+  UInt8 *data = shouldAllocate ? new UInt8[imageFrame.Height() * bytesPerRow] : nullptr;
   return {.data = data,
           .height = static_cast<vImagePixelCount>(imageFrame.Height()),
           .width = static_cast<vImagePixelCount>(imageFrame.Width()),
-          .rowBytes = static_cast<size_t>(imageFrame.WidthStep())};
+          .rowBytes = static_cast<size_t>(bytesPerRow)};
 }
 
 vImage_Buffer CreateVImageBufferFromImageFrame(ImageFrame &imageFrame) {
   vImage_Buffer imageBuffer = CreateEmptyVImageBufferFromImageFrame(imageFrame, false);
+
   imageBuffer.data = imageFrame.MutablePixelData();
   return imageBuffer;
 }
@@ -68,7 +72,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                      pixelBufferFormat:(OSType)pixelBufferFormatType
                                                  error:(NSError **)error;
 
-+ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
++ (UInt8 *)premultipliedVImageBufferFromImageFrame:(ImageFrame &)imageFrame
                         shouldCopy:(BOOL)shouldCopy
                              error:(NSError **)error;
 
@@ -182,9 +186,9 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                       static_cast<uint8_t *>(destBuffer.data));
 }
 
-+ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
-                        shouldCopy:(BOOL)shouldCopy
-                             error:(NSError **)error {
++ (vImage_Buffer)premultipliedVImageBufferFromImageFrame:(ImageFrame &)imageFrame
+                              shouldCopy:(BOOL)shouldCopy
+                                   error:(NSError **)error {
   vImage_Buffer sourceBuffer = CreateVImageBufferFromImageFrame(imageFrame);
 
   // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
@@ -198,6 +202,11 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
           shouldCopy ? CreateEmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
       premultiplyError =
           vImagePremultiplyData_RGBA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
+      break;
+    }
+     case ImageFormat::SRGB: {
+      destinationBuffer =
+          shouldCopy ? CreateEmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
       break;
     }
     default: {
@@ -219,7 +228,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     return nullptr;
   }
 
-  return (UInt8 *)destinationBuffer.data;
+  return destinationBuffer;
 }
 
 @end
@@ -266,7 +275,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     return nullptr;
   }
 
-  UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:imageFrame
+  vImage_Buffer premultipliedVImageBuffer = [MPPPixelDataUtils premultipliedVImageBufferFromImageFrame:imageFrame
                                                      shouldCopy:YES
                                                           error:error];
 
@@ -331,8 +340,13 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                                colorSpace, bitMapinfoFor32RGBA);
 
   if (context) {
+    NSLog(@"size %d %d", width, height);
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgImage);
     uint8_t *srcData = (uint8_t *)CGBitmapContextGetData(context);
+    for (int i = 0; i < height * width * 4; i++) {
+      NSLog(@"%d",srcData[i]);
+    }
+
 
     if (srcData) {
       // We have drawn the image as an RGBA image with 8 bitsPerComponent and hence can safely input
@@ -369,10 +383,10 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
   }
 
   switch (internalImageFrame->Format()) {
+    case ImageFormat::SRGB:
     case ImageFormat::SRGBA: {
       bitmapInfo = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big;
       break;
-    }
     default:
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError

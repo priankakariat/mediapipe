@@ -31,13 +31,13 @@ using ::mediapipe::Packet;
                                (const mediapipe::Packet &)stylizedImagePacket
                                                          sourceImage:(MPPImage *)sourceImage
                                                  shouldCopyPixelData:(BOOL)shouldCopyPixelData
-                                                               error:(NSError **)error {
+                                                               error:(NSError **)error {                                                      
   if (!stylizedImagePacket.ValidateAsType<Image>().ok()) {
+    NSLog(@"Error no image");
     return nil;
   }
 
   const Image &cppStylizedImage = stylizedImagePacket.Get<Image>();
-
 
   MPPImage *stylizedImage = [[MPPImage alloc] initWithCppImage:cppStylizedImage
                                 cloningPropertiesOfSourceImage:sourceImage
@@ -47,6 +47,7 @@ using ::mediapipe::Packet;
 
 
   if (!stylizedImage) {
+    NSLog(@"Error no iOS stylized");
     return nil;
   }
 

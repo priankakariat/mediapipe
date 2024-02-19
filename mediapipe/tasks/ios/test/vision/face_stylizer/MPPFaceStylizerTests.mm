@@ -24,7 +24,7 @@
 static MPPFileInfo *const kFaceStylizerBundleAssetFileInfo =
     [[MPPFileInfo alloc] initWithName:@"face_stylizer_color_ink" type:@"task"];
 
-static MPPFileInfo *const kLargeFaceImageFileInfo = [[MPPFileInfo alloc] initWithName:@"pose"
+static MPPFileInfo *const kLargeFaceImageFileInfo = [[MPPFileInfo alloc] initWithName:@"portrait"
                                                                             type:@"jpg"];
 static MPPFileInfo *const kSmallFaceImageFileInfo = [[MPPFileInfo alloc] initWithName:@"portrait_small"
                                                                               type:@"jpg"];
@@ -52,14 +52,6 @@ static const NSInteger kModelImageSize = 256;
 
 #pragma mark General Tests
 
-- (void)setUp {
-  // When expected and actual mask sizes are not equal, iterating through mask data results in a
-  // segmentation fault. Setting this property to `NO`, prevents each test case from executing the
-  // remaining flow after a failure. Since expected and actual mask sizes are compared before
-  // iterating through them, this prevents any illegal memory access.
-  self.continueAfterFailure = NO;
-}
-
 - (void)testStylizeWithModelPathSucceeds {
     NSError *error = nil;
 
@@ -68,11 +60,12 @@ static const NSInteger kModelImageSize = 256;
                                              error:&error];
   XCTAssertNotNil(faceStylizer);                                           
  
-  MPPImage *image = [MPPImage imageWithFileInfo:kLargeFaceImageFileInfo];
+  MPPImage *image = [MPPImage imageWithFileInfo:kSmallFaceImageFileInfo];
   XCTAssertNotNil(image);
   
   NSLog(@"Before");
-  MPPFaceStylizerResult *result = [faceStylizer stylizeImage:image error:nil];
+
+  MPPFaceStylizerResult *result = [faceStylizer stylizeImage:image error:&error];
   AssertFaceStylizerResultProperties(result, kModelImageSize);
     NSLog(@"ERRORRRR:   %@", error.localizedDescription);
 

@@ -137,24 +137,20 @@ return [self stylizeImage:image regionOfInterest:regionOfInterest shouldCopyOutp
 regionOfInterest:(CGRect)regionOfInterest
                                            shouldCopyOutputPixelData:(BOOL)shouldCopyOutputPixelData
                                            error:(NSError **)error {
-    NSLog(@"before inf");
-                                          
+
   std::optional<PacketMap> outputPacketMap =
       [_visionTaskRunner processImage:image
                           regionOfInterest:regionOfInterest
-                                     error:error];
-
-       NSLog(@"after inf");
-                                  
+                                     error:error];                                  
 
  if (!outputPacketMap.has_value()) {
     return nil;
   }
 
-  NSLog(@"Done before");
 
   return [MPPFaceStylizerResult                                                                       
-      faceStylizerResultWithStylizedImagePacket:outputPacketMap.value()[kImageOutStreamName.cppString]
+      faceStylizerResultWithStylizedImagePacket:outputPacketMap.value()[kStylizedImageOutStreamName.cppString]
+      sourceImage:image
       shouldCopyPixelData:shouldCopyOutputPixelData
                          error:error];
 }
