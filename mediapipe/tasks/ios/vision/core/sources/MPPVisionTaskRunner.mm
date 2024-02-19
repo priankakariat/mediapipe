@@ -43,11 +43,16 @@ static const NSInteger kMPPOrientationDegreesLeft = -90;
 
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
+#define InputPacketMap(imagePacket, normalizedRectPacket)                              \
+  {                                                                                    \
+    {_imageInStreamName, imagePacket}, { _normRectInStreamName, normalizedRectPacket } \
+  }
+
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
   BOOL _roiAllowed;
-  NSString *_imageInputStreamName;
-  NSString *_normRectInputStreamName;
+  NSString *_imageInStreamName;
+  NSString *_normRectInStreamName;
 }
 @end
 
@@ -60,23 +65,24 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                      imageInputStreamName:(NSString *)imageInputStreamName
                   normRectInputStreamName:(NSString *)normRectInputStreamName
                                     error:(NSError **)error {
-  // if (!taskInfo) {
-  //   [MPPCommonUtils createCustomError:error
-  //                            withCode:MPPTasksErrorCodeInvalidArgumentError
-  //                         description:@"`taskInfo` cannot be `nil`."];
-  //   return nil;
-  // }
+if (!taskInfo) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`taskInfo` cannot be `nil`."];
+    return nil;
+  }
 
-  // if (!imageInputStreamName) {
-  //   [MPPCommonUtils createCustomError:error
-  //                            withCode:MPPTasksErrorCodeInvalidArgumentError
-  //                         description:@"`imageInputStreamName` cannot be `nil.`"];
-  //   return nil;
-  // }
+  if (!imageInputStreamName) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`imageInputStreamName` cannot be `nil.`"];
+    return nil;
+  }
+
 
   _roiAllowed = roiAllowed;
-  _imageInputStreamName = imageInputStreamName;
-  _normRectInputStreamName = normRectInputStreamName;
+  _imageInStreamName = imageInputStreamName;
+  _normRectInStreamName = normRectInputStreamName;
 
   switch (runningMode) {
     case MPPRunningModeImage:
@@ -112,9 +118,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   }
 
   _runningMode = runningMode;
-  self = [super initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                              packetsCallback:packetsCallback
-                                        error:error];
+
+  self = [super initWithTaskInfo:taskInfo packetsCallback:packetsCallback error:error];
   return self;
 }
 
@@ -123,6 +128,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
                                                               error:(NSError **)error {
+
   // Redundant `roiAllowed` check is not needed here since it is already accounted for
   // before this method is called.
   CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? CGRectMake(0.0, 0.0, 1.0, 1.0) : roi;
@@ -179,6 +185,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
   return normalizedRect;
 }
+
 
 // This method checks if an error must be returned by the task based on the values of `roiAllowed`,
 // `normRectInStreamName`, imagOrientation and `roi`. With roi = `CGRectZero` and  no
@@ -280,29 +287,6 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   inputPacketMap[_imageInputStreamName.cppString] = imagePacket;
 
   return inputPacketMap;
-}
-
-- (std::optional<PacketMap>)processImage:(MPPImage *)image
-                        regionOfInterest:(CGRect)regionOfInterest
-                                   error:(NSError **)error {
-  if (_runningMode != MPPRunningModeImage) {
-    [MPPCommonUtils
-        createCustomError:error
-                 withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:[NSString stringWithFormat:@"The vision task is not initialized with "
-                                                     @"image mode. Current Running Mode: %@",
-                                                     MPPRunningModeDisplayName(_runningMode)]];
-    return std::nullopt;
-  }
-
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                            regionOfInterest:regionOfInterest
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return std::nullopt;
-  }
-
-  return [self processPacketMap:inputPacketMap.value() error:error];
 }
 
 - (std::optional<PacketMap>)processImage:(MPPImage *)image error:(NSError **)error {
