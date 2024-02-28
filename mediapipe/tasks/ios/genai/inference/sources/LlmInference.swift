@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import LlmInferenceEngineC
-import LlmTaskRunner
+import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///

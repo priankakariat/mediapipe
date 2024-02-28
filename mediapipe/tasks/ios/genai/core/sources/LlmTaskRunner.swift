@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import LlmInferenceEngineC
+import MediaPipeTasksGenAIC
 
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.

@@ -58,9 +58,15 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
     return tflite_model.status();
   }
 
+  std::cout << "Loop before" << std::endl;
   for (const auto& metadata : *(*tflite_model)->metadata()) {
+    std::cout << "Loop in" << std::endl;
+    std::cout << "LLM Params" << mediapipe::tasks::genai::proto::LlmParameters().GetTypeName() << std::endl;
+
+    std::cout << "Model metadata name" << metadata->name()->c_str() << std::endl;
     if (metadata->name()->c_str() ==
         mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
+      std::cout << "Get LLM params succeed" << std::endl;
       int llm_params_index = metadata->buffer();
       auto llm_params_buffer =
           (*tflite_model)->buffers()->Get(llm_params_index);
@@ -72,6 +78,7 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
 
       return llm_params;
     }
+    std::cout << "If done" << std::endl;
   }
   return absl::NotFoundError("Failed to get LLM params");
 }

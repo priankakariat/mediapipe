@@ -20,11 +20,15 @@ licenses(["notice"])
 
 swift_library(
     name = "LlmInference",
-    module_name = "LlmInference",
+    module_name = "MediaPipeTasksGenAI",
     generates_header = 1,
     generated_header_name = "generated_header/LlmInference-Swift.h",
+    copts = ["-no-verify-emitted-module-interface"],
     srcs = [
         "sources/LlmInference.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/LlmInferenceError.swift",
     ],
-    deps = ["//mediapipe/tasks/ios/genai/core:LlmTaskRunner"],
+    deps = [
+    "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
 )
