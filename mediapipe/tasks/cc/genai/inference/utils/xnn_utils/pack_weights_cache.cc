@@ -61,6 +61,8 @@ PackWeightsCache::~PackWeightsCache() { xnn_weights_cache = nullptr; }
 
 absl::Status PackWeightsCache::Initialize() {
   mmap_file_ = GetMmapFile(cache_path_);
+
+  std::cout << "Hey cache Initialize" << std::endl;
   if (mmap_file_) {
     MP_RETURN_IF_ERROR(InitializeFromCache(mmap_file_));
   } else {
@@ -160,23 +162,40 @@ bool PackWeightsCache::ShouldDoubleCheckCompatibility(
 
 std::shared_ptr<llm_utils::MemoryMappedFile> PackWeightsCache::GetMmapFile(
     absl::string_view filename) {
-  return mediapipe::file::Exists(filename).ok()
-             ? llm_utils::MemoryMappedFile::CreateMutable(filename).value_or(
-                   nullptr)
-             : nullptr;
+    std::cout << "Pack weights file name" << filename << std::endl;
+    if (mediapipe::file::Exists(filename).ok()) {
+        return llm_utils::MemoryMappedFile::CreateMutable(filename).value_or(
+                   nullptr);
+    }
+    else {
+        return nullptr;
+    }
+  // return mediapipe::file::Exists(filename).ok()
+  //            ? llm_utils::MemoryMappedFile::CreateMutable(filename).value_or(
+  //                  nullptr)
+  //            : nullptr;
 }
 
 absl::Status PackWeightsCache::InitializeFromCache(
     std::shared_ptr<llm_utils::MemoryMappedFile> mmap_cache) {
+
+  std::cout << "Enter InitFromCache" << std::endl;
   name_to_offset_size_.clear();
+
+  std::cout << "Before Named buffers" << std::endl;
   named_buffers_ = std::shared_ptr<const NamedBuffers>(
       mmap_cache, GetNamedBuffers(mmap_cache->data()));
+
+  std::cout << "Iterate buffers" << std::endl;
   for (const Buffer* buffer : *named_buffers_->buffers()) {
+    std::cout << "String view " << buffer->name()->c_str() << std::endl;
     absl::string_view name =
         absl::string_view(buffer->name()->c_str(), buffer->name()->size());
     name_to_offset_size_[name] =
         std::make_pair(buffer->offset(), buffer->size());
+    std::cout << "After add to offset " << std::endl;
   }
+  std::cout << "Before Return " << std::endl;
   return absl::OkStatus();
 }
 

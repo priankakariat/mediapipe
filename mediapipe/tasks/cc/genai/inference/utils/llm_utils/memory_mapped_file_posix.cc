@@ -92,16 +92,28 @@ absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MemoryMappedFile::Create(
 
 absl::StatusOr<std::unique_ptr<MemoryMappedFile>>
 MemoryMappedFile::CreateMutable(absl::string_view path) {
+  std::cout << "Enter" << std::endl;
   MP_ASSIGN_OR_RETURN(auto scoped_file, ScopedFile::OpenWritable(path));
   int fd = scoped_file.file();
   RET_CHECK_GE(fd, 0) << "open() failed: " << path;
   auto close_fd = absl::MakeCleanup([fd] { close(fd); });
+    std::cout << "Cleaned up" << std::endl;
+
 
   size_t length = lseek(fd, 0, SEEK_END);
+    
+  std::cout << "Before mmap private" << length << std::endl;
 
   void* data = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (data != MAP_FAILED) {
+    std::cout << "Mmap Succeeds" << std::endl;
+  }
+  else {
+    std::cout << "MMap failed" << strerror(errno) << std::endl;
+  }
   RET_CHECK_NE(data, MAP_FAILED)
       << "Failed to map " << path << ", error: " << strerror(errno);
+  std::cout << "Before mmap data check" << std::endl;
   RET_CHECK_NE(data, nullptr) << "Failed to map: " << path;
 
   return std::make_unique<MemoryMappedFilePosix>(length, data);

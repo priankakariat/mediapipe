@@ -181,6 +181,7 @@ LlmInferenceEngine_CreateSession_Helper(
 
   // Create directory for tokenizer and model cache file.
   if (session_config->cache_dir != nullptr) {
+    std::cout << "C Cache" << session_config->cache_dir << std::endl;
     auto s = mediapipe::file::RecursivelyCreateDir(session_config->cache_dir);
     if (!s.ok()) {
       ABSL_LOG(WARNING) << s;

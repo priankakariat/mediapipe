@@ -65,8 +65,8 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
 
     std::cout << "Model metadata name: " << metadata->name()->c_str() << std::endl;
     std::string internal_metadata_name = "odml.infra.proto.LlmParameters";
-    if (metadata->name()->c_str() == internal_metadata_name ||
-        metadata->name()->c_str() == mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
+    // metadata->name()->c_str() == internal_metadata_name ||
+    if (metadata->name()->c_str() == internal_metadata_name || metadata->name()->c_str() == mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
       std::cout << "Get LLM params succeed" << std::endl;
       int llm_params_index = metadata->buffer();
       auto llm_params_buffer =

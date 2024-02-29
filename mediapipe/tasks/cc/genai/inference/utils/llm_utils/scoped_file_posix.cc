@@ -30,6 +30,7 @@ absl::StatusOr<ScopedFile> ScopedFile::Open(absl::string_view path) {
 
 // static
 absl::StatusOr<ScopedFile> ScopedFile::OpenWritable(absl::string_view path) {
+  std::cout << "Before open scoped file" << std::endl;
   int fd = open(path.data(), O_RDWR);
   RET_CHECK_GE(fd, 0) << "open() failed: " << path;
   return ScopedFile(fd);
