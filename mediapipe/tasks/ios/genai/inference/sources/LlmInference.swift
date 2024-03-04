@@ -210,13 +210,13 @@ extension LlmInference {
 }
 
 /// An extension to `String` to add some utility functions.
-extension String {
+fileprivate extension String {
   private static let tokenSplitter = "▁"
   /// Note this is NOT an underscore: ▁(U+2581)
   private static let newLine = "<0x0A>"
   private static let eod = "\\[eod\\]"
 
-  fileprivate func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
+  func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
     var humanReadableString = self.replacingOccurrences(of: String.tokenSplitter, with: " ")
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =

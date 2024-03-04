@@ -23,16 +23,15 @@ import MediaPipeTasksGenAIC
 /// functions are invoked.
 /// Instead tasks can encapsulate `clearAllCachedFiles()` to provide a function to delete
 /// any undeleted caches when the user wishes to.
-public final class LlmTaskRunner {
+final class LlmTaskRunner {
 
   private static let cacheSuffix = ".cache"
-  private static let cacheDirectoryPrefix = "mediaPipe.genai.cache"
   private static let globalCacheDirectory = FileManager.default.temporaryDirectory
     .versionIndependentAppending(component: "mediapipe.genai.inference.cache")
   private static let cacheDirectory = LlmTaskRunner.globalCacheDirectory
     .versionIndependentAppending(component: "\(UUID().uuidString)")
 
-  typealias CLlmSession = UnsafeMutableRawPointer
+  private typealias CLlmSession = UnsafeMutableRawPointer
 
   private let cLlmSession: CLlmSession
 
@@ -235,7 +234,7 @@ extension LlmTaskRunner {
   }
 }
 
-extension LlmTaskRunner {
+private extension LlmTaskRunner {
   /// A wrapper class for whose object will be used as the C++ callback context.
   /// The progress and completion callbacks cannot be invoked without a context.
   class CallbackInfo {
@@ -261,8 +260,8 @@ extension LlmTaskRunner {
   }
 }
 
-extension LlmTaskRunner {
-  private class func responseStrings(from responseContext: LlmResponseContext) -> [String]? {
+private extension LlmTaskRunner {
+  class func responseStrings(from responseContext: LlmResponseContext) -> [String]? {
     guard let cResponseArray = responseContext.response_array else {
       return nil
     }
@@ -280,7 +279,7 @@ extension LlmTaskRunner {
   }
 }
 
-extension URL {
+fileprivate extension URL {
   func versionIndependentAppending(component: String) -> URL {
     if #available(iOS 16, *) {
       return self.appending(component: component)
