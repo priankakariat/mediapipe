@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import Foundation
-import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
@@ -23,6 +22,7 @@ import MediaPipeTasksGenAIC
   private static let sequenceBatchSize = 0
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+  private static let cacheDirectory = FileManager.default.temporaryDirectory.versionIndependentAppending(component: "mediapipe.genai.inference.cache_\(UUID().uuidString)")
 
   private let llmTaskRunner: LlmTaskRunner
 
@@ -52,25 +52,18 @@ import MediaPipeTasksGenAIC
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
   /// `LlmInference`.
-  @objc public init(options: Options) {
-    let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
-
-    defer {
-      free(modelPath)
-      free(cacheDirectory)
-    }
-
-    let sessionConfig = LlmSessionConfig(
-      model_path: modelPath,
-      cache_dir: cacheDirectory,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
-      num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_tokens: options.maxTokens,
+  @objc public init(options: Options) throws {
+    let taskRunnerConfig = LlmTaskRunner.Config(
+      modelPath: options.modelPath,
+      cacheDirectory: LlmInference.cacheDirectory,
+      sequenceBatchSize: LlmInference.sequenceBatchSize,
+      numberOfDecodeStepsPerSync: LlmInference.numberOfDecodeStepsPerSync,
+      maxTokens: options.maxTokens,
       topk: options.topk,
       temperature: options.temperature,
-      random_seed: options.randomSeed)
-    llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
+      randomSeed: options.randomSeed)
+
+    llmTaskRunner = try LlmTaskRunner(config:taskRunnerConfig)
 
     super.init()
   }
@@ -80,9 +73,9 @@ import MediaPipeTasksGenAIC
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-  @objc public convenience init(modelPath: String) {
+  @objc public convenience init(modelPath: String) throws {
     let options = Options(modelPath: modelPath)
-    self.init(options: options)
+    try self.init(options: options)
   }
 
   /// Generates a response based on the input text.
@@ -149,6 +142,20 @@ import MediaPipeTasksGenAIC
       })
   }
 
+  /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app 
+  /// size. Please ensure that this method is not called during the lifetime of any instances of 
+  /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope, 
+  /// calling one of its methods will result in undefined behaviour and may lead to a crash.
+  ///
+  /// This method blocks the thread on which it runs. Invoke this function from a background thread 
+  /// to avoid blocking the thread.
+  public static func clearAllCachedFiles() throws {
+    let files = try FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
+    for file in files {
+      try FileManager.default.removeItem(at: file)
+    }
+  }
+
   /// Throw error if response generation is in progress or update response generation state.
   private func shouldContinueWithResponseGeneration() throws {
     if responseGenerationInProgress {
@@ -203,6 +210,7 @@ extension LlmInference {
       self.modelPath = modelPath
       super.init()
     }
+
   }
 }
 

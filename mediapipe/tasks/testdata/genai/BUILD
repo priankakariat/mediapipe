@@ -20,11 +20,11 @@ package(
 )
 
 # Add model files
-exports_files([""])
+exports_files(["gemma_cpu.tflite"])
 
 filegroup(
     name = "test_models",
     srcs = [
-        "",
+        "gemma_cpu.tflite",
     ],
 )

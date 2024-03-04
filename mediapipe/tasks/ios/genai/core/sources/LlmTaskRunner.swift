@@ -18,18 +18,58 @@ import MediaPipeTasksGenAIC
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.
 public final class LlmTaskRunner {
+
+  private static let cacheSuffix = ".cache"
+  private static let cacheDirectoryPrefix = "mediaPipe.genai.cache"
+
   typealias CLlmSession = UnsafeMutableRawPointer
 
   private let cLlmSession: CLlmSession
+
+  private let modelCacheFile: URL
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
   ///
   /// - Parameters:
   ///   - sessionConfig: C session config of type `LlmSessionConfig`.
-  public init(sessionConfig: LlmSessionConfig) {
+  init(config: Config) throws {
     /// No safe guards for session creation since the C APIs only throw fatal errors.
     /// `LlmInferenceEngine_CreateSession()` will always return a llm session if the call
-    /// completes.
-    self.cLlmSession = withUnsafePointer(to: sessionConfig) { LlmInferenceEngine_CreateSession($0) }
+    /// completes. 
+
+    guard FileManager.default.fileExists(atPath: config.modelPath),
+      let modelName = config.modelPath.components(separatedBy: "/").last
+    else {
+      throw GenAiInferenceError.modelNotFound
+    }
+
+    /// Adding a `UUID` prefix to the cache path to prevent the app from crashing if a model cache
+    /// is already found in the temporary directory.
+    /// Cache will be deleted when the task runner is de-allocated. Preferring deletion on
+    /// de-allocation to deleting all caches on initialization to prevent model caches of
+    /// other task runners from being de-allocated prematurely during their life time.
+    ///
+    /// Note: Implementation will have to be updated if C++ core changes the cache prefix.
+    // let modelCacheDirectory = config.cacheDirectory.versionIndependentAppending(component:LlmTaskRunner.cacheDirectoryPrefix).versionIndependentAppending(component: "\(UUID().uuidString)")
+      
+    cLlmSession = config.cacheDirectory.path.withCString { cCacheDir in
+        return config.modelPath.withCString { cModelPath in
+          let cSessionConfig = LlmSessionConfig(
+        model_path: cModelPath,
+        cache_dir: cCacheDir,
+        sequence_batch_size: config.sequenceBatchSize,
+        num_decode_steps_per_sync: config.numberOfDecodeStepsPerSync,
+        max_tokens: config.maxTokens,
+        topk: config.topk,
+        temperature: config.temperature,
+        random_seed: config.randomSeed)
+        return withUnsafePointer(to: cSessionConfig) { LlmInferenceEngine_CreateSession($0) }
+      }
+    }
+
+    // self.cLlmSession = withUnsafePointer(to: cSessionConfig) { LlmInferenceEngine_CreateSession($0) }
+
+    modelCacheFile = config.cacheDirectory.versionIndependentAppending(component: "\(modelName)\(LlmTaskRunner.cacheSuffix)")
+    print(modelCacheFile.path)
   }
 
   /// Invokes the C inference engine with the given input text to generate an array of `String`
@@ -99,8 +139,87 @@ public final class LlmTaskRunner {
     }
   }
 
+  /// Options for setting up a `LlmInference`.
+  ///
+  /// Note: Inherits from `NSObject` for Objective C interoperability.
+  struct Config {
+    /// The absolute path to the model asset bundle stored locally on the device.
+    let modelPath: String
+
+    let cacheDirectory: URL
+
+    let sequenceBatchSize: Int
+
+    let numberOfDecodeStepsPerSync: Int
+
+    /// The total length of the kv-cache. In other words, this is the total number of input + output
+    /// tokens the model needs to handle.
+    let maxTokens: Int
+
+    /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
+    /// greedy decoding. Defaults to 40.
+    let topk: Int
+
+    /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
+    /// to 0.8.
+    let temperature: Float
+
+    /// The random seed for sampling tokens.
+    let randomSeed: Int
+
+
+    /// Creates a new instance of `Options` with the modelPath and default values of
+    /// `maxTokens`, `topK``, `temperature` and `randomSeed`.
+    /// This function is only intended to be used from Objective C.
+    ///
+    /// - Parameters:
+    ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
+    init(modelPath: String, cacheDirectory: URL, sequenceBatchSize: Int, numberOfDecodeStepsPerSync: Int,  maxTokens: Int = 512, topk: Int = 40, temperature: Float = 0.8, randomSeed: Int = 0) {
+      self.modelPath = modelPath
+      self.cacheDirectory = cacheDirectory
+      self.sequenceBatchSize = sequenceBatchSize
+      self.numberOfDecodeStepsPerSync = numberOfDecodeStepsPerSync
+      self.maxTokens = maxTokens
+      self.topk = topk
+      self.temperature = temperature
+      self.randomSeed = randomSeed
+    }
+
+      // // let modelPath = strdup(options.modelPath)
+      // // let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
+
+      // // defer {
+      // //   free(modelPath)
+      // //   free(cacheDirectory)
+      // // }
+
+      // let sessionConfig = LlmSessionConfig(
+      //   model_path: modelPath,
+      //   cache_dir: cacheDirectoryPath,
+      //   sequence_batch_size: LlmInference.sequenceBatchSize,
+      //   num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
+      //   max_tokens: options.maxTokens,
+      //   topk: options.topk,
+      //   temperature: options.temperature,
+      //   random_seed: options.randomSeed)
+      // }
+  }
+
   deinit {
     LlmInferenceEngine_Session_Delete(cLlmSession)
+
+    // Responsibly deleting the model cache.
+    // Performing on current thread since only one file needs to be deleted.
+    // Note: `deinit` does not get invoked  If a crash occurs before the task runner is de-allocated or if the task runner is , we let the OS handle the
+    // deletion of the cache when it sees fit.
+    do {
+      print("Enter removeItem")
+      try FileManager.default.removeItem(at: modelCacheFile)
+    } catch {
+      print("Failed")
+      print(error.localizedDescription)
+      // Could not delete file. Common cause: file not found.
+    }
   }
 }
 
@@ -146,5 +265,16 @@ extension LlmTaskRunner {
     }
 
     return responseStrings
+  }
+}
+
+extension URL {
+  func versionIndependentAppending(component: String) -> URL {
+      if  #available(iOS 16, *) {
+        return self.appending(component: component)
+      }
+      else {
+        return self.appendingPathComponent(component)
+      }
   }
 }

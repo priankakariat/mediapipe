@@ -23,14 +23,14 @@ class LlmInferenceTests: XCTestCase {
   private static let bundle = Bundle(for: LlmInferenceTests.self)
 
   /// Model name goes here.
-  private static let gemmaCpuModelPath = FileInfo(name:"", type:"tflite")
+  private static let gemmaCpuModelPath = FileInfo(name:"gemma_cpu", type:"tflite")
 
   func testSyncGenerateResponseWithDefaultOptions() throws {
     let options = try defaultLlmInferenceOptions(fileInfo: LlmInferenceTests.gemmaCpuModelPath)
-    let llmInference = LlmInference(options: options)
+    let llmInference = try LlmInference(options: options)
     
     /// TODO: Add a valid question.
-    let response = try llmInference.generateResponse(inputText: "")
+    _ = try llmInference.generateResponse(inputText: "What is the chemical name of water?")
   }
 
   func defaultLlmInferenceOptions(fileInfo: FileInfo) throws -> LlmInference.Options {
