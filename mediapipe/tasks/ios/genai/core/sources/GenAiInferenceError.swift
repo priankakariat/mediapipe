@@ -28,7 +28,8 @@ extension GenAiInferenceError: LocalizedError {
     case .invalidResponse:
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
-      return "You cannot invoke `generateResponse` while another response generation invocation is in progress."
+      return
+        "You cannot invoke `generateResponse` while another response generation invocation is in progress."
     case .modelNotFound:
       return "No file found at the `modelPath` you provided."
     }

@@ -18,11 +18,10 @@ import Foundation
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLlmInference) public final class LlmInference: NSObject {
-  private static let numberOfDecodeStepsPerSync = 3
-  private static let sequenceBatchSize = 0
+  private static let numberOfDecodeStepsPerSync: UInt = 3
+  private static let sequenceBatchSize: UInt = 0
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
-  private static let cacheDirectory = FileManager.default.temporaryDirectory.versionIndependentAppending(component: "mediapipe.genai.inference.cache_\(UUID().uuidString)")
 
   private let llmTaskRunner: LlmTaskRunner
 
@@ -55,7 +54,6 @@ import Foundation
   @objc public init(options: Options) throws {
     let taskRunnerConfig = LlmTaskRunner.Config(
       modelPath: options.modelPath,
-      cacheDirectory: LlmInference.cacheDirectory,
       sequenceBatchSize: LlmInference.sequenceBatchSize,
       numberOfDecodeStepsPerSync: LlmInference.numberOfDecodeStepsPerSync,
       maxTokens: options.maxTokens,
@@ -63,7 +61,7 @@ import Foundation
       temperature: options.temperature,
       randomSeed: options.randomSeed)
 
-    llmTaskRunner = try LlmTaskRunner(config:taskRunnerConfig)
+    llmTaskRunner = try LlmTaskRunner(config: taskRunnerConfig)
 
     super.init()
   }
@@ -142,18 +140,15 @@ import Foundation
       })
   }
 
-  /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app 
-  /// size. Please ensure that this method is not called during the lifetime of any instances of 
-  /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope, 
+  /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app
+  /// size. Please ensure that this method is not called during the lifetime of any instances of
+  /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope,
   /// calling one of its methods will result in undefined behaviour and may lead to a crash.
   ///
-  /// This method blocks the thread on which it runs. Invoke this function from a background thread 
-  /// to avoid blocking the thread.
-  public static func clearAllCachedFiles() throws {
-    let files = try FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
-    for file in files {
-      try FileManager.default.removeItem(at: file)
-    }
+  /// This method blocks the thread on which it runs. Invoke this function from a background thread
+  /// to avoid blocking the thread.x
+  public class func clearAllCachedFiles() throws {
+    try LlmTaskRunner.clearAllCachedFiles()
   }
 
   /// Throw error if response generation is in progress or update response generation state.
@@ -165,7 +160,7 @@ import Foundation
     responseGenerationInProgress = true
   }
 
-  private static func humanReadableString(
+  private class func humanReadableString(
     llmResponses: [String], stripLeadingWhitespaces: Bool = true
   ) -> String? {
     guard let llmResponse = llmResponses.first else {
@@ -187,11 +182,11 @@ extension LlmInference {
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
-    @objc public var maxTokens: Int = 512
+    @objc public var maxTokens: UInt = 512
 
     /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
     /// greedy decoding. Defaults to 40.
-    @objc public var topk: Int = 40
+    @objc public var topk: UInt = 40
 
     /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
     /// to 0.8.
