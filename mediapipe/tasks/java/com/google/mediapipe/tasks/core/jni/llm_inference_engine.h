@@ -14,74 +14,37 @@ extern "C" {
 
 typedef void LlmInferenceEngine_Session;
 
-// Supported model types.
-enum LlmModelType {
-  // Unknown
-  kUNKNOWN_MODEL_TYPE,
-
-  // Falcon with 1B parameters.
-  kFalcon1B,
-
-  // GMini with 2B parameters.
-  kGMini2B,
-};
-
-// Attention types.
-enum LlmAttentionType {
-  // Multi-head Attention.
-  kMHA,
-
-  // Multi-query Attention.
-  kMQA,
-};
-
-// Backend to execute the large language model.
-enum LlmBackend {
-  // CPU
-  kCPU,
-
-  // GPU
-  kGPU,
-};
-
-// LlmModelParameters should accurately describe the model used.
-typedef struct {
-  // Set a supported model types.
-  enum LlmModelType model_type;
-
-  // Path to the directory that contains spm.model and the weight directory.
-  const char* model_path;
-
-  // MHA or MQA.
-  enum LlmAttentionType attention_type;
-
-  // Start token id will be appended to the query before feeding into the model.
-  int start_token_id;
-
-  // Stop token/word that indicates the response is completed.
-  const char** stop_tokens;
-
-  // Number of stop tokens.
-  size_t stop_tokens_size;
-} LlmModelParameters;
-
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
-  // Select a supported backend.
-  enum LlmBackend backend;
+  // Path to the tflite flatbuffer file.
+  const char* model_path;
 
-  // Sequence batch size for encoding.
+  // Directory path for storing model related tokenizer and cache weights. the
+  // user is responsible for providing the directory that can be writable by the
+  // program.
+  const char* cache_dir;
+
+  // Sequence batch size for encoding. Used by GPU only. Number of input tokens
+  // to process at a time for batch processing. Setting this value to 1 means
+  // both the encoding and decoding share the same graph of sequence length
+  // of 1. Setting this value to 0 means the batch size will be optimized
+  // programmatically.
   size_t sequence_batch_size;
 
-  // Output batch size for decoding.(for gpu)
-  size_t num_decode_tokens;
+  // Number of decode steps per sync. Used by GPU only. The default value is 3.
+  size_t num_decode_steps_per_sync;
 
-  // Maximum sequence length stands for the total number of tokens from input
-  // and output.
-  size_t max_sequence_length;
+  // Maximum number of tokens for input and output.
+  size_t max_tokens;
 
-  // Use fake weights instead of loading from file.
-  bool use_fake_weights;
+  // Top K number of tokens to be sampled from for each decoding step.
+  size_t topk;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float temperature;
+
+  // Random seed for sampling tokens.
+  size_t random_seed;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for
@@ -93,15 +56,17 @@ typedef struct {
 
   // Number of responses.
   int response_count;
+
+  // Done all outputs for this session.
+  bool done;
 } LlmResponseContext;
 
-// Frees all context within the LlmResponseContext including itself.
+// Frees all context within the LlmResponseContext.
 ODML_EXPORT void LlmInferenceEngine_CloseResponseContext(
-    LlmResponseContext response_context);
+    LlmResponseContext* response_context);
 
 // Create a LlmInferenceEngine session for executing a query.
 ODML_EXPORT LlmInferenceEngine_Session* LlmInferenceEngine_CreateSession(
-    const LlmModelParameters* model_parameters,
     const LlmSessionConfig* session_config);
 
 // Free the session, will wait until graph is done executing.

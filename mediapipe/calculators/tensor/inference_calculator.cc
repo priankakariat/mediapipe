@@ -14,17 +14,23 @@
 
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 
-#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
+#include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
+#include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -74,6 +80,24 @@ class InferenceCalculatorSelectorImpl
     return absl::UnimplementedError("no implementation available");
   }
 };
+
+absl::Status InferenceCalculator::EnforceVectorTensors(CalculatorContract* cc) {
+  RET_CHECK(kInTensors(cc).IsConnected() && kOutTensors(cc).IsConnected())
+      << "This delegate requires TENSORS to be used.";
+  RET_CHECK(kInTensor(cc).Count() == 0 && kOutTensor(cc).Count() == 0)
+      << "This delegate does not support TENSOR; only TENSORS";
+  return absl::OkStatus();
+}
+
+absl::Status InferenceCalculator::TensorContractCheck(CalculatorContract* cc) {
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for input.";
+  RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for output.";
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "TENSORS and TENSOR cannot be used together.";
+  return absl::OkStatus();
+}
 
 absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {

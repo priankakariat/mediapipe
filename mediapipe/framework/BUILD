@@ -19,6 +19,17 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+# For direct MediaPipe internal proto usage. Please only add your package
+# here if necessary and using
+# "//mediapipe/framework:calculator_framework" is not sufficient
+# (e.g. auto generated code for serialization etc.)
+package_group(
+    name = "mediapipe_internal_proto_users",
+    packages = [
+        "//mediapipe/...",
+    ],
+)
+
 # The MediaPipe internal package group. No mediapipe users should be added to this group.
 package_group(
     name = "mediapipe_internal",
@@ -101,7 +112,7 @@ mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
     visibility = [
-        ":mediapipe_internal",
+        ":mediapipe_internal_proto_users",
     ],
 )
 
@@ -122,7 +133,7 @@ mediapipe_proto_library(
     testonly = 1,
     srcs = ["packet_test.proto"],
     visibility = [
-        ":mediapipe_internal",
+        ":mediapipe_internal_proto_users",
         "//mediapipe/framework:__subpackages__",
     ],
 )
@@ -130,14 +141,14 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "status_handler_proto",
     srcs = ["status_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [":mediapipe_options_proto"],
 )
 
@@ -145,7 +156,7 @@ mediapipe_proto_library(
     name = "test_calculators_proto",
     testonly = 1,
     srcs = ["test_calculators.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [
         ":calculator_options_proto",
         ":calculator_proto",
@@ -155,7 +166,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [":mediapipe_options_proto"],
 )
 
@@ -1026,6 +1037,13 @@ cc_library(
         "//mediapipe/framework:disable_rtti_and_exceptions": [
             "MEDIAPIPE_HAS_RTTI=0",
         ],
+        # Excludes AHardwareBuffer features from vendor processes
+        "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
+        # unless they're linked against nativewindow.
+        "//mediapipe/framework/formats:android_link_native_window": [
+            "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW",
+            "MEDIAPIPE_NO_JNI",
+        ],
     }),
     visibility = [
         "//fitbit/research/sensing/mobisense:__subpackages__",
@@ -1790,9 +1808,14 @@ cc_library(
     hdrs = ["memory_manager.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/formats:hardware_buffer_pool",
-        "//mediapipe/gpu:multi_pool",
-    ],
+        "//mediapipe/framework:port",
+    ] + select({
+        "//mediapipe:android": [
+            "//mediapipe/framework/formats:hardware_buffer_pool",
+            "//mediapipe/gpu:multi_pool",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -1802,6 +1825,5 @@ cc_library(
     deps = [
         ":graph_service",
         ":memory_manager",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )

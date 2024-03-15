@@ -15,13 +15,16 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 
-#include <cstring>
+#include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
@@ -51,14 +54,24 @@ namespace api2 {
 //  TENSORS - Vector of Tensors
 //
 // Input side packet:
-//  DEPRECATED: Prefer to use the "OP_RESOLVER" input side packet instead.
-//  CUSTOM_OP_RESOLVER (optional) - Use a custom op resolver,
-//                                  instead of the builtin one.
-//  OP_RESOLVER (optional) - Use to provide tflite op resolver
-//                           (tflite::OpResolver)
-//  MODEL (optional) - Use to specify TfLite model
-//                     (std::unique_ptr<tflite::FlatBufferModel,
-//                       std::function<void(tflite::FlatBufferModel*)>>)
+//  CUSTOM_OP_RESOLVER (optional)
+//    DEPRECATED: prefer to use the "OP_RESOLVER" input side packet instead.
+//    Use a custom op resolver, instead of the builtin one.
+//  OP_RESOLVER (optional)
+//    Use to provide tflite op resolver (tflite::OpResolver)
+//  MODEL (optional)
+//    Use to specify TfLite model.
+//    (std::unique_ptr<tflite::FlatBufferModel,
+//       std::function<void(tflite::FlatBufferModel*)>>)
+//  DELEGATE (optional)
+//    Use to specify special values per a particular delegate.
+//    (InferenceCalculatorOptions::Delegate)
+//
+//    NOTE: InferenceCalculator, being a subgraph which is replaced by concrete
+//      implementations/calculators during the graph expansion, cannot access
+//      side packets, and DELEGATE side packet rarely (only if concrete
+//      implementations/calculators allow that) can be used to switch between
+//      delegates.
 //
 // Example use:
 // node {
@@ -93,7 +106,16 @@ namespace api2 {
 
 class InferenceCalculator : public NodeIntf {
  public:
-  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+  // Default API: inputs and outputs will be passed as a single vector.
+  static constexpr Input<std::vector<Tensor>>::Optional kInTensors{"TENSORS"};
+  static constexpr Output<std::vector<Tensor>>::Optional kOutTensors{"TENSORS"};
+
+  // New API (not yet supported by all subclasses): inputs and outputs will be
+  // passed as multiple (ordered) Tensor streams. Only one of the two APIs can
+  // be used, so TENSORS and TENSOR are mutually exclusive.
+  static constexpr Input<Tensor>::Multiple kInTensor{"TENSOR"};
+  static constexpr Output<Tensor>::Multiple kOutTensor{"TENSOR"};
+
   // Deprecated. Prefers to use "OP_RESOLVER" input side packet instead.
   // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
   // migration.
@@ -102,18 +124,24 @@ class InferenceCalculator : public NodeIntf {
   static constexpr SideInput<tflite::OpResolver>::Optional kSideInOpResolver{
       "OP_RESOLVER"};
   static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
-  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
   static constexpr SideInput<
       mediapipe::InferenceCalculatorOptions::Delegate>::Optional kDelegate{
       "DELEGATE"};
-  MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver,
+  MEDIAPIPE_NODE_CONTRACT(kInTensors, kInTensor, kSideInCustomOpResolver,
                           kSideInOpResolver, kSideInModel, kOutTensors,
-                          kDelegate);
+                          kOutTensor, kDelegate);
 
  protected:
   using TfLiteDelegatePtr =
       std::unique_ptr<TfLiteOpaqueDelegate,
                       std::function<void(TfLiteOpaqueDelegate*)>>;
+
+  // Helper to be used in subclass UpdateContract calls to enforce common I/O
+  // constraints until TENSOR is supported everywhere.
+  static absl::Status EnforceVectorTensors(CalculatorContract* cc);
+  // Helper to be used in subclass UpdateContract calls to enforce constraints
+  // when TENSORS and TENSOR are both available.
+  static absl::Status TensorContractCheck(CalculatorContract* cc);
 
   static absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
       CalculatorContext* cc);
