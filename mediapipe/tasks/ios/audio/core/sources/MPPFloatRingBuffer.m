@@ -87,8 +87,15 @@
   return [self floatBufferWithOffset:0 length:self.length];
 }
 
-- (nullable MPPFloatBuffer *)floatBufferWithOffset:(NSUInteger)offset length:(NSUInteger)length {
+- (nullable MPPFloatBuffer *)floatBufferWithOffset:(NSUInteger)offset length:(NSUInteger)length error:(NSError **)error {
   if (offset + length > _buffer.length) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:
+                  [NSString stringWithFormat:@"Index out of range. `offset` (%lu) + `length` (%lu) "
+                                             @"must be <= `length` (%lu)",
+                                             offset, length, floatBuffer.length]];
     return nil;
   }
 

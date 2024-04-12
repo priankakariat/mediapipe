@@ -99,6 +99,13 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
    */
   MPPTasksErrorCodeUnauthenticatedError = 16,
 
+  
+  MPPTasksErrorCodeAudioRecordPermissionDeniedError = 100,
+
+  MPPTasksErrorCodeAudioRecordPermissionUndeterminedError = 101,
+
+  MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError = 102,
+
   /** The first error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 
