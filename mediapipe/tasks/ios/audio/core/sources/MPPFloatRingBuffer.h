@@ -69,7 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (nullable MPPFloatBuffer *)floatBufferWithOffset:(NSUInteger)offset
                                             length:(NSUInteger)length
-                                            error:(NSError **)error;
+                                             error:(NSError **)error;
 
 /**
  * Clears the `FloatRingBuffer` by setting all the elements to zero .
