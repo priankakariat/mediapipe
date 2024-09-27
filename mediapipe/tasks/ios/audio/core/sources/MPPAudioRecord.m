@@ -21,8 +21,31 @@
 
 static const NSUInteger kMaximumChannelCount = 2;
 
+@implementation MPPAudioRecordOptions
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _category = AVAudioSessionCategoryPlayAndRecord;
+    _mode = AVAudioSessionModeDefault;
+  }
+  return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+  MPPAudioRecordOptions *audioRecordOptions = [[MPPAudioRecordOptions alloc] init];
+
+  audioRecordOptions.category = self.category;
+  audioRecordOptions.mode = self.mode;
+  audioRecordOptions.categoryOptions = self.categoryOptions;
+ 
+  return audioRecordOptions;
+}
+@end
+
 @implementation MPPAudioRecord {
+  BOOL *_isRecording;
   AVAudioEngine *_audioEngine;
+  MPPAudioRecordOptions *_options;
 
   /**
    * Specifying a custom buffer size on `AVAudioEngine` while tapping audio does not take effect.
@@ -54,8 +77,18 @@ static const NSUInteger kMaximumChannelCount = 2;
 - (nullable instancetype)initWithAudioDataFormat:(MPPAudioDataFormat *)audioDataFormat
                                     bufferLength:(NSUInteger)bufferLength
                                            error:(NSError **)error {
+MPPAudioRecordOptions *options = [[MPPAudioRecordOptions alloc] init];                                            
+return [[MPPAudioRecord alloc] initWithAudioDataFormat:audioDataFormat bufferLength:bufferLength options:options error:error];
+}
+
+- (nullable instancetype)initWithAudioDataFormat:(MPPAudioDataFormat *)audioDataFormat
+                                    bufferLength:(NSUInteger)bufferLength
+                                    options:(MPPAudioRecordOptions *)options
+                                           error:(NSError **)error {                                      
   self = [super init];
   if (self) {
+    _options = [options copy];
+    NSLog(@"New one...........11111");
     if (audioDataFormat.channelCount > kMaximumChannelCount || audioDataFormat.channelCount == 0) {
       [MPPCommonUtils
           createCustomError:error
@@ -92,7 +125,15 @@ static const NSUInteger kMaximumChannelCount = 2;
   return self;
 }
 
-- (BOOL)startRecordingWithError:(NSError **)error {
+- (BOOL)startRecordingWithCategory:(AVAudioSessionCategory)category mode:(AVAudioSessionMode)mode options:(AVAudioSessionCategoryOptions)options  error:(NSError **)error {
+// - (BOOL)startRecordingWithError:(NSError **)error {
+  if (_isRecording) {
+    [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeFailedPreconditionError
+                description:@"Recording of microphone input is already in progress. Use `read(offset:length)` to read the most recently recorded microphone samples. Use `stop()` to stop recording the microphone input."];
+    return NO;   
+  }
   // TODO: This API is deprecated from iOS 17.0. Update to new APIs and restrict the following
   // code's use to versions below iOS 17.0.
   switch ([AVAudioSession sharedInstance].recordPermission) {
@@ -115,32 +156,56 @@ static const NSUInteger kMaximumChannelCount = 2;
     }
 
     case AVAudioSessionRecordPermissionGranted: {
-      [self startTappingMicrophoneWithError:error];
-      return YES;
+      return [self startTappingMicrophoneWithCategory:category options:options mode:mode error:error];
     }
   }
 
   return NO;
 }
 
-- (void)stop {
+- (BOOL)stopWithError:(NSError **)error {
   [[_audioEngine inputNode] removeTapOnBus:0];
   [_audioEngine stop];
-
+  _audioEngine = nil;
+  
+  NSError *setActiveError;
+  if(![[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&setActiveError]) {
+    [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeAudioRecordSystemError
+                description:setActiveError.localizedDescription];
+    return NO;
+  }
+   
   // Using strong `self` (instance variable is available through strong self) is okay since the
   // block is shortlived and it'll release its strong reference to `self` when it finishes
   // execution.
   //
-  // `dispatch_barrier_async` ensures no other thread can access `_floatRingBuffer` for read and
+  // `dispatch_sync` ensures no other thread can access `_floatRingBuffer` for read and
   // write while buffer is being cleared.
   dispatch_barrier_async(_convertLoadAndReadBufferQueue, ^{
     [_floatRingBuffer clear];
   });
+
+  return YES;
 }
 
 - (nullable MPPFloatBuffer *)readAtOffset:(NSUInteger)offset
                                withLength:(NSUInteger)length
                                     error:(NSError **)error {
+  //  if (![self isAudioEngineRunning:error]) {
+  //   return nil;
+  // }
+
+  // if (!_audioEngine.isRunning) {
+  //   [MPPCommonUtils
+  //         createCustomError:error
+  //                  withCode:MPPTasksErrorCodeFailedPreconditionError
+  //               description:@"The audio record is not currently recording the microphone input. You can start recording using `startRecording(category:options)`."];
+  //   return nil;
+  // } 
+  // NSLog(@"It is running...............bruh");                                   
+
   __block MPPFloatBuffer *bufferToReturn = nil;
   __block NSError *readError = nil;
 
@@ -165,7 +230,46 @@ static const NSUInteger kMaximumChannelCount = 2;
   return bufferToReturn;
 }
 
-- (void)startTappingMicrophoneWithError:(NSError **)error {
+- (BOOL)startTappingMicrophoneWithCategory:(AVAudioSessionCategory)category options:(AVAudioSessionCategoryOptions)options mode:(AVAudioSessionMode)mode error:(NSError **)error {
+  NSArray<AVAudioSessionCategory> *allowedCategories = @[
+    AVAudioSessionCategoryRecord,
+    AVAudioSessionCategoryPlayAndRecord
+  ];
+  
+  if (![allowedCategories containsObject:category]) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:[NSString stringWithFormat: @"Unsupported category %@. `category` can take the following values: `AVAudioSession.Category.playAndRecord`, `AVAudioSession.Category.record`.", category]];
+    return NO;
+  }
+
+  [self stopWithError:error];
+
+  if (![[AVAudioSession sharedInstance] setCategory:category mode:mode options:options error:error]) {
+    return NO;
+  }
+ 
+  if(![[AVAudioSession sharedInstance] setActive:YES withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:error]) {
+    return NO;
+  }
+
+  _audioEngine = [[AVAudioEngine alloc] init];
+
+  // // If the user is invoking this method to restart the audio engine because it was stopped by the system, the audio engine will be non-null. This is because we clear the audio engine only when the user invokes `stopRecording()` to explicitly stop the engine.
+  // // Allocate a new audio engine only if this is a fresh start after an exlicit stop by the user. 
+  // if (_audioEngine) {
+    
+  // }
+  // if (!_audioEngine) {
+  //   _audioEngine = [[AVAudioEngine alloc] init];
+  // }
+  // else {
+  //   _audioEngine = 
+  // }
+  // // }
+  // // // Resets any previous state of the audio engine in case of starting an audio engine allocated by a previous call to this method.
+  // // [_audioEngine reset];
+  
   AVAudioNode *inputNode = [_audioEngine inputNode];
   AVAudioFormat *format = [inputNode outputFormatForBus:0];
 
@@ -180,6 +284,8 @@ static const NSUInteger kMaximumChannelCount = 2;
 
   // Making self weak for the `installTapOnBus` callback.
   __weak MPPAudioRecord *weakSelf = self;
+  
+  [_audioEngine prepare];
 
   // Setting buffer size takes no effect on the input node. This class uses a ring buffer internally
   // to ensure the requested buffer size.
@@ -187,6 +293,7 @@ static const NSUInteger kMaximumChannelCount = 2;
                   bufferSize:(AVAudioFrameCount)self.bufferLength
                       format:format
                        block:^(AVAudioPCMBuffer *buffer, AVAudioTime *when) {
+                         NSLog(@"here nowwwwwwwwwww");
                          //  Getting a strong reference to `weakSelf` to conditionally execute
                          //  conversion and ring buffer loading. If self is deallocated before the
                          //  block is called, then `strongSelf` will be `nil`. Thereafter it is kept
@@ -206,9 +313,7 @@ static const NSUInteger kMaximumChannelCount = 2;
                            });
                          }
                        }];
-
-  [_audioEngine prepare];
-  [_audioEngine startAndReturnError:error];
+  return [_audioEngine startAndReturnError:error];
 }
 
 - (BOOL)loadAudioPCMBuffer:(AVAudioPCMBuffer *)pcmBuffer error:(NSError **)error {
@@ -300,6 +405,22 @@ static const NSUInteger kMaximumChannelCount = 2;
     }
   }
   return nil;
+}
+
+- (BOOL)isAudioEngineRunning:(NSError **)error {
+  BOOL isAudioEngineNull = _audioEngine == nil;
+  if (isAudioEngineNull) {
+    [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeFailedPreconditionError
+                description:@"The audio record is not currently recording the microphone input. You can start recording using `startRecording(category:options)`."];
+  }
+
+  return !isAudioEngineNull;
+}
+
+- (void)registerAudioEngineConfigurationChange {
+  AVAudioEngineConfigurationChangeNotification
 }
 
 @end

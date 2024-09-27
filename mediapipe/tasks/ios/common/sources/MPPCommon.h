@@ -111,6 +111,10 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
   /** Indicates that `AudioRecord` is waiting for new mic input. */
   MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError = 19,
 
+  MPPTasksErrorCodeAudioRecordSystemError = 20,
+
+  MPPTasksErrorCodeAudioRecordNotStartedError = 21,
+
   /** The first error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 

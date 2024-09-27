@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioDataFormat.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
@@ -24,6 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
  * supports recording up to 2 channels. If the number of channels is 2, then the mono microphone
  * input is duplicated to provide dual channel data.
  */
+NS_SWIFT_NAME(AudioRecordOptions)
+
+@interface MPPAudioRecordOptions: NSObject <NSCopying>
+@property(nonatomic, copy) AVAudioSessionCategory category;
+@property(nonatomic, copy) AVAudioSessionMode mode;
+@property(nonatomic) AVAudioSessionCategoryOptions categoryOptions;
+@end
+
+
 NS_SWIFT_NAME(AudioRecord)
 @interface MPPAudioRecord : NSObject
 
@@ -50,6 +60,11 @@ NS_SWIFT_NAME(AudioRecord)
                                     bufferLength:(NSUInteger)bufferSize
                                            error:(NSError **)error;
 
+
+// - (nullable instancetype)initWithAudioDataFormat:(MPPAudioDataFormat *)format
+//                                     bufferLength:(NSUInteger)bufferSize
+//                                     options:(MPPAudioRecordOptions *)options
+//                                            error:(NSError **)error;
 /**
  * This function starts recording the audio from the microphone if audio record permissions
  * have been granted by the user.
@@ -65,13 +80,13 @@ NS_SWIFT_NAME(AudioRecord)
  *
  * @return Boolean value indicating if audio recording started successfully.
  */
-- (BOOL)startRecordingWithError:(NSError **)error NS_SWIFT_NAME(startRecording());
+- (BOOL)startRecordingWithCategory:(AVAudioSessionCategory)category mode:(AVAudioSessionMode)mode options:(AVAudioSessionCategoryOptions)options error:(NSError **)error NS_SWIFT_NAME(startRecording(category:mode:options:));
 
 /**
  * Stops recording audio from the microphone. All elements in the internal buffer of `AudioRecord`
  * will also be set to zero.
  */
-- (void)stop;
+- (BOOL)stopWithError:(NSError **)error;
 
 /**
  * Returns the `length` number of elements in the internal buffer of `AudioRecord` starting at
@@ -88,6 +103,10 @@ NS_SWIFT_NAME(AudioRecord)
                                withLength:(NSUInteger)length
                                     error:(NSError **)error NS_SWIFT_NAME(read(offset:length:));
 
+
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
 @end
 
 NS_ASSUME_NONNULL_END
